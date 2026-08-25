@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f1ea">
+  <meta name="description" content="Measured bathroom planning PWA">
+  <title>Bathroom Planner</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Bathroom Planner</h1>
+      <div class="version">V1.0.0 · measured 2D planning</div>
+    </div>
+    <button id="reloadLatestBtn" class="ghost small">Reload latest</button>
+  </header>
+
+  <nav class="tabs" aria-label="Primary">
+    <button class="tab active" data-tab="plan">Plan</button>
+    <button class="tab" data-tab="project">Project</button>
+    <button class="tab" data-tab="backup">Backup</button>
+  </nav>
+
+  <main>
+    <section id="tab-plan" class="tab-panel active">
+      <div class="plan-toolbar">
+        <button id="undoBtn" class="ghost">Undo</button>
+        <button id="redoBtn" class="ghost">Redo</button>
+        <label class="toggle"><input type="checkbox" id="showDims" checked> Measurements</label>
+        <label class="toggle"><input type="checkbox" id="snapEnabled" checked> Snap</label>
+        <button id="addBtn" class="primary">+ Add</button>
+      </div>
+
+      <div class="status-row">
+        <span id="surveyStatus" class="pill"></span>
+        <span id="selectionStatus" class="muted">Tap an item to edit it.</span>
+      </div>
+
+      <div class="canvas-wrap">
+        <svg id="planSvg" viewBox="-420 -360 3200 3300" role="img" aria-label="Top-down bathroom plan"></svg>
+      </div>
+
+      <div id="inspector" class="inspector hidden">
+        <div class="inspector-head">
+          <div>
+            <div class="eyebrow">Selected item</div>
+            <h2 id="inspectorTitle">Fixture</h2>
+          </div>
+          <button id="closeInspectorBtn" class="ghost small">Close</button>
+        </div>
+
+        <div class="field-grid">
+          <label>Name<input id="itemName" type="text"></label>
+          <label>Type<select id="itemType">
+            <option value="bath">Bath</option>
+            <option value="wc">WC</option>
+            <option value="vanity">Vanity</option>
+            <option value="shower">Shower</option>
+            <option value="stud">Stud wall</option>
+            <option value="storage">Storage</option>
+            <option value="radiator">Radiator</option>
+            <option value="niche">Niche</option>
+          </select></label>
+          <label>X (mm)<input id="itemX" type="number" step="1"></label>
+          <label>Y (mm)<input id="itemY" type="number" step="1"></label>
+          <label>Width (mm)<input id="itemW" type="number" min="20" step="1"></label>
+          <label>Depth (mm)<input id="itemH" type="number" min="20" step="1"></label>
+          <label>Rotation
+            <select id="itemRotation">
+              <option value="0">0°</option>
+              <option value="90">90°</option>
+            </select>
+          </label>
+          <label class="toggle inspector-toggle"><input id="itemLocked" type="checkbox"> Lock position</label>
+        </div>
+
+        <div id="itemWarning" class="warning hidden"></div>
+
+        <div class="inspector-actions">
+          <button id="duplicateBtn" class="ghost">Duplicate</button>
+          <button id="deleteBtn" class="danger">Delete</button>
+        </div>
+      </div>
+
+      <div id="addSheet" class="sheet hidden" aria-modal="true" role="dialog">
+        <div class="sheet-card">
+          <div class="sheet-head">
+            <h2>Add to plan</h2>
+            <button id="closeAddBtn" class="ghost small">Close</button>
+          </div>
+          <div class="add-grid">
+            <button data-add-type="bath">Bath</button>
+            <button data-add-type="wc">WC</button>
+            <button data-add-type="vanity">Floor vanity</button>
+            <button data-add-type="shower">Shower tray</button>
+            <button data-add-type="stud">Stud wall</button>
+            <button data-add-type="storage">Storage</button>
+            <button data-add-type="radiator">Radiator</button>
+            <button data-add-type="niche">Wall niche</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-project" class="tab-panel">
+      <div class="card">
+        <h2>Room survey</h2>
+        <p class="muted">These numbers drive the drawing. V1 is seeded from the latest figures, but everything is editable.</p>
+
+        <div class="section-label">Overall room</div>
+        <div class="field-grid">
+          <label>Room width (mm)<input id="roomWidth" type="number" min="1000" step="1"></label>
+          <label>Room depth (mm)<input id="roomDepth" type="number" min="1000" step="1"></label>
+          <label>Ceiling height (mm)<input id="ceilingHeight" type="number" min="1800" step="1"></label>
+          <label>Design tolerance (mm)<input id="designTolerance" type="number" min="0" step="1"></label>
+        </div>
+
+        <div class="section-label">Window wall</div>
+        <div class="field-grid three">
+          <label>Left wall (mm)<input id="windowLeft" type="number" min="0" step="1"></label>
+          <label>Window (mm)<input id="windowWidth" type="number" min="100" step="1"></label>
+          <label>Right wall (mm)<input id="windowRight" type="number" min="0" step="1"></label>
+        </div>
+        <div id="windowCheck" class="checkline"></div>
+
+        <div class="section-label">Door wall</div>
+        <div class="field-grid three">
+          <label>Before door (mm)<input id="doorBefore" type="number" min="0" step="1"></label>
+          <label>Door incl. frame (mm)<input id="doorWidth" type="number" min="100" step="1"></label>
+          <label>After door (mm)<input id="doorAfter" type="number" min="0" step="1"></label>
+        </div>
+        <div id="doorCheck" class="checkline"></div>
+
+        <div class="section-label">Project</div>
+        <div class="field-grid">
+          <label>Project name<input id="projectName" type="text"></label>
+          <label>Plan name<input id="planName" type="text"></label>
+        </div>
+        <label>Notes<textarea id="projectNotes" rows="5" placeholder="Survey notes, questions, things to verify after strip-out…"></textarea></label>
+      </div>
+
+      <div class="card">
+        <h2>V1 scope</h2>
+        <div class="scope-list">
+          <div>✓ True-scale room and openings</div>
+          <div>✓ Drag fixtures with millimetre coordinates</div>
+          <div>✓ Wall snapping</div>
+          <div>✓ Lock / duplicate / delete</div>
+          <div>✓ Undo / redo</div>
+          <div>✓ Local autosave</div>
+          <div>✓ JSON backup / restore</div>
+          <div>→ Water, waste, joists and routing come next</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-backup" class="tab-panel">
+      <div class="card">
+        <h2>Backup & restore</h2>
+        <p>Your plan autosaves locally in this browser. Export a JSON backup before major changes or before clearing browser data.</p>
+        <div class="stack">
+          <button id="exportBtn" class="primary">Export JSON backup</button>
+          <label class="file-button">Import JSON backup<input id="importInput" type="file" accept=".json,application/json"></label>
+          <button id="resetBtn" class="danger-outline">Reset to V1 starter plan</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>App data</h2>
+        <div id="dataSummary" class="summary-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

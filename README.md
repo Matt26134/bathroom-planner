@@ -1,4 +1,4 @@
-# Bathroom Planner V1.0.0
+# Bathroom Planner V1.0.1
 
 A lightweight, installable GitHub Pages PWA for measured bathroom planning.
 

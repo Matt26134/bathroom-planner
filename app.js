@@ -1,8 +1,9 @@
 (() => {
   "use strict";
 
-  const APP_VERSION = "1.0.0";
+  const APP_VERSION = "1.0.1";
   const STORAGE_KEY = "bathroomPlannerV1";
+  const clone = v => JSON.parse(JSON.stringify(v));
 
   const starterState = {
     version: APP_VERSION,
@@ -42,7 +43,6 @@
   const $ = (id) => document.getElementById(id);
   const svg = $("planSvg");
   const inspector = $("inspector");
-  const clone = v => JSON.parse(JSON.stringify(v));
 
   function loadState() {
     try {

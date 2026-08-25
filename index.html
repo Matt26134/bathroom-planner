@@ -1,181 +1,199 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f4f1ea">
-  <meta name="description" content="Measured bathroom planning PWA">
-  <title>Bathroom Planner</title>
-  <link rel="manifest" href="./manifest.json">
-  <link rel="icon" href="./icon-192.png">
-  <link rel="apple-touch-icon" href="./icon-192.png">
-  <link rel="stylesheet" href="./styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4f1ea">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Bathroom Planner</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon-192.png">
+<style>
+:root{--bg:#f4f1ea;--card:#fffdf9;--ink:#222421;--muted:#6e706b;--line:#d7d2c8;--accent:#747c69;--danger:#a04b42;--warn:#b47b25}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}button{min-height:44px;border:1px solid var(--line);background:var(--card);border-radius:11px;padding:9px 12px;font-weight:750;color:var(--ink)}
+header{padding:16px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--line);background:var(--bg)}
+h1{font-size:1.25rem;margin:0}.ver{color:var(--muted);font-size:.8rem;margin-top:2px}
+nav{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card);border-bottom:1px solid var(--line)}
+nav button{border:0;border-radius:0;background:transparent;color:var(--muted);font-size:1rem}
+nav button.active{color:var(--ink);box-shadow:inset 0 -3px 0 var(--accent)}
+main{max-width:980px;margin:auto;padding:10px 10px 60px}.panel{display:none}.panel.active{display:block}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.toolbar .add{margin-left:auto;background:var(--accent);color:#fff;border-color:var(--accent)}
+.status{margin:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pill{padding:5px 9px;border-radius:99px;background:#ded8ca;font-size:.8rem;font-weight:800}
+.canvas{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;min-height:430px}
+svg{display:block;width:100%;height:auto;min-height:430px;touch-action:none;background:#fffdf9}
+.wall{fill:none;stroke:#252724;stroke-width:25;vector-effect:non-scaling-stroke}.win{stroke:#74a1aa;stroke-width:18;vector-effect:non-scaling-stroke}
+.fix{stroke:#4e524b;stroke-width:5;vector-effect:non-scaling-stroke;cursor:grab}.fix.sel{stroke:#207183;stroke-width:8}.fix.warn{stroke:#b64e44}
+.bath{fill:#ece8de}.wc{fill:#f1eee7}.vanity{fill:#d8c3a8}.shower{fill:#e5efee}.stud{fill:#ddd6c8}.storage{fill:#cfc0aa}.radiator{fill:#eee3d6}.niche{fill:#f4ece2}
+.lab{font-size:58px;font-weight:800;fill:#292b28;text-anchor:middle;dominant-baseline:middle;pointer-events:none}.sub{font-size:40px;font-weight:650;fill:#666a63;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
+.dim{stroke:#898d86;stroke-width:3;vector-effect:non-scaling-stroke}.dimt{font-size:46px;font-weight:700;fill:#5e625c}
+.card{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h2{margin:0 0 10px;font-size:1.05rem}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+label{display:grid;gap:5px;font-size:.82rem;font-weight:700;color:var(--muted)}input,select,textarea{min-height:44px;border:1px solid var(--line);border-radius:9px;padding:9px;background:#fff;color:var(--ink);font-size:16px;width:100%}
+.section{margin:18px 0 8px;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:900;color:var(--muted)}
+.inspector{margin-top:12px}.inshead{display:flex;justify-content:space-between;gap:10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.danger{background:var(--danger);color:white;border-color:var(--danger)}
+.warnbox{padding:10px;background:#fff3df;border-left:4px solid var(--warn);border-radius:8px;margin-top:10px}.hidden{display:none!important}
+.sheet{position:fixed;inset:0;background:rgba(20,20,18,.42);display:flex;align-items:end;padding:12px;z-index:50}.sheetbox{background:var(--card);border-radius:18px;padding:16px;width:min(680px,100%);margin:auto}.addgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check{font-size:.86rem;font-weight:750;margin-top:7px}.ok{color:#4f7554}.bad{color:#a04b42}
+#boot{font-size:.78rem;color:var(--muted)}.filebtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--line);border-radius:11px;padding:9px 12px;font-weight:750;background:var(--card)}.filebtn input{display:none}
+@media(max-width:430px){.grid.three{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.toolbar{gap:6px}}
+</style>
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <h1>Bathroom Planner</h1>
-      <div class="version">V1.0.1 · measured 2D planning</div>
+<header>
+  <div><h1>Bathroom Planner</h1><div class="ver">V1.0.3 · complete replacement build</div></div>
+  <button id="reload">Reload latest</button>
+</header>
+<nav>
+  <button class="tab active" data-tab="plan">Plan</button>
+  <button class="tab" data-tab="project">Project</button>
+  <button class="tab" data-tab="backup">Backup</button>
+</nav>
+<main>
+<section id="plan" class="panel active">
+  <div class="toolbar">
+    <button id="undo">Undo</button><button id="redo">Redo</button>
+    <label style="display:flex;align-items:center;gap:6px"><input id="dims" type="checkbox" checked style="width:20px">Measurements</label>
+    <label style="display:flex;align-items:center;gap:6px"><input id="snap" type="checkbox" checked style="width:20px">Snap</label>
+    <button id="add" class="add">+ Add</button>
+  </div>
+  <div class="status"><span id="survey" class="pill">Starting…</span><span id="boot">Planner loading…</span></div>
+  <div class="canvas">
+    <svg id="svg" viewBox="-420 -360 3200 3400" aria-label="Bathroom floor plan">
+      <!-- Static fallback: visible even before JavaScript -->
+      <rect x="0" y="0" width="2280" height="2545" fill="#faf8f3"/>
+      <rect x="0" y="0" width="2280" height="2545" class="wall"/>
+      <line x1="660" y1="0" x2="1590" y2="0" class="win"/>
+      <rect x="0" y="0" width="1600" height="700" class="fix bath"/>
+      <text x="800" y="350" class="lab">Bath</text>
+      <rect x="1830" y="25" width="370" height="640" rx="70" class="fix wc"/>
+      <text x="2015" y="345" class="lab">WC</text>
+      <rect x="0" y="700" width="450" height="970" class="fix vanity"/>
+      <text x="225" y="1185" class="lab">Vanity</text>
+      <rect x="0" y="1745" width="1400" height="800" class="fix shower"/>
+      <text x="700" y="2145" class="lab">Shower</text>
+    </svg>
+  </div>
+  <div id="inspector" class="card inspector hidden">
+    <div class="inshead"><div><div class="muted" style="font-size:.75rem">SELECTED</div><h2 id="ititle">Item</h2></div><button id="iclose">Close</button></div>
+    <div class="grid">
+      <label>Name<input id="iname"></label>
+      <label>Type<select id="itype"><option value="bath">Bath</option><option value="wc">WC</option><option value="vanity">Vanity</option><option value="shower">Shower</option><option value="stud">Stud wall</option><option value="storage">Storage</option><option value="radiator">Radiator</option><option value="niche">Niche</option></select></label>
+      <label>X mm<input id="ix" type="number"></label><label>Y mm<input id="iy" type="number"></label>
+      <label>Width mm<input id="iw" type="number"></label><label>Depth mm<input id="ih" type="number"></label>
+      <label>Rotation<select id="irot"><option value="0">0°</option><option value="90">90°</option></select></label>
+      <label style="display:flex;align-items:center;gap:7px"><input id="ilock" type="checkbox" style="width:20px">Lock position</label>
     </div>
-    <button id="reloadLatestBtn" class="ghost small">Reload latest</button>
-  </header>
+    <div id="iwarn" class="warnbox hidden"></div>
+    <div class="actions"><button id="dup">Duplicate</button><button id="del" class="danger">Delete</button></div>
+  </div>
+</section>
 
-  <nav class="tabs" aria-label="Primary">
-    <button class="tab active" data-tab="plan">Plan</button>
-    <button class="tab" data-tab="project">Project</button>
-    <button class="tab" data-tab="backup">Backup</button>
-  </nav>
+<section id="project" class="panel">
+  <div class="card">
+    <h2>Room survey</h2><p class="muted">These measurements are the source of truth for the drawing.</p>
+    <div class="section">Overall room</div>
+    <div class="grid">
+      <label>Width mm<input id="rw" type="number"></label><label>Depth mm<input id="rd" type="number"></label>
+      <label>Ceiling mm<input id="rc" type="number"></label><label>Design tolerance mm<input id="rt" type="number"></label>
+    </div>
+    <div class="section">Window wall</div>
+    <div class="grid three"><label>Left<input id="wl" type="number"></label><label>Window<input id="ww" type="number"></label><label>Right<input id="wr" type="number"></label></div>
+    <div id="wcheck" class="check"></div>
+    <div class="section">Door wall</div>
+    <div class="grid three"><label>Before door<input id="db" type="number"></label><label>Door incl frame<input id="dw" type="number"></label><label>After door<input id="da" type="number"></label></div>
+    <div id="dcheck" class="check"></div>
+    <div class="section">Project</div>
+    <div class="grid"><label>Project name<input id="pname"></label><label>Plan name<input id="plname"></label></div>
+    <label style="margin-top:10px">Notes<textarea id="notes" rows="5"></textarea></label>
+  </div>
+</section>
 
-  <main>
-    <section id="tab-plan" class="tab-panel active">
-      <div class="plan-toolbar">
-        <button id="undoBtn" class="ghost">Undo</button>
-        <button id="redoBtn" class="ghost">Redo</button>
-        <label class="toggle"><input type="checkbox" id="showDims" checked> Measurements</label>
-        <label class="toggle"><input type="checkbox" id="snapEnabled" checked> Snap</label>
-        <button id="addBtn" class="primary">+ Add</button>
-      </div>
+<section id="backup" class="panel">
+  <div class="card"><h2>Backup & restore</h2>
+    <div class="actions"><button id="export">Export JSON backup</button><label class="filebtn">Import JSON<input id="import" type="file" accept=".json,application/json"></label><button id="reset" class="danger">Reset starter plan</button></div>
+  </div>
+</section>
+</main>
 
-      <div class="status-row">
-        <span id="surveyStatus" class="pill"></span>
-        <span id="selectionStatus" class="muted">Tap an item to edit it.</span>
-      </div>
+<div id="sheet" class="sheet hidden"><div class="sheetbox"><div class="inshead"><h2>Add to plan</h2><button id="sheetclose">Close</button></div><div class="addgrid">
+<button data-add="bath">Bath</button><button data-add="wc">WC</button><button data-add="vanity">Floor vanity</button><button data-add="shower">Shower</button><button data-add="stud">Stud wall</button><button data-add="storage">Storage</button><button data-add="radiator">Radiator</button><button data-add="niche">Niche</button>
+</div></div></div>
 
-      <div class="canvas-wrap">
-        <svg id="planSvg" viewBox="-420 -360 3200 3300" role="img" aria-label="Top-down bathroom plan"></svg>
-      </div>
-
-      <div id="inspector" class="inspector hidden">
-        <div class="inspector-head">
-          <div>
-            <div class="eyebrow">Selected item</div>
-            <h2 id="inspectorTitle">Fixture</h2>
-          </div>
-          <button id="closeInspectorBtn" class="ghost small">Close</button>
-        </div>
-
-        <div class="field-grid">
-          <label>Name<input id="itemName" type="text"></label>
-          <label>Type<select id="itemType">
-            <option value="bath">Bath</option>
-            <option value="wc">WC</option>
-            <option value="vanity">Vanity</option>
-            <option value="shower">Shower</option>
-            <option value="stud">Stud wall</option>
-            <option value="storage">Storage</option>
-            <option value="radiator">Radiator</option>
-            <option value="niche">Niche</option>
-          </select></label>
-          <label>X (mm)<input id="itemX" type="number" step="1"></label>
-          <label>Y (mm)<input id="itemY" type="number" step="1"></label>
-          <label>Width (mm)<input id="itemW" type="number" min="20" step="1"></label>
-          <label>Depth (mm)<input id="itemH" type="number" min="20" step="1"></label>
-          <label>Rotation
-            <select id="itemRotation">
-              <option value="0">0°</option>
-              <option value="90">90°</option>
-            </select>
-          </label>
-          <label class="toggle inspector-toggle"><input id="itemLocked" type="checkbox"> Lock position</label>
-        </div>
-
-        <div id="itemWarning" class="warning hidden"></div>
-
-        <div class="inspector-actions">
-          <button id="duplicateBtn" class="ghost">Duplicate</button>
-          <button id="deleteBtn" class="danger">Delete</button>
-        </div>
-      </div>
-
-      <div id="addSheet" class="sheet hidden" aria-modal="true" role="dialog">
-        <div class="sheet-card">
-          <div class="sheet-head">
-            <h2>Add to plan</h2>
-            <button id="closeAddBtn" class="ghost small">Close</button>
-          </div>
-          <div class="add-grid">
-            <button data-add-type="bath">Bath</button>
-            <button data-add-type="wc">WC</button>
-            <button data-add-type="vanity">Floor vanity</button>
-            <button data-add-type="shower">Shower tray</button>
-            <button data-add-type="stud">Stud wall</button>
-            <button data-add-type="storage">Storage</button>
-            <button data-add-type="radiator">Radiator</button>
-            <button data-add-type="niche">Wall niche</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="tab-project" class="tab-panel">
-      <div class="card">
-        <h2>Room survey</h2>
-        <p class="muted">These numbers drive the drawing. V1 is seeded from the latest figures, but everything is editable.</p>
-
-        <div class="section-label">Overall room</div>
-        <div class="field-grid">
-          <label>Room width (mm)<input id="roomWidth" type="number" min="1000" step="1"></label>
-          <label>Room depth (mm)<input id="roomDepth" type="number" min="1000" step="1"></label>
-          <label>Ceiling height (mm)<input id="ceilingHeight" type="number" min="1800" step="1"></label>
-          <label>Design tolerance (mm)<input id="designTolerance" type="number" min="0" step="1"></label>
-        </div>
-
-        <div class="section-label">Window wall</div>
-        <div class="field-grid three">
-          <label>Left wall (mm)<input id="windowLeft" type="number" min="0" step="1"></label>
-          <label>Window (mm)<input id="windowWidth" type="number" min="100" step="1"></label>
-          <label>Right wall (mm)<input id="windowRight" type="number" min="0" step="1"></label>
-        </div>
-        <div id="windowCheck" class="checkline"></div>
-
-        <div class="section-label">Door wall</div>
-        <div class="field-grid three">
-          <label>Before door (mm)<input id="doorBefore" type="number" min="0" step="1"></label>
-          <label>Door incl. frame (mm)<input id="doorWidth" type="number" min="100" step="1"></label>
-          <label>After door (mm)<input id="doorAfter" type="number" min="0" step="1"></label>
-        </div>
-        <div id="doorCheck" class="checkline"></div>
-
-        <div class="section-label">Project</div>
-        <div class="field-grid">
-          <label>Project name<input id="projectName" type="text"></label>
-          <label>Plan name<input id="planName" type="text"></label>
-        </div>
-        <label>Notes<textarea id="projectNotes" rows="5" placeholder="Survey notes, questions, things to verify after strip-out…"></textarea></label>
-      </div>
-
-      <div class="card">
-        <h2>V1 scope</h2>
-        <div class="scope-list">
-          <div>✓ True-scale room and openings</div>
-          <div>✓ Drag fixtures with millimetre coordinates</div>
-          <div>✓ Wall snapping</div>
-          <div>✓ Lock / duplicate / delete</div>
-          <div>✓ Undo / redo</div>
-          <div>✓ Local autosave</div>
-          <div>✓ JSON backup / restore</div>
-          <div>→ Water, waste, joists and routing come next</div>
-        </div>
-      </div>
-    </section>
-
-    <section id="tab-backup" class="tab-panel">
-      <div class="card">
-        <h2>Backup & restore</h2>
-        <p>Your plan autosaves locally in this browser. Export a JSON backup before major changes or before clearing browser data.</p>
-        <div class="stack">
-          <button id="exportBtn" class="primary">Export JSON backup</button>
-          <label class="file-button">Import JSON backup<input id="importInput" type="file" accept=".json,application/json"></label>
-          <button id="resetBtn" class="danger-outline">Reset to V1 starter plan</button>
-        </div>
-      </div>
-      <div class="card">
-        <h2>App data</h2>
-        <div id="dataSummary" class="summary-grid"></div>
-      </div>
-    </section>
-  </main>
-
-  <script src="./app.js"></script>
+<script>
+(function(){
+"use strict";
+const VERSION="1.0.3", KEY="bathroomPlannerV103";
+const $=id=>document.getElementById(id), svg=$("svg");
+const clone=o=>JSON.parse(JSON.stringify(o));
+const starter={
+ version:VERSION,
+ project:{name:"Bathroom Redesign",planName:"Current working layout",notes:"Confirm final survey dimensions after strip-out before ordering fitted items."},
+ room:{width:2280,depth:2545,ceiling:2400,tolerance:20,window:{before:660,width:930,after:690},door:{before:835,width:860,after:850}},
+ ui:{dims:true,snap:true},
+ items:[
+ {id:"bath1",type:"bath",name:"Bath",x:0,y:0,w:1600,h:700,rotation:0,locked:true},
+ {id:"wc1",type:"wc",name:"New WC",x:1830,y:25,w:370,h:640,rotation:0,locked:true},
+ {id:"vanity1",type:"vanity",name:"Floor-standing vanity",x:0,y:700,w:450,h:970,rotation:0,locked:false},
+ {id:"stud1",type:"stud",name:"Half-height stud wall",x:0,y:1670,w:900,h:100,rotation:0,locked:false},
+ {id:"shower1",type:"shower",name:"Walk-in shower",x:0,y:1745,w:1400,h:800,rotation:0,locked:false},
+ {id:"storage1",type:"storage",name:"Tall storage",x:1460,y:2295,w:300,h:250,rotation:0,locked:false},
+ {id:"rad1",type:"radiator",name:"Towel radiator",x:2180,y:1900,w:100,h:520,rotation:0,locked:false},
+ {id:"n1",type:"niche",name:"Large shampoo niche",x:120,y:1680,w:380,h:70,rotation:0,locked:false},
+ {id:"n2",type:"niche",name:"Decorative bottle niche",x:20,y:2050,w:70,h:420,rotation:0,locked:false}
+ ]};
+let state;try{state=JSON.parse(localStorage.getItem(KEY)||"null")||clone(starter)}catch(e){state=clone(starter)}
+let selected=null,history=[],future=[],drag=null;
+const sEl=(tag,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);Object.keys(a).forEach(k=>e.setAttribute(k,a[k]));return e};
+const dims=i=>i.rotation===90?{w:i.h,h:i.w}:{w:i.w,h:i.h};
+const box=i=>{const d=dims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}};
+const collide=(a,b)=>{const A=box(a),B=box(b);return A.x1<B.x2&&A.x2>B.x1&&A.y1<B.y2&&A.y2>B.y1};
+function warnings(i){const b=box(i),w=[];if(b.x1<0||b.y1<0||b.x2>state.room.width||b.y2>state.room.depth)w.push("Outside room.");state.items.forEach(o=>{if(o.id===i.id||!collide(i,o))return;if(i.type==="niche"||o.type==="niche")return;if((i.type==="stud"&&o.type==="shower")||(i.type==="shower"&&o.type==="stud"))return;w.push("Overlaps "+o.name+".")});return w}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function checkpoint(){history.push(clone(state));if(history.length>40)history.shift();future=[];buttons()}
+function buttons(){$("undo").disabled=!history.length;$("redo").disabled=!future.length}
+function undo(){if(!history.length)return;future.push(clone(state));state=history.pop();selected=null;save();sync();render();buttons()}
+function redo(){if(!future.length)return;history.push(clone(state));state=future.pop();selected=null;save();sync();render();buttons()}
+function render(){
+ svg.innerHTML="";const r=state.room;svg.setAttribute("viewBox",`-420 -360 ${Math.max(3200,r.width+900)} ${Math.max(3400,r.depth+850)}`);
+ svg.appendChild(sEl("rect",{x:0,y:0,width:r.width,height:r.depth,fill:"#faf8f3"}));
+ svg.appendChild(sEl("rect",{x:0,y:0,width:r.width,height:r.depth,class:"wall"}));
+ svg.appendChild(sEl("line",{x1:r.window.before,y1:0,x2:r.window.before+r.window.width,y2:0,class:"win"}));
+ const d1=r.door.before,d2=d1+r.door.width;
+ svg.appendChild(sEl("line",{x1:r.width,y1:d1,x2:r.width,y2:d2,stroke:"#fffdf9","stroke-width":34,"vector-effect":"non-scaling-stroke"}));
+ const leaf=Math.min(800,r.door.width*.92);
+ svg.appendChild(sEl("line",{x1:r.width,y1:d2,x2:r.width-leaf,y2:d2,class:"wall","stroke-width":3}));
+ svg.appendChild(sEl("path",{d:`M ${r.width-leaf} ${d2} A ${leaf} ${leaf} 0 0 1 ${r.width} ${d2-leaf}`,fill:"none",stroke:"#777","stroke-width":3,"stroke-dasharray":"12 12"}));
+ state.items.forEach(i=>{const d=dims(i),ws=warnings(i);const rect=sEl("rect",{x:i.x,y:i.y,width:d.w,height:d.h,rx:i.type==="wc"?70:6,class:`fix ${i.type}${i.id===selected?" sel":""}${ws.length?" warn":""}`,"data-id":i.id});rect.addEventListener("pointerdown",down);svg.appendChild(rect);const cx=i.x+d.w/2,cy=i.y+d.h/2;let t=sEl("text",{x:cx,y:cy-18,class:"lab"});t.textContent=i.name;svg.appendChild(t);if(d.w>240&&d.h>110){t=sEl("text",{x:cx,y:cy+48,class:"sub"});t.textContent=Math.round(d.w)+" × "+Math.round(d.h);svg.appendChild(t)}});
+ if(state.ui.dims)drawDims();updateSurvey();updateInspector()
+}
+function drawDims(){const r=state.room;svg.appendChild(sEl("line",{x1:0,y1:-175,x2:r.width,y2:-175,class:"dim"}));let t=sEl("text",{x:r.width/2,y:-205,class:"dimt","text-anchor":"middle"});t.textContent=r.width+" mm";svg.appendChild(t);svg.appendChild(sEl("line",{x1:-175,y1:0,x2:-175,y2:r.depth,class:"dim"}));t=sEl("text",{x:-235,y:r.depth/2,class:"dimt",transform:`rotate(-90 -235 ${r.depth/2})`,"text-anchor":"middle"});t.textContent=r.depth+" mm";svg.appendChild(t)}
+function point(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+function down(e){const id=e.currentTarget.dataset.id,i=state.items.find(x=>x.id===id);selected=id;render();if(!i||i.locked)return;checkpoint();const p=point(e);drag={id,sx:p.x,sy:p.y,x:i.x,y:i.y};e.currentTarget.setPointerCapture(e.pointerId);e.currentTarget.addEventListener("pointermove",move);e.currentTarget.addEventListener("pointerup",up,{once:true});e.currentTarget.addEventListener("pointercancel",up,{once:true})}
+function move(e){if(!drag)return;const i=state.items.find(x=>x.id===drag.id),p=point(e),d=dims(i);let x=Math.round(drag.x+p.x-drag.sx),y=Math.round(drag.y+p.y-drag.sy);if(state.ui.snap){const s=35;if(Math.abs(x)<s)x=0;if(Math.abs(y)<s)y=0;if(Math.abs(x+d.w-state.room.width)<s)x=state.room.width-d.w;if(Math.abs(y+d.h-state.room.depth)<s)y=state.room.depth-d.h;state.items.forEach(o=>{if(o.id===i.id)return;const b=box(o);if(Math.abs(x-b.x2)<s)x=b.x2;if(Math.abs(x+d.w-b.x1)<s)x=b.x1-d.w;if(Math.abs(y-b.y2)<s)y=b.y2;if(Math.abs(y+d.h-b.y1)<s)y=b.y1-d.h})}i.x=x;i.y=y;render()}
+function up(){if(!drag)return;drag=null;save();render()}
+function updateInspector(){const i=state.items.find(x=>x.id===selected),panel=$("inspector");if(!i){panel.classList.add("hidden");return}panel.classList.remove("hidden");$("ititle").textContent=i.name;$("iname").value=i.name;$("itype").value=i.type;$("ix").value=i.x;$("iy").value=i.y;$("iw").value=i.w;$("ih").value=i.h;$("irot").value=i.rotation;$("ilock").checked=i.locked;const w=warnings(i);$("iwarn").classList.toggle("hidden",!w.length);$("iwarn").textContent=w.join(" ")}
+function applyInspector(){const i=state.items.find(x=>x.id===selected);if(!i)return;checkpoint();i.name=$("iname").value.trim()||i.name;i.type=$("itype").value;i.x=Number($("ix").value)||0;i.y=Number($("iy").value)||0;i.w=Math.max(20,Number($("iw").value)||20);i.h=Math.max(20,Number($("ih").value)||20);i.rotation=Number($("irot").value)===90?90:0;i.locked=$("ilock").checked;save();render()}
+["iname","itype","ix","iy","iw","ih","irot","ilock"].forEach(id=>$(id).addEventListener("change",applyInspector));
+function add(type){const p={bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower",1400,800],stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],niche:["Niche",400,70]}[type];checkpoint();const i={id:type+Date.now(),type,name:p[0],x:200,y:900,w:p[1],h:p[2],rotation:0,locked:false};state.items.push(i);selected=i.id;save();render();$("sheet").classList.add("hidden")}
+function sync(){const r=state.room;$("rw").value=r.width;$("rd").value=r.depth;$("rc").value=r.ceiling;$("rt").value=r.tolerance;$("wl").value=r.window.before;$("ww").value=r.window.width;$("wr").value=r.window.after;$("db").value=r.door.before;$("dw").value=r.door.width;$("da").value=r.door.after;$("pname").value=state.project.name;$("plname").value=state.project.planName;$("notes").value=state.project.notes;$("dims").checked=state.ui.dims;$("snap").checked=state.ui.snap;checks()}
+function checks(){const ws=state.room.window.before+state.room.window.width+state.room.window.after,ds=state.room.door.before+state.room.door.width+state.room.door.after;$("wcheck").className="check "+(ws===state.room.width?"ok":"bad");$("wcheck").textContent=(ws===state.room.width?"✓ ":"⚠ ")+`Window wall totals ${ws} mm`;$("dcheck").className="check "+(ds===state.room.depth?"ok":"bad");$("dcheck").textContent=(ds===state.room.depth?"✓ ":"⚠ ")+`Door wall totals ${ds} mm`}
+function updateSurvey(){const ws=state.room.window.before+state.room.window.width+state.room.window.after,ds=state.room.door.before+state.room.door.width+state.room.door.after;$("survey").textContent=(ws===state.room.width&&ds===state.room.depth)?"Survey dimensions reconcile":"Survey mismatch — check Project"}
+const paths={rw:["room","width"],rd:["room","depth"],rc:["room","ceiling"],rt:["room","tolerance"],wl:["room","window","before"],ww:["room","window","width"],wr:["room","window","after"],db:["room","door","before"],dw:["room","door","width"],da:["room","door","after"]};
+Object.entries(paths).forEach(([id,path])=>$(id).addEventListener("change",()=>{checkpoint();let o=state;for(let n=0;n<path.length-1;n++)o=o[path[n]];o[path[path.length-1]]=Math.max(0,Number($(id).value)||0);save();sync();render()}));
+[["pname","name"],["plname","planName"],["notes","notes"]].forEach(([id,k])=>$(id).addEventListener("change",()=>{checkpoint();state.project[k]=$(id).value;save()}));
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));b.classList.add("active");$(b.dataset.tab).classList.add("active")}));
+$("undo").onclick=undo;$("redo").onclick=redo;$("dims").onchange=e=>{state.ui.dims=e.target.checked;save();render()};$("snap").onchange=e=>{state.ui.snap=e.target.checked;save()};$("add").onclick=()=>$("sheet").classList.remove("hidden");$("sheetclose").onclick=()=>$("sheet").classList.add("hidden");document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>add(b.dataset.add));$("iclose").onclick=()=>{selected=null;render()};$("dup").onclick=()=>{const i=state.items.find(x=>x.id===selected);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.x+=50;c.y+=50;c.locked=false;state.items.push(c);selected=c.id;save();render()};$("del").onclick=()=>{const i=state.items.find(x=>x.id===selected);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==selected);selected=null;save();render()};
+$("export").onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download="bathroom-planner-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),500)};
+$("import").onchange=async e=>{try{const p=JSON.parse(await e.target.files[0].text());if(!p.room||!p.items)throw Error("Invalid backup");checkpoint();state=p;selected=null;save();sync();render();alert("Backup imported")}catch(err){alert(err.message)}e.target.value=""};
+$("reset").onclick=()=>{if(!confirm("Reset to starter plan?"))return;checkpoint();state=clone(starter);selected=null;save();sync();render()};
+$("reload").onclick=async()=>{try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}if("caches"in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}const u=new URL(location.href);u.searchParams.set("v",Date.now());location.replace(u.toString())};
+svg.addEventListener("pointerdown",e=>{if(e.target===svg){selected=null;render()}});
+sync();buttons();render();$("boot").textContent="Planner ready · V"+VERSION;
+// Remove any older service worker/cache from V1.0.0/V1.0.1.
+(async()=>{try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}if("caches"in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}})();
+})();
+</script>
 </body>
 </html>

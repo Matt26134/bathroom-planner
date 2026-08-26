@@ -115,7 +115,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.6 · 3D deep-fix</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.7 · fixed shower hardware</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -325,7 +325,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Depth (mm)<input id="itemH" type="number"></label>
         <label>Bottom above floor (mm)<input id="itemZ" type="number"></label>
         <label>Height (mm)<input id="itemHeight" type="number"></label>
-        <label id="itemShowerMountWrap" class="hidden">Shower mount side<select id="itemShowerMount"><option value="left">Opposite side</option><option value="right">Vanity / stud-wall side</option></select></label>
+        <label id="itemShowerMountWrap" class="hidden">Shower mount side<select id="itemShowerMount"><option value="left">Fixed shower layout</option><option value="right">Fixed shower layout</option></select></label>
       </div>
     </div>
 
@@ -573,7 +573,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.8.6", KEY="bathroomPlannerStable";
+const VERSION="1.8.7", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 

@@ -590,80 +590,72 @@ if (!api || !legacy) {
     }
 
     if(style==="showerWalkInRain"){
-      // IMPORTANT: local +Z is the rear of the shower. In the current plan that
-      // is the physical back wall of the room. Hardware is therefore mounted
-      // against +d/2, not on the glass/stud at the entry.
-      const backZ=d/2-.025;
-      let adjacentSide=1;
-      const showerCenterX=i.x + itemDims(i).w/2;
+      // FIXED shower hardware layout:
+      // - rain head + handset always come off the BACK wall
+      // - mixer controls always sit on the HALF-HEIGHT STUD WALL / entry wall
+      // - hardware stays fixed to the room intent even if the tray rotates
+      // - finish is matte black
+      const finish=mats.dark;
+      const angle=((Number(i.rotation)||0)%360+360)%360;
+      const hw = new THREE.Group();
+      hw.rotation.y = THREE.MathUtils.degToRad(angle); // cancel parent item rotation
+      g.add(hw);
+
+      // Use the nearby stud wall to infer the preferred x-position. This keeps
+      // the controls and shower heads on the vanity side of the shower layout.
+      let controlX = -w*.20;
       if(nearbyStud){
         const sd=itemDims(nearbyStud);
-        const studCenterX=nearbyStud.x + sd.w/2;
-        adjacentSide = studCenterX >= showerCenterX ? 1 : -1;
-      }else{
-        const nearestVanity=(s.items||[]).filter(o=>o.type==="vanity").sort((a,b)=>{
-          const ad=itemDims(a), bd=itemDims(b);
-          const acx=a.x+ad.w/2, acy=a.y+ad.d/2;
-          const bcx=b.x+bd.w/2, bcy=b.y+bd.d/2;
-          const scy=i.y+itemDims(i).d/2;
-          return ((acx-showerCenterX)**2 + (acy-scy)**2) - ((bcx-showerCenterX)**2 + (bcy-scy)**2);
-        })[0];
-        if(nearestVanity){
-          const vd=itemDims(nearestVanity);
-          const vanityCenterX=nearestVanity.x + vd.w/2;
-          adjacentSide = vanityCenterX >= showerCenterX ? 1 : -1;
-        }
+        const relStudCenter=((nearbyStud.x + sd.w/2) - (i.x + itemDims(i).w/2))/1000;
+        controlX = THREE.MathUtils.clamp(relStudCenter, -w*.30, w*.30);
       }
-      const pref=(i.showerMountSide||"right");
-      const side=pref==="left" ? -adjacentSide : adjacentSide;
-      const headX=side*w*.23;
-      const headY=Math.min(mm(s.room.ceiling)-.22,2.08);
 
-      // Vertical supply/riser visibly touching the back wall.
-      const riser=cylinder(.010,.72,mats.brass,"y",18);
-      riser.position.set(headX,headY-.42,backZ);
-      g.add(riser);
-
-      // Wall arm comes OUT from the back wall towards the shower centre.
-      const armLen=.30;
-      const arm=meshBox(.018,.018,armLen,mats.brass,headX,headY,backZ-armLen/2,false);
-      g.add(arm);
-
-      // Short drop and overhead rain head.
-      const drop=cylinder(.010,.07,mats.brass,"y",18);
-      drop.position.set(headX,headY-.035,backZ-armLen+.015);
-      g.add(drop);
-
-      const head=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.018,42),mats.brass);
-      head.position.set(headX,headY-.075,backZ-armLen+.015);
-      head.castShadow=true;
-      g.add(head);
-
-      // Handset and slide rail: also mounted on the back wall.
-      const railX=side*w*.18;
-      const rail=cylinder(.008,.62,mats.brass,"y",16);
-      rail.position.set(railX,z+h+1.27,backZ-.005);
-      g.add(rail);
-
-      const handset=cylinder(.018,.17,mats.brass,"y",18);
-      handset.position.set(railX+(side*.035),z+h+1.43,backZ-.07);
-      handset.rotation.z=.25;
-      g.add(handset);
-
-      // Controls belong on the half-height stud / entry wall, facing into shower.
-      // local -Z is the entry edge where the current stud wall sits.
+      // Back wall = local +Z. Stud / entry wall = local -Z.
+      const backZ=d/2-.025;
       const frontZ=-d/2+.022;
-      const controlsX=side*w*.20;
-      const plate=meshBox(.15,.20,.018,mats.brass,controlsX,z+h+1.03,frontZ,false);
-      g.add(plate);
+      const headY=Math.min(mm(s.room.ceiling)-.22,2.08);
+      const railX=THREE.MathUtils.clamp(controlX + .06, -w*.28, w*.28);
 
-      const knob1=cylinder(.021,.028,mats.brass,"z",20);
-      knob1.position.set(controlsX,z+h+1.09,frontZ+.022);
-      g.add(knob1);
+      // Vertical riser touching the back wall.
+      const riser=cylinder(.010,.72,finish,"y",18);
+      riser.position.set(controlX,headY-.42,backZ);
+      hw.add(riser);
 
-      const knob2=cylinder(.021,.028,mats.brass,"z",20);
-      knob2.position.set(controlsX,z+h+.98,frontZ+.022);
-      g.add(knob2);
+      // Arm projects out from the back wall.
+      const armLen=.30;
+      const arm=meshBox(.018,.018,armLen,finish,controlX,headY,backZ-armLen/2,false);
+      hw.add(arm);
+
+      const drop=cylinder(.010,.07,finish,"y",18);
+      drop.position.set(controlX,headY-.035,backZ-armLen+.015);
+      hw.add(drop);
+
+      const head=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.018,42),finish);
+      head.position.set(controlX,headY-.075,backZ-armLen+.015);
+      head.castShadow=true;
+      hw.add(head);
+
+      // Hand shower and slide rail also on the back wall.
+      const rail=cylinder(.008,.62,finish,"y",16);
+      rail.position.set(railX,z+h+1.27,backZ-.005);
+      hw.add(rail);
+
+      const handset=cylinder(.018,.17,finish,"y",18);
+      handset.position.set(railX+.035,z+h+1.43,backZ-.07);
+      handset.rotation.z=.25;
+      hw.add(handset);
+
+      // Controls on the half-height stud wall, facing into the shower.
+      const plate=meshBox(.15,.20,.018,finish,controlX,z+h+1.03,frontZ,false);
+      hw.add(plate);
+
+      const knob1=cylinder(.021,.028,finish,"z",20);
+      knob1.position.set(controlX,z+h+1.09,frontZ+.022);
+      hw.add(knob1);
+
+      const knob2=cylinder(.021,.028,finish,"z",20);
+      knob2.position.set(controlX,z+h+.98,frontZ+.022);
+      hw.add(knob2);
     }
 
     return setItemId(g,i.id);

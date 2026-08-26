@@ -3,184 +3,243 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f6f3ed">
+<meta name="theme-color" content="#f5f3ee">
 <title>Bathroom Planner</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icon-192.png">
 <style>
 :root{
-  --bg:#f6f3ed;--panel:#fffdfa;--ink:#22231f;--muted:#77756f;--line:#d8d3c9;
-  --olive:#707664;--olive2:#8e9483;--brass:#b18a52;--stone:#e9e2d7;--blue:#8fa8ad;
-  --danger:#9b4d43;--warn:#ad7420;--ok:#5d765c;--shadow:0 10px 28px rgba(40,38,32,.07);
+  --bg:#f5f3ee;--panel:#fffdfa;--ink:#23241f;--muted:#74746d;--line:#d8d4ca;
+  --olive:#6e7463;--brass:#ad8753;--blue:#769aa2;--hot:#b6695f;--cold:#6e92ad;
+  --waste:#6d706b;--elec:#b49b50;--danger:#9f4d43;--warn:#a86f20;--ok:#587257;
+  --shadow:0 12px 32px rgba(36,34,29,.09);
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
 button,input,select,textarea{font:inherit}
-button{min-height:42px;border:1px solid var(--line);background:#fffdf9;border-radius:12px;padding:8px 12px;font-weight:700;color:var(--ink)}
-button:active{transform:translateY(1px)}
-header{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 16px 12px;border-bottom:1px solid rgba(216,211,201,.9)}
-.brand{display:flex;gap:10px;align-items:center}
-.mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#747b69,#9d9279);position:relative}
-.mark:before{content:"";position:absolute;left:8px;top:8px;width:18px;height:18px;border:2px solid rgba(255,255,255,.9);border-radius:3px}
-h1{font-size:1.18rem;margin:0;letter-spacing:-.01em}.ver{font-size:.76rem;color:var(--muted);margin-top:2px}
-nav{display:grid;grid-template-columns:repeat(3,1fr);background:rgba(255,253,250,.82);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-nav button{border:0;border-radius:0;background:transparent;color:var(--muted);font-size:.97rem}
-nav button.active{color:var(--ink);box-shadow:inset 0 -2px 0 var(--olive)}
-main{max-width:980px;margin:auto;padding:10px 10px 60px}
-.panel{display:none}.panel.active{display:block}
-.toolbar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
-.toolbtn{display:inline-flex;align-items:center;gap:7px;background:transparent}
-.toolbtn .ico{font-size:1.05rem;color:var(--olive)}
-.toolbar .add{margin-left:auto;background:var(--olive);border-color:var(--olive);color:white;padding-inline:14px}
-.status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 1px 10px}
-.pill{padding:5px 9px;border-radius:999px;background:#e8e5dc;color:#5a5c55;font-size:.78rem;font-weight:800}
-.hint{font-size:.82rem;color:var(--muted)}
-.canvasShell{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
-.canvasHeader{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid #ece8df;font-size:.8rem;color:var(--muted)}
-.canvasMeta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}.zoomCtl{display:flex;align-items:center;gap:5px}.zoomCtl button{min-height:34px;padding:4px 9px;border-radius:9px;font-size:.86rem;background:#faf8f3}.zoomRead{min-width:48px;text-align:center;font-variant-numeric:tabular-nums;font-weight:800;color:#5f625d}.canvas{position:relative;background:#fffefa}.detaildim{stroke:#b18a52;stroke-width:1.25;fill:none;vector-effect:non-scaling-stroke}.detailtext{font-size:31px;font-weight:800;fill:#8c6b3f}.finedim{stroke:#8fa8ad;stroke-width:1.05;stroke-dasharray:7 6;fill:none;vector-effect:non-scaling-stroke}.finetext{font-size:27px;font-weight:750;fill:#657d82}
-svg{display:block;width:100%;height:auto;min-height:470px;touch-action:none;background:#fffefa}
-.gridline{stroke:#edeae3;stroke-width:1;vector-effect:non-scaling-stroke}
-.roomfill{fill:#fcfbf8}
-.wallOuter{fill:none;stroke:#3d3f3a;stroke-width:6;vector-effect:non-scaling-stroke}
-.wallInner{fill:none;stroke:#9b9d96;stroke-width:1.5;vector-effect:non-scaling-stroke}
-.win{stroke:#8fa8ad;stroke-width:8;vector-effect:non-scaling-stroke}
-.door{stroke:#6c6f69;stroke-width:2;fill:none;vector-effect:non-scaling-stroke}
-.fixture{stroke:#5f625c;stroke-width:2.2;vector-effect:non-scaling-stroke;cursor:grab;filter:url(#soft)}
-.fixture.sel{stroke:#516f76;stroke-width:4}
-.fixture.warn{stroke:#a65b4f}
-.bath{fill:#f1ede5}.wc{fill:#f4f1ea}.vanity{fill:#ded0bb}.shower{fill:#edf4f3}.stud{fill:#d8d3c7}.storage{fill:#d7c7b1}.radiator{fill:#efe7da}.niche{fill:#f6efe4}
-.fixtitle{font-size:46px;font-weight:800;fill:#2a2c29;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
-.fixsub{font-size:32px;font-weight:650;fill:#74766f;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
-.bathInner{fill:none;stroke:#bdb8ae;stroke-width:2;vector-effect:non-scaling-stroke}
-.wcInner{fill:none;stroke:#bbb7ae;stroke-width:2;vector-effect:non-scaling-stroke}
-.basin{fill:#f8f6f1;stroke:#b7aa97;stroke-width:2;vector-effect:non-scaling-stroke}
-.showerGlass{stroke:#8fa8ad;stroke-width:4;vector-effect:non-scaling-stroke}
-.dimline{stroke:#8e9089;stroke-width:1.3;fill:none;vector-effect:non-scaling-stroke}
-.dimtext{font-size:38px;font-weight:700;fill:#676a64}
-.card{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px;box-shadow:var(--shadow)}
-.card h2{margin:0 0 10px;font-size:1rem}
-.muted{color:var(--muted)}
-.section{margin:18px 0 8px;text-transform:uppercase;letter-spacing:.09em;font-size:.69rem;font-weight:900;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
-label{display:grid;gap:5px;font-size:.78rem;font-weight:750;color:var(--muted)}
-input,select,textarea{width:100%;min-height:43px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);padding:9px 10px;font-size:16px}
-textarea{resize:vertical}
-.inspector{margin-top:12px}
-.inshead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-.eyebrow{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:900}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.danger{background:var(--danger);border-color:var(--danger);color:white}
-.warnbox{margin-top:10px;padding:9px 10px;border-left:3px solid var(--warn);background:#fff6e7;border-radius:8px;font-size:.85rem}
-.hidden{display:none!important}
-.sheet{position:fixed;inset:0;background:rgba(25,24,21,.36);display:flex;align-items:end;padding:12px;z-index:50}
-.sheetbox{background:var(--panel);border-radius:20px;padding:16px;width:min(680px,100%);margin:auto;box-shadow:0 24px 70px rgba(0,0,0,.2)}
-.addgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-.check{font-size:.83rem;font-weight:750;margin-top:7px}.ok{color:var(--ok)}.bad{color:var(--danger)}
-.filebtn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:700;background:#fffdf9}.filebtn input{display:none}
-.legend{display:flex;gap:12px;flex-wrap:wrap}.legend span{font-size:.76rem;color:var(--muted)}.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-@media(max-width:430px){
-  .grid.three{grid-template-columns:1fr}
-  .grid{grid-template-columns:1fr 1fr}
-  header{padding-inline:12px}
-  main{padding-inline:7px}
-  .toolbar{gap:5px}
-}
+button{min-height:40px;border:1px solid var(--line);background:#fffdf9;color:var(--ink);border-radius:11px;padding:7px 11px;font-weight:750}
+button:disabled{opacity:.4}
+header{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 14px 11px;border-bottom:1px solid var(--line)}
+.brand{display:flex;gap:9px;align-items:center}.mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(145deg,#6f7564,#a6987f);position:relative}
+.mark:after{content:"";position:absolute;inset:8px;border:2px solid rgba(255,255,255,.9);border-radius:3px}
+h1{font-size:1.15rem;line-height:1.1;margin:0}.version{color:var(--muted);font-size:.74rem;margin-top:3px}
+nav{display:grid;grid-template-columns:repeat(3,1fr);background:rgba(255,253,250,.9);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+nav button{border:0;border-radius:0;background:transparent;color:var(--muted)}nav button.active{color:var(--ink);box-shadow:inset 0 -2px 0 var(--olive)}
+main{max-width:1000px;margin:auto;padding:8px 8px 64px}.panel{display:none}.panel.active{display:block}
+.toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+.tool{display:inline-flex;align-items:center;gap:5px;background:transparent}.primary{background:var(--olive);border-color:var(--olive);color:white}.toolbar .spacer{flex:1}
+.status{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:7px 1px 9px}.pill{font-size:.76rem;font-weight:800;padding:5px 8px;border-radius:999px;background:#e7e4dc;color:#5e6058}.hint{font-size:.79rem;color:var(--muted)}
+.canvasShell{background:var(--panel);border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow)}
+.canvasHeader{height:45px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;gap:6px;border-bottom:1px solid #ece8df}
+.planName{font-size:.8rem;color:var(--muted);font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.canvasControls{display:flex;gap:5px;align-items:center}.canvasControls button{min-height:32px;padding:4px 8px;font-size:.8rem}.zoomRead{font-size:.75rem;font-weight:850;min-width:42px;text-align:center;color:#62655f}
+.canvas{height:min(68vh,700px);min-height:440px;background:#fffefa}
+svg{width:100%;height:100%;display:block;background:#fffefa;touch-action:none}
+.roomfill{fill:#fdfcf9}.gridMajor{stroke:#ebe8e1;stroke-width:1;vector-effect:non-scaling-stroke}.gridMinor{stroke:#f2f0ea;stroke-width:.8;vector-effect:non-scaling-stroke}
+.wallOuter{fill:none;stroke:#3e403b;stroke-width:5;vector-effect:non-scaling-stroke}.wallInner{fill:none;stroke:#9c9e97;stroke-width:1.2;vector-effect:non-scaling-stroke}
+.window{stroke:#789ca4;stroke-width:7;vector-effect:non-scaling-stroke;cursor:pointer}.door{stroke:#686b64;stroke-width:1.8;fill:none;vector-effect:non-scaling-stroke;cursor:pointer}
+.doorZone{fill:rgba(173,135,83,.07);stroke:#c6ad88;stroke-width:1;stroke-dasharray:6 6;vector-effect:non-scaling-stroke;pointer-events:none}
+.fixture{stroke:#5d605a;stroke-width:2;vector-effect:non-scaling-stroke;cursor:grab}.fixture.selected{stroke:#4f7780;stroke-width:3.5}.fixture.overlap{stroke:#a8564c}.fixture.tolerance{stroke:#b5843c}
+.bath{fill:#f3efe8}.wc{fill:#f4f1eb}.vanity{fill:#e2d5c2}.shower{fill:#edf4f3}.stud{fill:#dbd6ca}.storage{fill:#d8c9b6}.radiator{fill:#efe8dd}.niche{fill:#f5eee4}.custom{fill:#eeeae2}
+.archLine{fill:none;stroke:#bbb7af;stroke-width:1.6;vector-effect:non-scaling-stroke}.glass{stroke:#80a2aa;stroke-width:3;vector-effect:non-scaling-stroke}
+.label{font-size:40px;font-weight:850;fill:#2e302c;text-anchor:middle;dominant-baseline:middle;pointer-events:none}.subLabel{font-size:28px;font-weight:700;fill:#777a73;text-anchor:middle;dominant-baseline:middle;pointer-events:none}.outsideLabel{font-size:28px;font-weight:750;fill:#656861}
+.service{cursor:grab}.service circle{stroke-width:2;vector-effect:non-scaling-stroke}.service text{font-size:28px;font-weight:850;fill:#4e514b;pointer-events:none}
+.dim{stroke:#8e918a;stroke-width:1.1;fill:none;vector-effect:non-scaling-stroke}.dimDetail{stroke:#ad8753;stroke-width:1.1;fill:none;vector-effect:non-scaling-stroke}.dimSelected{stroke:#789ca4;stroke-width:1.15;fill:none;vector-effect:non-scaling-stroke}
+.dimText{font-size:30px;font-weight:800;fill:#696c66}.dimTextDetail{font-size:27px;font-weight:850;fill:#8d6a3d}.dimTextSelected{font-size:27px;font-weight:850;fill:#617f85}
+.snapGuide{stroke:#789ca4;stroke-width:1.2;stroke-dasharray:8 6;vector-effect:non-scaling-stroke}.snapText{font-size:28px;font-weight:850;fill:#617f85}
+.measureLine{stroke:#8a7251;stroke-width:1.5;stroke-dasharray:7 5;vector-effect:non-scaling-stroke}.measurePoint{fill:#8a7251}.measureText{font-size:30px;font-weight:900;fill:#7b6242}
+.warningBadge{fill:#fff4df;stroke:#bd8a40;stroke-width:1.5;vector-effect:non-scaling-stroke}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;box-shadow:var(--shadow)}.card h2{font-size:1rem;margin:0 0 10px}.muted{color:var(--muted)}
+.section{margin:17px 0 8px;text-transform:uppercase;letter-spacing:.09em;font-size:.68rem;font-weight:900;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}input,select,textarea{width:100%;min-height:42px;border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:white;color:var(--ink);font-size:16px}textarea{resize:vertical}
+.check{font-size:.82rem;font-weight:800;margin-top:6px}.ok{color:var(--ok)}.bad{color:var(--danger)}
+.sheet{position:fixed;inset:0;background:rgba(25,24,21,.34);display:flex;align-items:flex-end;padding:9px;z-index:60}.objectEditor{background:transparent;pointer-events:none}.objectEditor .sheetCard{pointer-events:auto}.sheetCard{width:min(720px,100%);max-height:82vh;overflow:auto;margin:0 auto;background:var(--panel);border-radius:19px 19px 15px 15px;padding:12px;box-shadow:0 20px 70px rgba(0,0,0,.24)}
+.sheetHead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.eyebrow{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;font-weight:900;color:var(--muted)}
+.quickActions{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}.quickActions button{min-height:36px;font-size:.82rem}.danger{background:var(--danger);border-color:var(--danger);color:white}
+.details{border-top:1px solid #ece8df;padding-top:10px}.detailsToggle{width:100%;background:#faf8f3}
+.warnbox{margin-top:9px;padding:8px 9px;border-left:3px solid var(--warn);background:#fff6e6;border-radius:8px;font-size:.82rem}
+.addgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px}
+.hidden{display:none!important}.filebtn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;border:1px solid var(--line);border-radius:11px;padding:7px 11px;font-weight:750;background:#fffdf9}.filebtn input{display:none}
+.measureBanner{display:none;position:absolute;left:50%;transform:translateX(-50%);top:10px;z-index:10;background:#2e302c;color:white;border-radius:999px;padding:7px 11px;font-size:.78rem;font-weight:800;box-shadow:var(--shadow)}.measureBanner.show{display:block}
+.canvas{position:relative}
+.focus-mode header,.focus-mode nav,.focus-mode #project,.focus-mode #backup{display:none!important}.focus-mode main{padding:0;max-width:none;height:100vh}.focus-mode #plan{display:block!important;height:100vh;background:var(--bg);padding:6px}.focus-mode .status{display:none}.focus-mode .canvasShell{height:calc(100vh - 58px);border-radius:12px}.focus-mode .canvas{height:calc(100% - 45px);min-height:0}.focus-mode .toolbar{height:46px;margin:0 0 6px}.focus-mode .canvasHeader{height:45px}
+@media(max-width:480px){.grid.three{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.canvas{height:64vh;min-height:420px}.toolbar{gap:5px}.toolbar button{padding-inline:9px}.canvasHeader{height:42px}.canvasControls .desktopOnly{display:none}}
 </style>
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="ver">V1.2.0 · pinch zoom + detail dimensions</div></div></div>
-  <button id="reload">Reload latest</button>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.4.0 · planning workspace</div></div></div>
+  <button id="reloadBtn">Reload latest</button>
 </header>
+
 <nav>
   <button class="tab active" data-tab="plan">Plan</button>
   <button class="tab" data-tab="project">Project</button>
   <button class="tab" data-tab="backup">Backup</button>
 </nav>
+
 <main>
 <section id="plan" class="panel active">
   <div class="toolbar">
-    <button id="undo" class="toolbtn"><span class="ico">↶</span>Undo</button>
-    <button id="redo" class="toolbtn"><span class="ico">↷</span>Redo</button>
-    <label style="display:flex;align-items:center;gap:6px"><input id="dims" type="checkbox" checked style="width:18px">Measurements</label>
-    <label style="display:flex;align-items:center;gap:6px"><input id="snap" type="checkbox" checked style="width:18px">Snap</label>
-    <button id="add" class="add">+ Add</button>
+    <button id="undoBtn" class="tool">↶</button>
+    <button id="redoBtn" class="tool">↷</button>
+    <select id="measureMode" aria-label="Measurement mode" style="width:auto;min-height:40px">
+      <option value="overview">Overview dims</option>
+      <option value="selected">Selected dims</option>
+      <option value="all">All dims</option>
+    </select>
+    <button id="manualMeasureBtn">Measure</button>
+    <button id="clearMeasuresBtn" class="hidden">Clear</button>
+    <div class="spacer"></div>
+    <button id="focusBtn">⛶ Focus</button>
+    <button id="addBtn" class="primary">+ Add</button>
   </div>
 
   <div class="status">
-    <span id="survey" class="pill">Survey dimensions reconcile</span>
-    <span id="boot" class="hint">Drag fixtures · pinch to zoom · drag blank space to pan.</span>
+    <span id="surveyStatus" class="pill">Survey dimensions reconcile</span>
+    <span id="statusHint" class="hint">Drag fixtures · pinch to zoom · tap an item for measurements.</span>
   </div>
 
   <div class="canvasShell">
     <div class="canvasHeader">
-      <span id="planTitle">Current working layout</span>
-      <div class="canvasMeta">
-        <div class="zoomCtl"><button id="zoomOut">−</button><span id="zoomRead" class="zoomRead">100%</span><button id="zoomIn">+</button><button id="zoomReset">Fit</button></div>
-        <div class="legend"><span><i class="sw" style="background:#ded0bb"></i>Fixture</span><span><i class="sw" style="background:#edf4f3"></i>Shower</span><span><i class="sw" style="background:#d8d3c7"></i>Stud</span></div>
+      <div id="planName" class="planName">Current working layout</div>
+      <div class="canvasControls">
+        <button id="zoomOutBtn">−</button><span id="zoomRead" class="zoomRead">100%</span><button id="zoomInBtn">+</button>
+        <button id="fitBtn">Fit</button>
+        <button id="exitFocusBtn" class="hidden">Exit</button>
       </div>
     </div>
     <div class="canvas">
-      <svg id="svg" viewBox="-360 -300 3000 3250" aria-label="Bathroom floor plan">
-        <defs>
-          <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".08"/>
-          </filter>
-        </defs>
-      </svg>
+      <div id="measureBanner" class="measureBanner">Tap the first point</div>
+      <svg id="planSvg" viewBox="-360 -300 3000 3250" aria-label="Bathroom plan"></svg>
     </div>
-  </div>
-
-  <div id="inspector" class="card inspector hidden">
-    <div class="inshead"><div><div class="eyebrow">Selected item</div><h2 id="ititle">Item</h2></div><button id="iclose">Close</button></div>
-    <div class="grid">
-      <label>Name<input id="iname"></label>
-      <label>Type<select id="itype"><option value="bath">Bath</option><option value="wc">WC</option><option value="vanity">Vanity</option><option value="shower">Shower</option><option value="stud">Stud wall</option><option value="storage">Storage</option><option value="radiator">Radiator</option><option value="niche">Niche</option></select></label>
-      <label>X position (mm)<input id="ix" type="number"></label>
-      <label>Y position (mm)<input id="iy" type="number"></label>
-      <label>Width (mm)<input id="iw" type="number"></label>
-      <label>Depth (mm)<input id="ih" type="number"></label>
-      <label>Rotation<select id="irot"><option value="0">0°</option><option value="90">90°</option></select></label>
-      <label style="display:flex;align-items:center;gap:7px"><input id="ilock" type="checkbox" style="width:18px">Lock position</label>
-    </div>
-    <div id="iwarn" class="warnbox hidden"></div>
-    <div class="actions"><button id="dup">Duplicate</button><button id="del" class="danger">Delete</button></div>
   </div>
 </section>
 
 <section id="project" class="panel">
   <div class="card">
-    <h2>Room survey</h2><p class="muted">The drawing comes from these measurements, not from a decorative image.</p>
+    <h2>Room survey</h2>
+    <p class="muted">These values drive the drawing. If the room changes after strip-out, update the survey here.</p>
     <div class="section">Overall room</div>
     <div class="grid">
-      <label>Width (mm)<input id="rw" type="number"></label><label>Depth (mm)<input id="rd" type="number"></label>
-      <label>Ceiling (mm)<input id="rc" type="number"></label><label>Design tolerance (mm)<input id="rt" type="number"></label>
+      <label>Room width (mm)<input id="roomWidth" type="number"></label>
+      <label>Room depth (mm)<input id="roomDepth" type="number"></label>
+      <label>Ceiling height (mm)<input id="ceilingHeight" type="number"></label>
+      <label>Design tolerance (mm)<input id="tolerance" type="number"></label>
     </div>
     <div class="section">Window wall</div>
-    <div class="grid three"><label>Left wall<input id="wl" type="number"></label><label>Window<input id="ww" type="number"></label><label>Right wall<input id="wr" type="number"></label></div>
-    <div id="wcheck" class="check"></div>
+    <div class="grid three">
+      <label>Left wall<input id="windowBefore" type="number"></label>
+      <label>Window<input id="windowWidth" type="number"></label>
+      <label>Right wall<input id="windowAfter" type="number"></label>
+    </div>
+    <div id="windowCheck" class="check"></div>
     <div class="section">Door wall</div>
-    <div class="grid three"><label>Before door<input id="db" type="number"></label><label>Door incl. frame<input id="dw" type="number"></label><label>After door<input id="da" type="number"></label></div>
-    <div id="dcheck" class="check"></div>
+    <div class="grid three">
+      <label>Before door<input id="doorBefore" type="number"></label>
+      <label>Door incl. frame<input id="doorWidth" type="number"></label>
+      <label>After door<input id="doorAfter" type="number"></label>
+    </div>
+    <div id="doorCheck" class="check"></div>
     <div class="section">Project</div>
-    <div class="grid"><label>Project name<input id="pname"></label><label>Plan name<input id="plname"></label></div>
-    <label style="margin-top:10px">Notes<textarea id="notes" rows="5"></textarea></label>
+    <div class="grid">
+      <label>Project name<input id="projectName"></label>
+      <label>Plan name<input id="projectPlanName"></label>
+    </div>
+    <label style="margin-top:9px">Notes<textarea id="notes" rows="5"></textarea></label>
   </div>
 </section>
 
 <section id="backup" class="panel">
-  <div class="card"><h2>Backup & restore</h2><p class="muted">The plan autosaves locally on this device.</p>
-    <div class="actions"><button id="export">Export JSON backup</button><label class="filebtn">Import JSON<input id="import" type="file" accept=".json,application/json"></label><button id="reset" class="danger">Reset starter plan</button></div>
+  <div class="card">
+    <h2>Backup & restore</h2>
+    <p class="muted">Your plan autosaves locally in this browser.</p>
+    <div class="quickActions">
+      <button id="exportBtn">Export JSON</button>
+      <label class="filebtn">Import JSON<input id="importInput" type="file" accept=".json,application/json"></label>
+      <button id="resetBtn" class="danger">Reset starter plan</button>
+    </div>
   </div>
 </section>
 </main>
 
-<div id="sheet" class="sheet hidden">
-  <div class="sheetbox">
-    <div class="inshead"><div><div class="eyebrow">Plan object</div><h2>Add to plan</h2></div><button id="sheetclose">Close</button></div>
+<div id="objectSheet" class="sheet objectEditor hidden">
+  <div class="sheetCard">
+    <div class="sheetHead">
+      <div><div id="sheetEyebrow" class="eyebrow">Selected item</div><h2 id="sheetTitle" style="margin:2px 0 0;font-size:1.05rem">Item</h2></div>
+      <button id="closeObjectSheet">Close</button>
+    </div>
+
+    <div id="itemQuick" class="quickActions">
+      <button id="rotateBtn">Rotate 90°</button>
+      <button id="lockBtn">Lock</button>
+      <button id="duplicateBtn">Duplicate</button>
+      <button id="deleteBtn" class="danger">Delete</button>
+    </div>
+
+    <button id="detailsToggle" class="detailsToggle">Show exact details</button>
+
+    <div id="itemDetails" class="details hidden">
+      <div class="grid">
+        <label>Name<input id="itemName"></label>
+        <label>Type<select id="itemType">
+          <option value="bath">Bath</option><option value="wc">WC</option><option value="vanity">Vanity</option>
+          <option value="shower">Shower</option><option value="stud">Stud wall</option><option value="storage">Storage</option>
+          <option value="radiator">Radiator</option><option value="niche">Niche</option><option value="custom">Custom</option>
+        </select></label>
+        <label>From left wall (mm)<input id="itemX" type="number"></label>
+        <label>From window wall (mm)<input id="itemY" type="number"></label>
+        <label>Width (mm)<input id="itemW" type="number"></label>
+        <label>Depth (mm)<input id="itemH" type="number"></label>
+      </div>
+    </div>
+
+    <div id="openingDetails" class="details hidden">
+      <div id="windowFields" class="grid three hidden">
+        <label>Left wall<input id="openA" type="number"></label>
+        <label>Opening<input id="openW" type="number"></label>
+        <label>Right wall<input id="openB" type="number"></label>
+      </div>
+      <div id="doorFields" class="grid three hidden">
+        <label>Before door<input id="doorA" type="number"></label>
+        <label>Door width<input id="doorW" type="number"></label>
+        <label>After door<input id="doorB" type="number"></label>
+      </div>
+    </div>
+
+    <div id="serviceDetails" class="details hidden">
+      <div class="grid">
+        <label>Label<input id="serviceName"></label>
+        <label>Service<select id="serviceType">
+          <option value="hot">Hot water</option><option value="cold">Cold water</option><option value="waste">Waste</option>
+          <option value="soil">Soil stack</option><option value="electric">Electrical</option>
+        </select></label>
+        <label>From left wall (mm)<input id="serviceX" type="number"></label>
+        <label>From window wall (mm)<input id="serviceY" type="number"></label>
+      </div>
+    </div>
+
+    <div id="sheetWarning" class="warnbox hidden"></div>
+  </div>
+</div>
+
+<div id="addSheet" class="sheet hidden">
+  <div class="sheetCard">
+    <div class="sheetHead"><div><div class="eyebrow">Plan object</div><h2 style="margin:2px 0 0">Add to plan</h2></div><button id="closeAddSheet">Close</button></div>
+    <div class="section">Fixtures & construction</div>
     <div class="addgrid">
-      <button data-add="bath">Bath</button><button data-add="wc">WC</button><button data-add="vanity">Floor vanity</button><button data-add="shower">Shower</button>
-      <button data-add="stud">Stud wall</button><button data-add="storage">Storage</button><button data-add="radiator">Radiator</button><button data-add="niche">Niche</button>
+      <button data-add-item="bath">Bath</button><button data-add-item="wc">WC</button>
+      <button data-add-item="vanity">Floor vanity</button><button data-add-item="shower">Shower</button>
+      <button data-add-item="stud">Stud wall</button><button data-add-item="storage">Storage</button>
+      <button data-add-item="radiator">Radiator</button><button data-add-item="niche">Niche</button>
+      <button data-add-item="custom">Custom rectangle</button>
+    </div>
+    <div class="section">Service points</div>
+    <div class="addgrid">
+      <button data-add-service="hot">Hot entry</button><button data-add-service="cold">Cold entry</button>
+      <button data-add-service="waste">Waste outlet</button><button data-add-service="soil">Soil stack</button>
+      <button data-add-service="electric">Electrical point</button>
     </div>
   </div>
 </div>
@@ -188,134 +247,607 @@ textarea{resize:vertical}
 <script>
 (function(){
 "use strict";
-const VERSION="1.2.0", KEY="bathroomPlannerStable";
-const $=id=>document.getElementById(id), svg=$("svg");
+const VERSION="1.4.0", KEY="bathroomPlannerStable";
+const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
+
 const starter={
  version:VERSION,
  project:{name:"Bathroom Redesign",planName:"Current working layout",notes:"Confirm final survey dimensions after strip-out before ordering fitted items."},
  room:{width:2280,depth:2545,ceiling:2400,tolerance:20,window:{before:660,width:930,after:690},door:{before:835,width:860,after:850}},
- ui:{dims:true,snap:true},
+ ui:{measureMode:"selected",snap:true},
  items:[
- {id:"bath1",type:"bath",name:"Bath",x:0,y:0,w:1600,h:700,rotation:0,locked:false},
- {id:"wc1",type:"wc",name:"New WC",x:1830,y:25,w:370,h:640,rotation:0,locked:false},
- {id:"vanity1",type:"vanity",name:"Floor-standing vanity",x:0,y:700,w:450,h:970,rotation:0,locked:false},
- {id:"stud1",type:"stud",name:"Half-height stud wall",x:0,y:1670,w:900,h:100,rotation:0,locked:false},
- {id:"shower1",type:"shower",name:"Walk-in shower",x:0,y:1745,w:1400,h:800,rotation:0,locked:false},
- {id:"storage1",type:"storage",name:"Tall storage",x:1460,y:2295,w:300,h:250,rotation:0,locked:false},
- {id:"rad1",type:"radiator",name:"Towel radiator",x:2180,y:1900,w:100,h:520,rotation:0,locked:false},
- {id:"n1",type:"niche",name:"Large shampoo niche",x:120,y:1680,w:380,h:70,rotation:0,locked:false},
- {id:"n2",type:"niche",name:"Decorative bottle niche",x:20,y:2050,w:70,h:420,rotation:0,locked:false}
- ]};
-let state;try{state=JSON.parse(localStorage.getItem(KEY)||"null")||clone(starter)}catch(e){state=clone(starter)}
-let selected=null,history=[],future=[],drag=null;let view=null,baseView=null,pan=null,pinch=null;const activePointers=new Map();
-const sEl=(tag,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);Object.keys(a).forEach(k=>e.setAttribute(k,a[k]));return e};
-const dims=i=>i.rotation===90?{w:i.h,h:i.w}:{w:i.w,h:i.h};
-const box=i=>{const d=dims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}};
+  {id:"bath1",type:"bath",name:"Bath",x:0,y:0,w:1600,h:700,rotation:0,locked:false},
+  {id:"wc1",type:"wc",name:"New WC",x:1830,y:25,w:370,h:640,rotation:0,locked:false},
+  {id:"vanity1",type:"vanity",name:"Floor-standing vanity",x:0,y:700,w:450,h:970,rotation:0,locked:false},
+  {id:"stud1",type:"stud",name:"Half-height stud wall",x:0,y:1670,w:900,h:100,rotation:0,locked:false},
+  {id:"shower1",type:"shower",name:"Walk-in shower",x:0,y:1745,w:1400,h:800,rotation:0,locked:false},
+  {id:"storage1",type:"storage",name:"Tall storage",x:1460,y:2295,w:300,h:250,rotation:0,locked:false},
+  {id:"rad1",type:"radiator",name:"Towel radiator",x:2180,y:1900,w:100,h:520,rotation:0,locked:false},
+  {id:"n1",type:"niche",name:"Large shampoo niche",x:120,y:1680,w:380,h:70,rotation:0,locked:false},
+  {id:"n2",type:"niche",name:"Decorative bottle niche",x:20,y:2050,w:70,h:420,rotation:0,locked:false}
+ ],
+ services:[],
+ manualMeasurements:[]
+};
+
+let state;
+try{
+  const parsed=JSON.parse(localStorage.getItem(KEY)||"null");
+  state=parsed||clone(starter);
+}catch(e){state=clone(starter)}
+state.ui=state.ui||{};
+if(!state.ui.measureMode) state.ui.measureMode="selected";
+if(!Array.isArray(state.services)) state.services=[];
+if(!Array.isArray(state.manualMeasurements)) state.manualMeasurements=[];
+
+let selected={kind:null,id:null};
+let history=[],future=[];
+let drag=null,serviceDrag=null,pan=null,pinch=null;
+let activePointers=new Map();
+let baseView=null,view=null;
+let snapFeedback=null;
+let manualMode=false,manualFirst=null;
+
+const sEl=(tag,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e};
+const itemDims=i=>i.rotation===90?{w:i.h,h:i.w}:{w:i.w,h:i.h};
+const box=i=>{const d=itemDims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}};
+const overlap1D=(a1,a2,b1,b2)=>Math.min(a2,b2)-Math.max(a1,b1)>0;
 const collide=(a,b)=>{const A=box(a),B=box(b);return A.x1<B.x2&&A.x2>B.x1&&A.y1<B.y2&&A.y2>B.y1};
-function warnings(i){const b=box(i),w=[];if(b.x1<0||b.y1<0||b.x2>state.room.width||b.y2>state.room.depth)w.push("Outside room.");state.items.forEach(o=>{if(o.id===i.id||!collide(i,o))return;if(i.type==="niche"||o.type==="niche")return;if((i.type==="stud"&&o.type==="shower")||(i.type==="shower"&&o.type==="stud"))return;w.push("Overlaps "+o.name+".")});return w}
+const floorItems=()=>state.items.filter(i=>i.type!=="niche");
+
 function save(){state.version=VERSION;localStorage.setItem(KEY,JSON.stringify(state))}
-function checkpoint(){history.push(clone(state));if(history.length>50)history.shift();future=[];buttons()}
-function buttons(){$("undo").disabled=!history.length;$("redo").disabled=!future.length}
-function undo(){if(!history.length)return;future.push(clone(state));state=history.pop();selected=null;save();sync();render();buttons()}
-function redo(){if(!future.length)return;history.push(clone(state));state=future.pop();selected=null;save();sync();render();buttons()}
+function checkpoint(){history.push(clone(state));if(history.length>60)history.shift();future=[];updateUndoRedo()}
+function updateUndoRedo(){$("undoBtn").disabled=!history.length;$("redoBtn").disabled=!future.length}
+function undo(){if(!history.length)return;future.push(clone(state));state=history.pop();selected={kind:null,id:null};save();sync();resetView(false);render();updateUndoRedo()}
+function redo(){if(!future.length)return;history.push(clone(state));state=future.pop();selected={kind:null,id:null};save();sync();resetView(false);render();updateUndoRedo()}
 
-function makeBaseView(){const r=state.room;return{x:-360,y:-300,w:Math.max(3000,r.width+800),h:Math.max(3250,r.depth+700)}}
-function ensureView(){if(!baseView)baseView=makeBaseView();if(!view)view={...baseView}}
-function applyView(){ensureView();svg.setAttribute("viewBox",`${view.x} ${view.y} ${view.w} ${view.h}`);$("zoomRead").textContent=Math.round((baseView.w/view.w)*100)+"%"}
-function currentZoom(){ensureView();return baseView.w/view.w}
-function pointFromClient(x,y){const p=svg.createSVGPoint();p.x=x;p.y=y;return p.matrixTransform(svg.getScreenCTM().inverse())}
-function clampView(){ensureView();const minW=baseView.w/4.5,minH=baseView.h/4.5;view.w=Math.max(minW,Math.min(baseView.w,view.w));view.h=Math.max(minH,Math.min(baseView.h,view.h));const maxX=baseView.x+baseView.w-view.w,maxY=baseView.y+baseView.h-view.h;view.x=Math.min(Math.max(view.x,baseView.x),maxX);view.y=Math.min(Math.max(view.y,baseView.y),maxY)}
-function zoomAt(cx,cy,factor){ensureView();const p=pointFromClient(cx,cy),ow=view.w,oh=view.h;let nw=ow/factor,nh=oh/factor;nw=Math.max(baseView.w/4.5,Math.min(baseView.w,nw));nh=Math.max(baseView.h/4.5,Math.min(baseView.h,nh));const rx=(p.x-view.x)/ow,ry=(p.y-view.y)/oh;view.x=p.x-rx*nw;view.y=p.y-ry*nh;view.w=nw;view.h=nh;clampView();applyView();render()}
-function resetView(){baseView=makeBaseView();view={...baseView};applyView();render()}
-function ptrCenter(a,b){return{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}
-function ptrDist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
-function startPinch(){const v=[...activePointers.values()];if(v.length<2)return;drag=null;pan=null;const c=ptrCenter(v[0],v[1]);pinch={dist:ptrDist(v[0],v[1]),view:{...view},cx:c.x,cy:c.y}}
-function updatePinch(){const v=[...activePointers.values()];if(v.length<2||!pinch)return;const c=ptrCenter(v[0],v[1]),d=Math.max(20,ptrDist(v[0],v[1])),f=d/pinch.dist;view={...pinch.view};const p=pointFromClient(pinch.cx,pinch.cy),ow=view.w,oh=view.h;view.w=ow/f;view.h=oh/f;const rx=(p.x-view.x)/ow,ry=(p.y-view.y)/oh;view.x=p.x-rx*view.w;view.y=p.y-ry*view.h;clampView();applyView();render()}
-function drawGap(x1,y1,x2,y2,label,fine=false){const cls=fine?"finedim":"detaildim",tcls=fine?"finetext":"detailtext";svg.appendChild(sEl("line",{x1,y1,x2,y2,class:cls}));const vertical=Math.abs(y2-y1)>Math.abs(x2-x1),tick=14;if(vertical){svg.appendChild(sEl("line",{x1:x1-tick,y1,x2:x1+tick,y2:y1,class:cls}));svg.appendChild(sEl("line",{x1:x2-tick,y1:y2,x2:x2+tick,y2:y2,class:cls}))}else{svg.appendChild(sEl("line",{x1,y1:y1-tick,x2:x1,y2:y1+tick,class:cls}));svg.appendChild(sEl("line",{x1:x2,y1:y2-tick,x2:x2,y2:y2+tick,class:cls}))}const t=sEl("text",{x:(x1+x2)/2,y:(y1+y2)/2-9,class:tcls,"text-anchor":"middle"});t.textContent=label;svg.appendChild(t)}
-function drawDetailDimensions(){const z=currentZoom();if(z<1.28)return;const first=t=>state.items.find(i=>i.type===t),bath=first("bath"),wc=first("wc"),vanity=first("vanity"),shower=first("shower"),storage=first("storage");if(bath&&wc){const A=box(bath),B=box(wc),g=B.x1-A.x2;if(g>=0)drawGap(A.x2,A.y1+A.h*.72,B.x1,A.y1+A.h*.72,Math.round(g)+" mm")}if(vanity&&shower){const A=box(vanity),B=box(shower),g=B.y1-A.y2;if(g>=0)drawGap(A.x1+A.w*.75,A.y2,A.x1+A.w*.75,B.y1,Math.round(g)+" mm")}if(shower&&storage){const A=box(shower),B=box(storage),g=B.x1-A.x2;if(g>=0)drawGap(A.x2,A.y1+A.h*.82,B.x1,A.y1+A.h*.82,Math.round(g)+" mm")}if(z>=1.9&&selected){const i=state.items.find(x=>x.id===selected);if(i){const b=box(i),r=state.room,l=b.x1,rr=r.width-b.x2,t=b.y1,bt=r.depth-b.y2;if(l>0)drawGap(0,b.y1+b.h*.2,b.x1,b.y1+b.h*.2,Math.round(l)+" mm",true);if(rr>0)drawGap(b.x2,b.y1+b.h*.2,r.width,b.y1+b.h*.2,Math.round(rr)+" mm",true);if(t>0)drawGap(b.x1+b.w*.25,0,b.x1+b.w*.25,b.y1,Math.round(t)+" mm",true);if(bt>0)drawGap(b.x1+b.w*.25,b.y2,b.x1+b.w*.25,r.depth,Math.round(bt)+" mm",true)}}}
-
-function grid(r){
-  const step=100;
-  for(let x=0;x<=r.width;x+=step)svg.appendChild(sEl("line",{x1:x,y1:0,x2:x,y2:r.depth,class:"gridline"}));
-  for(let y=0;y<=r.depth;y+=step)svg.appendChild(sEl("line",{x1:0,y1:y,x2:r.width,y2:y,class:"gridline"}));
-}
-function render(){
- svg.innerHTML='<defs><filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".08"/></filter></defs>';
- const r=state.room;if(!baseView){baseView=makeBaseView();view={...baseView}}applyView();
- svg.appendChild(sEl("rect",{x:0,y:0,width:r.width,height:r.depth,class:"roomfill"}));grid(r);
- svg.appendChild(sEl("rect",{x:0,y:0,width:r.width,height:r.depth,class:"wallOuter"}));
- svg.appendChild(sEl("rect",{x:14,y:14,width:Math.max(0,r.width-28),height:Math.max(0,r.depth-28),class:"wallInner"}));
- svg.appendChild(sEl("line",{x1:r.window.before,y1:0,x2:r.window.before+r.window.width,y2:0,class:"win"}));
- const d1=r.door.before,d2=d1+r.door.width;
- svg.appendChild(sEl("line",{x1:r.width,y1:d1,x2:r.width,y2:d2,stroke:"#fffefa","stroke-width":14,"vector-effect":"non-scaling-stroke"}));
- const leaf=Math.min(800,r.door.width*.92);
- svg.appendChild(sEl("line",{x1:r.width,y1:d2,x2:r.width-leaf,y2:d2,class:"door"}));
- svg.appendChild(sEl("path",{d:`M ${r.width-leaf} ${d2} A ${leaf} ${leaf} 0 0 1 ${r.width} ${d2-leaf}`,class:"door","stroke-dasharray":"10 10"}));
- state.items.forEach(drawItem);
- if(state.ui.dims){drawDims();drawDetailDimensions()}updateSurvey();updateInspector();$("planTitle").textContent=state.project.planName||"Plan"
-}
-function drawItem(i){
- const d=dims(i),ws=warnings(i),g=sEl("g",{"data-id":i.id});
- const rect=sEl("rect",{x:i.x,y:i.y,width:d.w,height:d.h,rx:i.type==="wc"?70:8,class:`fixture ${i.type}${i.id===selected?" sel":""}${ws.length?" warn":""}`,"data-id":i.id});
- rect.addEventListener("pointerdown",down);g.appendChild(rect);
- if(i.type==="bath"){g.appendChild(sEl("rect",{x:i.x+45,y:i.y+45,width:Math.max(20,d.w-90),height:Math.max(20,d.h-90),rx:100,class:"bathInner"}))}
- if(i.type==="wc"){g.appendChild(sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+d.h*.58,rx:d.w*.34,ry:d.h*.26,class:"wcInner"}))}
- if(i.type==="vanity"){g.appendChild(sEl("ellipse",{cx:i.x+d.w*.5,cy:i.y+d.h*.22,rx:d.w*.28,ry:Math.min(80,d.h*.12),class:"basin"}))}
- if(i.type==="shower"){g.appendChild(sEl("line",{x1:i.x+d.w-18,y1:i.y+30,x2:i.x+d.w-18,y2:i.y+d.h-30,class:"showerGlass"}))}
- if(i.type==="radiator"){for(let y=i.y+25;y<i.y+d.h-20;y+=45)g.appendChild(sEl("line",{x1:i.x+15,y1:y,x2:i.x+d.w-15,y2:y,stroke:"#b2a999","stroke-width":"2"}))}
- const cx=i.x+d.w/2,cy=i.y+d.h/2;
- let t=sEl("text",{x:cx,y:cy-14,class:"fixtitle"});t.textContent=i.name;g.appendChild(t);
- if(d.w>240&&d.h>100){t=sEl("text",{x:cx,y:cy+38,class:"fixsub"});t.textContent=Math.round(d.w)+" × "+Math.round(d.h);g.appendChild(t)}
- svg.appendChild(g)
-}
-function drawDims(){
+function makeBaseView(){
  const r=state.room;
- svg.appendChild(sEl("line",{x1:0,y1:-150,x2:r.width,y2:-150,class:"dimline"}));
- svg.appendChild(sEl("line",{x1:0,y1:-165,x2:0,y2:-135,class:"dimline"}));svg.appendChild(sEl("line",{x1:r.width,y1:-165,x2:r.width,y2:-135,class:"dimline"}));
- let t=sEl("text",{x:r.width/2,y:-178,class:"dimtext","text-anchor":"middle"});t.textContent=r.width+" mm";svg.appendChild(t);
- svg.appendChild(sEl("line",{x1:-150,y1:0,x2:-150,y2:r.depth,class:"dimline"}));
- svg.appendChild(sEl("line",{x1:-165,y1:0,x2:-135,y2:0,class:"dimline"}));svg.appendChild(sEl("line",{x1:-165,y1:r.depth,x2:-135,y2:r.depth,class:"dimline"}));
- t=sEl("text",{x:-205,y:r.depth/2,class:"dimtext",transform:`rotate(-90 -205 ${r.depth/2})`,"text-anchor":"middle"});t.textContent=r.depth+" mm";svg.appendChild(t)
+ return{x:-330,y:-280,w:Math.max(2920,r.width+700),h:Math.max(3180,r.depth+620)};
 }
+function ensureView(){if(!baseView)baseView=makeBaseView();if(!view)view={...baseView}}
+function currentZoom(){ensureView();return baseView.w/view.w}
+function applyView(){ensureView();svg.setAttribute("viewBox",`${view.x} ${view.y} ${view.w} ${view.h}`);$("zoomRead").textContent=Math.round(currentZoom()*100)+"%"}
+function clampView(){
+ ensureView();
+ const maxZ=5,minW=baseView.w/maxZ,minH=baseView.h/maxZ;
+ if(view.w>baseView.w||view.h>baseView.h){view={...baseView};return}
+ if(view.w<minW||view.h<minH){
+  const cx=view.x+view.w/2,cy=view.y+view.h/2;
+  view.w=minW;view.h=minH;view.x=cx-minW/2;view.y=cy-minH/2;
+ }
+ const mx=220,my=220;
+ view.x=Math.min(Math.max(view.x,baseView.x-mx),baseView.x+baseView.w-view.w+mx);
+ view.y=Math.min(Math.max(view.y,baseView.y-my),baseView.y+baseView.h-view.h+my);
+}
+function pointFromClient(x,y){const p=svg.createSVGPoint();p.x=x;p.y=y;return p.matrixTransform(svg.getScreenCTM().inverse())}
 function point(e){return pointFromClient(e.clientX,e.clientY)}
-function down(e){
- e.preventDefault();const id=e.currentTarget.dataset.id,i=state.items.find(x=>x.id===id);selected=id;if(!i){render();return}if(i.locked){render();return}
- checkpoint();const p=point(e);drag={id,sx:p.x,sy:p.y,x:i.x,y:i.y,pointerId:e.pointerId};try{svg.setPointerCapture(e.pointerId)}catch(err){}render()
+function zoomAt(clientX,clientY,factor){
+ ensureView();
+ const p=pointFromClient(clientX,clientY),ow=view.w,oh=view.h;
+ let nw=Math.max(baseView.w/5,Math.min(baseView.w,ow/factor));
+ let nh=Math.max(baseView.h/5,Math.min(baseView.h,oh/factor));
+ const rx=(p.x-view.x)/ow,ry=(p.y-view.y)/oh;
+ view.x=p.x-rx*nw;view.y=p.y-ry*nh;view.w=nw;view.h=nh;clampView();applyView();render()
 }
-function move(e){
- if(!drag||e.pointerId!==drag.pointerId)return;e.preventDefault();const i=state.items.find(x=>x.id===drag.id);if(!i)return;
- const p=point(e),d=dims(i);let x=Math.round(drag.x+p.x-drag.sx),y=Math.round(drag.y+p.y-drag.sy);
- if(state.ui.snap){const s=30;if(Math.abs(x)<s)x=0;if(Math.abs(y)<s)y=0;if(Math.abs(x+d.w-state.room.width)<s)x=state.room.width-d.w;if(Math.abs(y+d.h-state.room.depth)<s)y=state.room.depth-d.h;state.items.forEach(o=>{if(o.id===i.id)return;const b=box(o);if(Math.abs(x-b.x2)<s)x=b.x2;if(Math.abs(x+d.w-b.x1)<s)x=b.x1-d.w;if(Math.abs(y-b.y2)<s)y=b.y2;if(Math.abs(y+d.h-b.y1)<s)y=b.y1-d.h})}
- i.x=x;i.y=y;render()
+function resetView(doRender=true){baseView=makeBaseView();view={...baseView};applyView();if(doRender)render()}
+
+function drawGrid(){
+ const z=currentZoom();
+ const minor=z<1.5?100:z<2.7?50:25;
+ const major=minor*5;
+ const r=state.room;
+ for(let x=0;x<=r.width;x+=minor){
+  svg.appendChild(sEl("line",{x1:x,y1:0,x2:x,y2:r.depth,class:(x%major===0?"gridMajor":"gridMinor")}));
+ }
+ for(let y=0;y<=r.depth;y+=minor){
+  svg.appendChild(sEl("line",{x1:0,y1:y,x2:r.width,y2:y,class:(y%major===0?"gridMajor":"gridMinor")}));
+ }
 }
-function up(e){if(!drag)return;if(e&&e.pointerId!==undefined&&e.pointerId!==drag.pointerId)return;try{svg.releasePointerCapture(drag.pointerId)}catch(err){}drag=null;save();render()}
-function updateInspector(){
- const i=state.items.find(x=>x.id===selected),p=$("inspector");if(!i){p.classList.add("hidden");return}p.classList.remove("hidden");
- $("ititle").textContent=i.name;$("iname").value=i.name;$("itype").value=i.type;$("ix").value=i.x;$("iy").value=i.y;$("iw").value=i.w;$("ih").value=i.h;$("irot").value=i.rotation;$("ilock").checked=i.locked;
- const w=warnings(i);$("iwarn").classList.toggle("hidden",!w.length);$("iwarn").textContent=w.join(" ")
+
+function doorGeometry(){
+ const r=state.room, y1=r.door.before,y2=y1+r.door.width,leaf=Math.min(r.door.width*.92,800);
+ return{y1,y2,leaf,hx:r.width,hy:y2};
 }
-function applyInspector(){const i=state.items.find(x=>x.id===selected);if(!i)return;checkpoint();i.name=$("iname").value.trim()||i.name;i.type=$("itype").value;i.x=Number($("ix").value)||0;i.y=Number($("iy").value)||0;i.w=Math.max(20,Number($("iw").value)||20);i.h=Math.max(20,Number($("ih").value)||20);i.rotation=Number($("irot").value)===90?90:0;i.locked=$("ilock").checked;save();render()}
-["iname","itype","ix","iy","iw","ih","irot","ilock"].forEach(id=>$(id).addEventListener("change",applyInspector));
-function add(type){const p={bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower",1400,800],stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],niche:["Niche",400,70]}[type];checkpoint();const i={id:type+Date.now(),type,name:p[0],x:200,y:900,w:p[1],h:p[2],rotation:0,locked:false};state.items.push(i);selected=i.id;save();render();$("sheet").classList.add("hidden")}
-function sync(){const r=state.room;$("rw").value=r.width;$("rd").value=r.depth;$("rc").value=r.ceiling;$("rt").value=r.tolerance;$("wl").value=r.window.before;$("ww").value=r.window.width;$("wr").value=r.window.after;$("db").value=r.door.before;$("dw").value=r.door.width;$("da").value=r.door.after;$("pname").value=state.project.name;$("plname").value=state.project.planName;$("notes").value=state.project.notes;$("dims").checked=state.ui.dims;$("snap").checked=state.ui.snap;checks()}
-function checks(){const ws=state.room.window.before+state.room.window.width+state.room.window.after,ds=state.room.door.before+state.room.door.width+state.room.door.after;$("wcheck").className="check "+(ws===state.room.width?"ok":"bad");$("wcheck").textContent=(ws===state.room.width?"✓ ":"⚠ ")+`Window wall totals ${ws} mm`;$("dcheck").className="check "+(ds===state.room.depth?"ok":"bad");$("dcheck").textContent=(ds===state.room.depth?"✓ ":"⚠ ")+`Door wall totals ${ds} mm`}
-function updateSurvey(){const ws=state.room.window.before+state.room.window.width+state.room.window.after,ds=state.room.door.before+state.room.door.width+state.room.door.after;$("survey").textContent=(ws===state.room.width&&ds===state.room.depth)?"Survey dimensions reconcile":"Survey mismatch — check Project"}
-const paths={rw:["room","width"],rd:["room","depth"],rc:["room","ceiling"],rt:["room","tolerance"],wl:["room","window","before"],ww:["room","window","width"],wr:["room","window","after"],db:["room","door","before"],dw:["room","door","width"],da:["room","door","after"]};
-Object.entries(paths).forEach(([id,path])=>$(id).addEventListener("change",()=>{checkpoint();let o=state;for(let n=0;n<path.length-1;n++)o=o[path[n]];o[path[path.length-1]]=Math.max(0,Number($(id).value)||0);save();sync();render()}));
-[["pname","name"],["plname","planName"],["notes","notes"]].forEach(([id,k])=>$(id).addEventListener("change",()=>{checkpoint();state.project[k]=$(id).value;save();render()}));
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));b.classList.add("active");$(b.dataset.tab).classList.add("active")}));
-$("undo").onclick=undo;$("redo").onclick=redo;$("dims").onchange=e=>{state.ui.dims=e.target.checked;save();render()};$("snap").onchange=e=>{state.ui.snap=e.target.checked;save()};$("add").onclick=()=>$("sheet").classList.remove("hidden");$("sheetclose").onclick=()=>$("sheet").classList.add("hidden");document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>add(b.dataset.add));$("iclose").onclick=()=>{selected=null;render()};$("dup").onclick=()=>{const i=state.items.find(x=>x.id===selected);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.x+=50;c.y+=50;c.locked=false;state.items.push(c);selected=c.id;save();render()};$("del").onclick=()=>{const i=state.items.find(x=>x.id===selected);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==selected);selected=null;save();render()};
-$("export").onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download="bathroom-planner-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),500)};
-$("import").onchange=async e=>{try{const p=JSON.parse(await e.target.files[0].text());if(!p.room||!p.items)throw Error("Invalid backup");checkpoint();state=p;selected=null;save();sync();render();alert("Backup imported")}catch(err){alert(err.message)}e.target.value=""};
-$("reset").onclick=()=>{if(!confirm("Reset to starter plan?"))return;checkpoint();state=clone(starter);selected=null;save();sync();render()};
-$("reload").onclick=async()=>{try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}if("caches"in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}const u=new URL(location.href);u.searchParams.set("v",Date.now());location.replace(u.toString())};
-svg.addEventListener("pointerdown",e=>{activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(activePointers.size===2){e.preventDefault();startPinch();return}if(e.target===svg||e.target.classList.contains("roomfill")||e.target.classList.contains("gridline")){selected=null;if(currentZoom()>1.01){pan={id:e.pointerId,start:{...view},p:point(e)};try{svg.setPointerCapture(e.pointerId)}catch(_){}}render()}},{passive:false});
-svg.addEventListener("pointermove",e=>{if(activePointers.has(e.pointerId))activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(activePointers.size>=2){e.preventDefault();updatePinch();return}if(pan&&e.pointerId===pan.id){e.preventDefault();const n=pointFromClient(e.clientX,e.clientY);view={...pan.start};view.x+=pan.p.x-n.x;view.y+=pan.p.y-n.y;clampView();applyView();render();return}move(e)},{passive:false});
-function finishPointer(e){activePointers.delete(e.pointerId);if(pan&&e.pointerId===pan.id)pan=null;if(activePointers.size<2)pinch=null;up(e)}
-svg.addEventListener("pointerup",finishPointer);svg.addEventListener("pointercancel",finishPointer);
-$("zoomIn").onclick=()=>{const r=svg.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25)};$("zoomOut").onclick=()=>{const r=svg.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,.8)};$("zoomReset").onclick=resetView;
-sync();buttons();resetView();$("boot").textContent="Drag fixtures · pinch to zoom · drag blank space to pan · V"+VERSION;
+function doorSwingConflict(item){
+ if(item.type==="niche")return false;
+ const b=box(item),g=doorGeometry();
+ const qx=Math.min(Math.max(g.hx,b.x1),b.x2);
+ const qy=Math.min(Math.max(g.hy,b.y1),b.y2);
+ if(qx>g.hx||qy>g.hy)return false;
+ return Math.hypot(qx-g.hx,qy-g.hy)<g.leaf;
+}
+
+function nearestInDirection(item,dir){
+ const b=box(item),r=state.room;
+ let best;
+ if(dir==="left") best={kind:"wall",gap:b.x1,coord:0,label:"Left wall"};
+ if(dir==="right")best={kind:"wall",gap:r.width-b.x2,coord:r.width,label:"Right wall"};
+ if(dir==="up")best={kind:"wall",gap:b.y1,coord:0,label:"Window wall"};
+ if(dir==="down")best={kind:"wall",gap:r.depth-b.y2,coord:r.depth,label:"Door-side wall"};
+ for(const o of floorItems()){
+  if(o.id===item.id)continue;
+  const B=box(o),A=b;let gap=null;
+  if(dir==="left"&&overlap1D(A.y1,A.y2,B.y1,B.y2)&&B.x2<=A.x1)gap=A.x1-B.x2;
+  if(dir==="right"&&overlap1D(A.y1,A.y2,B.y1,B.y2)&&B.x1>=A.x2)gap=B.x1-A.x2;
+  if(dir==="up"&&overlap1D(A.x1,A.x2,B.x1,B.x2)&&B.y2<=A.y1)gap=A.y1-B.y2;
+  if(dir==="down"&&overlap1D(A.x1,A.x2,B.x1,B.x2)&&B.y1>=A.y2)gap=B.y1-A.y2;
+  if(gap!==null&&gap>=0&&gap<best.gap)best={kind:"item",gap,item:o,label:o.name};
+ }
+ return best;
+}
+function warningInfo(item){
+ const list=[];
+ for(const o of floorItems()){
+  if(o.id===item.id||!collide(item,o))continue;
+  const intentional=(item.type==="stud"&&o.type==="shower")||(item.type==="shower"&&o.type==="stud");
+  if(!intentional)list.push("Overlaps "+o.name+".");
+ }
+ const b=box(item),r=state.room;
+ if(b.x1<0||b.y1<0||b.x2>r.width||b.y2>r.depth)list.push("Extends outside the room.");
+ if(doorSwingConflict(item))list.push("Conflicts with the door swing.");
+ const t=Number(r.tolerance)||0;
+ ["left","right","up","down"].forEach(d=>{
+  const n=nearestInDirection(item,d);
+  if(n&&n.gap>0&&n.gap<t)list.push(`${Math.round(n.gap)} mm clearance to ${n.label} — below ${t} mm tolerance.`);
+ });
+ return list;
+}
+function itemStatusClass(item){
+ if(floorItems().some(o=>{
+  if(o.id===item.id||!collide(item,o))return false;
+  return !((item.type==="stud"&&o.type==="shower")||(item.type==="shower"&&o.type==="stud"));
+ }))return" overlap";
+ if(doorSwingConflict(item))return" tolerance";
+ const t=Number(state.room.tolerance)||0;
+ if(["left","right","up","down"].some(d=>{const n=nearestInDirection(item,d);return n&&n.gap>0&&n.gap<t}))return" tolerance";
+ return"";
+}
+
+function render(){
+ svg.innerHTML="";
+ const defs=sEl("defs");
+ defs.innerHTML='<filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-opacity=".055"/></filter>';
+ svg.appendChild(defs);
+ const r=state.room;
+ applyView();
+ svg.appendChild(sEl("rect",{x:0,y:0,width:r.width,height:r.depth,class:"roomfill"}));
+ drawGrid();
+ svg.appendChild(sEl("rect",{x:0,y:0,width:r.width,height:r.depth,class:"wallOuter"}));
+ svg.appendChild(sEl("rect",{x:10,y:10,width:Math.max(0,r.width-20),height:Math.max(0,r.depth-20),class:"wallInner"}));
+ drawOpenings();
+ state.items.forEach(drawItem);
+ state.services.forEach(drawService);
+ drawDimensions();
+ drawManualMeasurements();
+ drawSnapFeedback();
+ if(manualFirst)drawMeasureFirstPoint();
+ updateSurveyStatus();
+ $("planName").textContent=state.project.planName||"Plan";
+}
+
+function drawOpenings(){
+ const r=state.room;
+ const win=sEl("line",{x1:r.window.before,y1:0,x2:r.window.before+r.window.width,y2:0,class:"window","data-opening":"window"});
+ win.addEventListener("pointerdown",openingDown);svg.appendChild(win);
+ const g=doorGeometry();
+ svg.appendChild(sEl("line",{x1:r.width,y1:g.y1,x2:r.width,y2:g.y2,stroke:"#fffefa","stroke-width":12,"vector-effect":"non-scaling-stroke"}));
+ const zone=sEl("path",{d:`M ${g.hx} ${g.hy} L ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 1 ${g.hx} ${g.hy-g.leaf} Z`,class:"doorZone"});
+ svg.appendChild(zone);
+ const leaf=sEl("line",{x1:g.hx,y1:g.hy,x2:g.hx-g.leaf,y2:g.hy,class:"door","data-opening":"door"});
+ leaf.addEventListener("pointerdown",openingDown);svg.appendChild(leaf);
+ const arc=sEl("path",{d:`M ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 1 ${g.hx} ${g.hy-g.leaf}`,class:"door","stroke-dasharray":"9 7","data-opening":"door"});
+ arc.addEventListener("pointerdown",openingDown);svg.appendChild(arc);
+}
+
+function drawItem(i){
+ const d=itemDims(i),b=box(i),status=itemStatusClass(i);
+ const rect=sEl("rect",{x:i.x,y:i.y,width:d.w,height:d.h,rx:i.type==="wc"?65:7,class:`fixture ${i.type}${selected.kind==="item"&&selected.id===i.id?" selected":""}${status}`,"data-id":i.id});
+ rect.addEventListener("pointerdown",itemDown);svg.appendChild(rect);
+
+ if(i.type==="bath")svg.appendChild(sEl("rect",{x:i.x+40,y:i.y+40,width:Math.max(20,d.w-80),height:Math.max(20,d.h-80),rx:95,class:"archLine"}));
+ if(i.type==="wc"){
+  svg.appendChild(sEl("rect",{x:i.x+d.w*.24,y:i.y+28,width:d.w*.52,height:d.h*.28,rx:12,class:"archLine"}));
+  svg.appendChild(sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+d.h*.62,rx:d.w*.32,ry:d.h*.24,class:"archLine"}));
+ }
+ if(i.type==="vanity")svg.appendChild(sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+Math.min(d.h*.22,160),rx:d.w*.27,ry:Math.min(72,d.h*.1),class:"archLine"}));
+ if(i.type==="shower"){
+  svg.appendChild(sEl("line",{x1:i.x+d.w-16,y1:i.y+25,x2:i.x+d.w-16,y2:i.y+d.h-25,class:"glass"}));
+  svg.appendChild(sEl("circle",{cx:i.x+d.w*.18,cy:i.y+d.h*.72,r:28,class:"archLine"}));
+ }
+ if(i.type==="radiator"){for(let y=i.y+22;y<i.y+d.h-18;y+=42)svg.appendChild(sEl("line",{x1:i.x+12,y1:y,x2:i.x+d.w-12,y2:y,class:"archLine"}))}
+
+ const z=currentZoom();
+ if(d.w>240&&d.h>110){
+  const t=sEl("text",{x:i.x+d.w/2,y:i.y+d.h/2-12,class:"label"});t.textContent=i.name;svg.appendChild(t);
+  if(z>1.1){const s=sEl("text",{x:i.x+d.w/2,y:i.y+d.h/2+33,class:"subLabel"});s.textContent=`${Math.round(d.w)} × ${Math.round(d.h)}`;svg.appendChild(s)}
+ }else if(z>1.45){
+  const t=sEl("text",{x:i.x+d.w+18,y:i.y+d.h/2,class:"outsideLabel"});t.textContent=i.name;svg.appendChild(t);
+ }
+ if(warningInfo(i).length){
+  const badge=sEl("circle",{cx:b.x2-18,cy:b.y1+18,r:14,class:"warningBadge"});svg.appendChild(badge);
+  const ex=sEl("text",{x:b.x2-18,y:b.y1+21,"text-anchor":"middle","font-size":"20","font-weight":"900",fill:"#9a6d29"});ex.textContent="!";svg.appendChild(ex);
+ }
+}
+
+function serviceColor(type){return{hot:"#b6695f",cold:"#6e92ad",waste:"#6d706b",soil:"#4e514b",electric:"#b49b50"}[type]||"#6d706b"}
+function drawService(s){
+ const g=sEl("g",{class:"service","data-service-id":s.id});
+ const c=sEl("circle",{cx:s.x,cy:s.y,r:28,fill:"#fffefa",stroke:serviceColor(s.type),"data-service-id":s.id});
+ c.addEventListener("pointerdown",serviceDown);g.appendChild(c);
+ const dot=sEl("circle",{cx:s.x,cy:s.y,r:8,fill:serviceColor(s.type),"pointer-events":"none"});g.appendChild(dot);
+ if(currentZoom()>1.15){const t=sEl("text",{x:s.x+38,y:s.y+9});t.textContent=s.name;g.appendChild(t)}
+ svg.appendChild(g);
+}
+
+function dimLine(x1,y1,x2,y2,label,kind="detail"){
+ const cls=kind==="selected"?"dimSelected":kind==="overview"?"dim":"dimDetail";
+ const tcls=kind==="selected"?"dimTextSelected":kind==="overview"?"dimText":"dimTextDetail";
+ svg.appendChild(sEl("line",{x1,y1,x2,y2,class:cls}));
+ const tick=14;
+ if(Math.abs(x2-x1)>=Math.abs(y2-y1)){
+  svg.appendChild(sEl("line",{x1,y1:y1-tick,x2:x1,y2:y1+tick,class:cls}));
+  svg.appendChild(sEl("line",{x1:x2,y1:y2-tick,x2:x2,y2:y2+tick,class:cls}));
+ }else{
+  svg.appendChild(sEl("line",{x1:x1-tick,y1,x2:x1+tick,y2:y1,class:cls}));
+  svg.appendChild(sEl("line",{x1:x2-tick,y1:y2,x2:x2+tick,y2:y2,class:cls}));
+ }
+ const t=sEl("text",{x:(x1+x2)/2,y:(y1+y2)/2-8,class:tcls,"text-anchor":"middle"});t.textContent=label;svg.appendChild(t);
+}
+function drawOverviewDims(){
+ const r=state.room;
+ dimLine(0,-135,r.width,-135,`${r.width} mm`,"overview");
+ dimLine(-135,0,-135,r.depth,`${r.depth} mm`,"overview");
+ if(currentZoom()>=1.05){
+  const wb=r.window.before,ww=r.window.width,wa=r.window.after,y=-65;
+  if(wb>0)dimLine(0,y,wb,y,`${wb}`,"overview");
+  dimLine(wb,y,wb+ww,y,`${ww} window`,"overview");
+  if(wa>0)dimLine(wb+ww,y,r.width,y,`${wa}`,"overview");
+  const d=r.door,x=r.width+70;
+  if(d.before>0)dimLine(x,0,x,d.before,`${d.before}`,"overview");
+  dimLine(x,d.before,x,d.before+d.width,`${d.width} door`,"overview");
+  if(d.after>0)dimLine(x,d.before+d.width,x,r.depth,`${d.after}`,"overview");
+ }
+}
+function relationKey(a,b,axis){return[a,b].sort().join("|")+"|"+axis}
+function drawNearestForItem(i,seen,kind){
+ const A=box(i);
+ ["left","right","up","down"].forEach(dir=>{
+  const n=nearestInDirection(i,dir);if(!n||n.gap<0)return;
+  const axis=(dir==="left"||dir==="right")?"x":"y";
+  if(n.kind==="item"){
+   const key=relationKey(i.id,n.item.id,axis);if(seen.has(key))return;seen.add(key);
+   const B=box(n.item);
+   if(axis==="x"){
+    const y=(Math.max(A.y1,B.y1)+Math.min(A.y2,B.y2))/2;
+    if(dir==="left")dimLine(B.x2,y,A.x1,y,`${Math.round(n.gap)} mm`,kind);
+    else dimLine(A.x2,y,B.x1,y,`${Math.round(n.gap)} mm`,kind);
+   }else{
+    const x=(Math.max(A.x1,B.x1)+Math.min(A.x2,B.x2))/2;
+    if(dir==="up")dimLine(x,B.y2,x,A.y1,`${Math.round(n.gap)} mm`,kind);
+    else dimLine(x,A.y2,x,B.y1,`${Math.round(n.gap)} mm`,kind);
+   }
+  }else{
+   const key=i.id+"|"+dir;if(seen.has(key))return;seen.add(key);
+   if(dir==="left"&&n.gap>0)dimLine(0,A.y1+A.h*.25,A.x1,A.y1+A.h*.25,`${Math.round(n.gap)} mm`,kind);
+   if(dir==="right"&&n.gap>0)dimLine(A.x2,A.y1+A.h*.25,state.room.width,A.y1+A.h*.25,`${Math.round(n.gap)} mm`,kind);
+   if(dir==="up"&&n.gap>0)dimLine(A.x1+A.w*.28,0,A.x1+A.w*.28,A.y1,`${Math.round(n.gap)} mm`,kind);
+   if(dir==="down"&&n.gap>0)dimLine(A.x1+A.w*.28,A.y2,A.x1+A.w*.28,state.room.depth,`${Math.round(n.gap)} mm`,kind);
+  }
+ });
+}
+function drawDoorNearest(){
+ const g=doorGeometry(),items=floorItems();
+ let best=null;
+ for(const i of items){
+  const b=box(i);
+  const x=Math.min(Math.max(g.hx,b.x1),b.x2),y=Math.min(Math.max((g.y1+g.y2)/2,b.y1),b.y2);
+  const d=Math.hypot(g.hx-x,(g.y1+g.y2)/2-y);
+  if(!best||d<best.d)best={i,b,x,y,d};
+ }
+ if(best&&best.d>0&&best.d<1800)dimLine(g.hx,(g.y1+g.y2)/2,best.x,best.y,`${Math.round(best.d)} mm`,"detail");
+}
+function drawDimensions(){
+ drawOverviewDims();
+ const mode=state.ui.measureMode||"selected",seen=new Set();
+ if(mode==="selected"&&selected.kind==="item"){
+  const i=state.items.find(x=>x.id===selected.id);if(i)drawNearestForItem(i,seen,"selected");
+ }
+ if(mode==="all"){
+  floorItems().forEach(i=>drawNearestForItem(i,seen,"detail"));
+  drawDoorNearest();
+ }
+}
+
+function drawManualMeasurements(){
+ for(const m of state.manualMeasurements){
+  svg.appendChild(sEl("line",{x1:m.x1,y1:m.y1,x2:m.x2,y2:m.y2,class:"measureLine"}));
+  svg.appendChild(sEl("circle",{cx:m.x1,cy:m.y1,r:8,class:"measurePoint"}));
+  svg.appendChild(sEl("circle",{cx:m.x2,cy:m.y2,r:8,class:"measurePoint"}));
+  const t=sEl("text",{x:(m.x1+m.x2)/2,y:(m.y1+m.y2)/2-10,class:"measureText","text-anchor":"middle"});t.textContent=`${Math.round(m.length)} mm`;svg.appendChild(t);
+ }
+ $("clearMeasuresBtn").classList.toggle("hidden",!state.manualMeasurements.length);
+}
+function drawMeasureFirstPoint(){svg.appendChild(sEl("circle",{cx:manualFirst.x,cy:manualFirst.y,r:10,class:"measurePoint"}))}
+function snapMeasurePoint(p){
+ const z=currentZoom(),th=28/Math.max(1,z*.7),r=state.room;
+ const xs=[0,r.width,r.window.before,r.window.before+r.window.width],ys=[0,r.depth,r.door.before,r.door.before+r.door.width];
+ state.items.forEach(i=>{const b=box(i);xs.push(b.x1,b.x2);ys.push(b.y1,b.y2)});
+ state.services.forEach(s=>{xs.push(s.x);ys.push(s.y)});
+ let x=p.x,y=p.y,bx=null,by=null,dx=Infinity,dy=Infinity;
+ xs.forEach(v=>{const d=Math.abs(v-p.x);if(d<dx){dx=d;bx=v}});
+ ys.forEach(v=>{const d=Math.abs(v-p.y);if(d<dy){dy=d;by=v}});
+ if(dx<th)x=bx;if(dy<th)y=by;
+ if(manualFirst){
+  if(Math.abs(x-manualFirst.x)<th*1.4)x=manualFirst.x;
+  if(Math.abs(y-manualFirst.y)<th*1.4)y=manualFirst.y;
+ }
+ return{x,y};
+}
+function handleMeasureTap(e){
+ const p=snapMeasurePoint(point(e));
+ if(!manualFirst){manualFirst=p;$("measureBanner").textContent="Tap the second point";render();return}
+ checkpoint();
+ const len=Math.hypot(p.x-manualFirst.x,p.y-manualFirst.y);
+ if(len>1)state.manualMeasurements.push({id:"m"+Date.now(),x1:manualFirst.x,y1:manualFirst.y,x2:p.x,y2:p.y,length:len});
+ manualFirst=null;manualMode=false;$("measureBanner").classList.remove("show");$("manualMeasureBtn").classList.remove("primary");save();render();
+}
+
+function drawSnapFeedback(){
+ if(!snapFeedback)return;
+ const f=snapFeedback;
+ if(f.axis==="x")svg.appendChild(sEl("line",{x1:f.coord,y1:0,x2:f.coord,y2:state.room.depth,class:"snapGuide"}));
+ else svg.appendChild(sEl("line",{x1:0,y1:f.coord,x2:state.room.width,y2:f.coord,class:"snapGuide"}));
+ const t=sEl("text",{x:f.axis==="x"?f.coord+20:state.room.width/2,y:f.axis==="y"?f.coord-15:state.room.depth/2,class:"snapText","text-anchor":f.axis==="y"?"middle":"start"});t.textContent=f.label;svg.appendChild(t);
+}
+
+function openingDown(e){
+ if(activePointers.size>1)return;
+ e.preventDefault();
+ if(manualMode){handleMeasureTap(e);return}
+ selected={kind:"opening",id:e.currentTarget.dataset.opening};render();openSelectedSheet();
+}
+function itemDown(e){
+ if(activePointers.size>1)return;
+ e.preventDefault();
+ if(manualMode){handleMeasureTap(e);return}
+ const i=state.items.find(x=>x.id===e.currentTarget.dataset.id);if(!i)return;
+ selected={kind:"item",id:i.id};openSelectedSheet();
+ if(i.locked){render();return}
+ const p=point(e);drag={id:i.id,pointerId:e.pointerId,sx:p.x,sy:p.y,x:i.x,y:i.y,moved:false,checkpointed:false};
+ try{svg.setPointerCapture(e.pointerId)}catch(_){}
+ render();
+}
+function serviceDown(e){
+ if(activePointers.size>1)return;
+ e.preventDefault();
+ if(manualMode){handleMeasureTap(e);return}
+ const s=state.services.find(x=>x.id===e.currentTarget.dataset.serviceId);if(!s)return;
+ selected={kind:"service",id:s.id};openSelectedSheet();
+ const p=point(e);serviceDrag={id:s.id,pointerId:e.pointerId,sx:p.x,sy:p.y,x:s.x,y:s.y,moved:false,checkpointed:false};
+ try{svg.setPointerCapture(e.pointerId)}catch(_){}
+ render();
+}
+function moveItem(e){
+ if(!drag||e.pointerId!==drag.pointerId)return false;
+ e.preventDefault();const i=state.items.find(x=>x.id===drag.id);if(!i)return false;
+ const p=point(e),d=itemDims(i);let x=Math.round(drag.x+p.x-drag.sx),y=Math.round(drag.y+p.y-drag.sy);
+ if(Math.abs(x-drag.x)>1||Math.abs(y-drag.y)>1){
+  if(!drag.checkpointed){checkpoint();drag.checkpointed=true}drag.moved=true;
+ }
+ snapFeedback=null;
+ if(state.ui.snap!==false){
+  const s=28/currentZoom();
+  const tryX=(candidate,label)=>{if(Math.abs(x-candidate)<s){x=candidate;snapFeedback={axis:"x",coord:candidate,label}}};
+  const tryXRight=(candidate,label)=>{if(Math.abs(x+d.w-candidate)<s){x=candidate-d.w;snapFeedback={axis:"x",coord:candidate,label}}};
+  const tryY=(candidate,label)=>{if(Math.abs(y-candidate)<s){y=candidate;snapFeedback={axis:"y",coord:candidate,label}}};
+  const tryYBottom=(candidate,label)=>{if(Math.abs(y+d.h-candidate)<s){y=candidate-d.h;snapFeedback={axis:"y",coord:candidate,label}}};
+  tryX(0,"Snapped to wall");tryY(0,"Snapped to wall");tryXRight(state.room.width,"Snapped to wall");tryYBottom(state.room.depth,"Snapped to wall");
+  for(const o of state.items){
+   if(o.id===i.id)continue;const b=box(o);
+   tryX(b.x2,`Aligned to ${o.name}`);tryXRight(b.x1,`Aligned to ${o.name}`);
+   tryY(b.y2,`Aligned to ${o.name}`);tryYBottom(b.y1,`Aligned to ${o.name}`);
+  }
+ }
+ i.x=x;i.y=y;render();return true;
+}
+function moveService(e){
+ if(!serviceDrag||e.pointerId!==serviceDrag.pointerId)return false;
+ e.preventDefault();const s=state.services.find(x=>x.id===serviceDrag.id);if(!s)return false;
+ const p=point(e);const nx=Math.round(serviceDrag.x+p.x-serviceDrag.sx),ny=Math.round(serviceDrag.y+p.y-serviceDrag.sy);
+ if(Math.abs(nx-serviceDrag.x)>1||Math.abs(ny-serviceDrag.y)>1){
+  if(!serviceDrag.checkpointed){checkpoint();serviceDrag.checkpointed=true}serviceDrag.moved=true;
+ }
+ s.x=nx;s.y=ny;render();return true;
+}
+function endDrags(e){
+ if(drag&&e.pointerId===drag.pointerId){try{svg.releasePointerCapture(e.pointerId)}catch(_){}if(drag.moved)save();drag=null;snapFeedback=null;render()}
+ if(serviceDrag&&e.pointerId===serviceDrag.pointerId){try{svg.releasePointerCapture(e.pointerId)}catch(_){}if(serviceDrag.moved)save();serviceDrag=null;render()}
+}
+
+function openSelectedSheet(){
+ const sheet=$("objectSheet");sheet.classList.remove("hidden");
+ $("itemQuick").classList.add("hidden");$("itemDetails").classList.add("hidden");$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
+ if(selected.kind==="item"){
+  const i=state.items.find(x=>x.id===selected.id);if(!i)return;
+  $("sheetEyebrow").textContent="Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} mm`;
+  $("itemQuick").classList.remove("hidden");$("detailsToggle").classList.remove("hidden");
+  $("lockBtn").textContent=i.locked?"Unlock":"Lock";
+  $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;
+  const w=warningInfo(i);if(w.length){$("sheetWarning").classList.remove("hidden");$("sheetWarning").textContent=w.join(" ")}
+ }else if(selected.kind==="opening"){
+  $("detailsToggle").classList.add("hidden");$("openingDetails").classList.remove("hidden");
+  if(selected.id==="window"){
+   $("sheetEyebrow").textContent="Opening";$("sheetTitle").textContent="Window";$("windowFields").classList.remove("hidden");$("doorFields").classList.add("hidden");
+   $("openA").value=state.room.window.before;$("openW").value=state.room.window.width;$("openB").value=state.room.window.after;
+  }else{
+   $("sheetEyebrow").textContent="Opening";$("sheetTitle").textContent="Door";$("doorFields").classList.remove("hidden");$("windowFields").classList.add("hidden");
+   $("doorA").value=state.room.door.before;$("doorW").value=state.room.door.width;$("doorB").value=state.room.door.after;
+  }
+ }else if(selected.kind==="service"){
+  const s=state.services.find(x=>x.id===selected.id);if(!s)return;
+  $("detailsToggle").classList.add("hidden");$("serviceDetails").classList.remove("hidden");
+  $("sheetEyebrow").textContent="Service point";$("sheetTitle").textContent=s.name;
+  $("serviceName").value=s.name;$("serviceType").value=s.type;$("serviceX").value=s.x;$("serviceY").value=s.y;
+ }
+}
+function closeObjectSheet(){$("objectSheet").classList.add("hidden");$("itemDetails").classList.add("hidden")}
+
+function addItem(type){
+ const p={
+  bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower",1400,800],
+  stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],niche:["Niche",400,70],custom:["Custom object",400,400]
+ }[type];
+ checkpoint();const i={id:type+Date.now(),type,name:p[0],x:250,y:850,w:p[1],h:p[2],rotation:0,locked:false};state.items.push(i);selected={kind:"item",id:i.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
+}
+function addService(type){
+ const names={hot:"Hot entry",cold:"Cold entry",waste:"Waste outlet",soil:"Soil stack",electric:"Electrical point"};
+ checkpoint();const s={id:"s"+Date.now(),type,name:names[type],x:state.room.width/2,y:state.room.depth/2};state.services.push(s);selected={kind:"service",id:s.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
+}
+
+function sync(){
+ const r=state.room;
+ $("roomWidth").value=r.width;$("roomDepth").value=r.depth;$("ceilingHeight").value=r.ceiling;$("tolerance").value=r.tolerance;
+ $("windowBefore").value=r.window.before;$("windowWidth").value=r.window.width;$("windowAfter").value=r.window.after;
+ $("doorBefore").value=r.door.before;$("doorWidth").value=r.door.width;$("doorAfter").value=r.door.after;
+ $("projectName").value=state.project.name||"";$("projectPlanName").value=state.project.planName||"";$("notes").value=state.project.notes||"";
+ $("measureMode").value=state.ui.measureMode||"selected";updateChecks();
+}
+function updateChecks(){
+ const r=state.room,ws=r.window.before+r.window.width+r.window.after,ds=r.door.before+r.door.width+r.door.after;
+ $("windowCheck").className="check "+(ws===r.width?"ok":"bad");$("windowCheck").textContent=(ws===r.width?"✓ ":"⚠ ")+`Window wall totals ${ws} mm`;
+ $("doorCheck").className="check "+(ds===r.depth?"ok":"bad");$("doorCheck").textContent=(ds===r.depth?"✓ ":"⚠ ")+`Door wall totals ${ds} mm`;
+}
+function updateSurveyStatus(){
+ const r=state.room,ok=(r.window.before+r.window.width+r.window.after===r.width)&&(r.door.before+r.door.width+r.door.after===r.depth);
+ $("surveyStatus").textContent=ok?"Survey dimensions reconcile":"Survey mismatch — check Project";
+}
+
+function toggleFocus(){
+ document.body.classList.toggle("focus-mode");
+ const on=document.body.classList.contains("focus-mode");
+ $("focusBtn").classList.toggle("hidden",on);$("exitFocusBtn").classList.toggle("hidden",!on);
+ setTimeout(()=>{applyView();render()},50);
+}
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+ document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");$(b.dataset.tab).classList.add("active");
+});
+
+$("undoBtn").onclick=undo;$("redoBtn").onclick=redo;
+$("measureMode").onchange=e=>{state.ui.measureMode=e.target.value;save();render()};
+$("manualMeasureBtn").onclick=()=>{
+ manualMode=!manualMode;manualFirst=null;
+ $("manualMeasureBtn").classList.toggle("primary",manualMode);
+ $("measureBanner").classList.toggle("show",manualMode);
+ $("measureBanner").textContent="Tap the first point";
+ $("statusHint").textContent=manualMode?"Measure mode: tap two points. Edges will snap automatically.":"Drag fixtures · pinch to zoom · tap an item for measurements.";
+ render();
+};
+$("clearMeasuresBtn").onclick=()=>{if(!state.manualMeasurements.length)return;checkpoint();state.manualMeasurements=[];save();render()};
+$("focusBtn").onclick=toggleFocus;$("exitFocusBtn").onclick=toggleFocus;
+$("addBtn").onclick=()=>$("addSheet").classList.remove("hidden");$("closeAddSheet").onclick=()=>$("addSheet").classList.add("hidden");
+document.querySelectorAll("[data-add-item]").forEach(b=>b.onclick=()=>addItem(b.dataset.addItem));
+document.querySelectorAll("[data-add-service]").forEach(b=>b.onclick=()=>addService(b.dataset.addService));
+$("closeObjectSheet").onclick=closeObjectSheet;
+$("detailsToggle").onclick=()=>{const d=$("itemDetails");d.classList.toggle("hidden");$("detailsToggle").textContent=d.classList.contains("hidden")?"Show exact details":"Hide exact details"};
+
+$("rotateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();i.rotation=i.rotation===90?0:90;save();render();openSelectedSheet()};
+$("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();i.locked=!i.locked;save();render();openSelectedSheet()};
+$("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.x+=50;c.y+=50;c.locked=false;state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
+$("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
+
+["itemName","itemType","itemX","itemY","itemW","itemH"].forEach(id=>$(id).onchange=()=>{
+ const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();
+ i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(20,Number($("itemH").value)||20);
+ save();render();openSelectedSheet();
+});
+["openA","openW","openB"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);save();sync();render();openSelectedSheet()});
+["doorA","doorW","doorB"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.door.before=Math.max(0,Number($("doorA").value)||0);state.room.door.width=Math.max(100,Number($("doorW").value)||100);state.room.door.after=Math.max(0,Number($("doorB").value)||0);save();sync();render();openSelectedSheet()});
+["serviceName","serviceType","serviceX","serviceY"].forEach(id=>$(id).onchange=()=>{
+ const s=state.services.find(x=>x.id===selected.id);if(!s)return;checkpoint();s.name=$("serviceName").value.trim()||s.name;s.type=$("serviceType").value;s.x=Number($("serviceX").value)||0;s.y=Number($("serviceY").value)||0;save();render();openSelectedSheet();
+});
+
+const numPaths={
+ roomWidth:["room","width"],roomDepth:["room","depth"],ceilingHeight:["room","ceiling"],tolerance:["room","tolerance"],
+ windowBefore:["room","window","before"],windowWidth:["room","window","width"],windowAfter:["room","window","after"],
+ doorBefore:["room","door","before"],doorWidth:["room","door","width"],doorAfter:["room","door","after"]
+};
+Object.entries(numPaths).forEach(([id,path])=>$(id).onchange=()=>{
+ checkpoint();let o=state;for(let i=0;i<path.length-1;i++)o=o[path[i]];o[path[path.length-1]]=Math.max(0,Number($(id).value)||0);
+ save();baseView=makeBaseView();view={...baseView};sync();render();
+});
+[["projectName","name"],["projectPlanName","planName"],["notes","notes"]].forEach(([id,key])=>$(id).onchange=()=>{checkpoint();state.project[key]=$(id).value;save();render()});
+
+$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download="bathroom-planner-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),500)};
+$("importInput").onchange=async e=>{try{const p=JSON.parse(await e.target.files[0].text());if(!p.room||!p.items)throw Error("Invalid backup");checkpoint();state=p;state.services=state.services||[];state.manualMeasurements=state.manualMeasurements||[];state.ui=state.ui||{measureMode:"selected",snap:true};selected={kind:null,id:null};save();sync();resetView(false);render();alert("Backup imported")}catch(err){alert(err.message)}e.target.value=""};
+$("resetBtn").onclick=()=>{if(!confirm("Reset to the V1.4 starter plan?"))return;checkpoint();state=clone(starter);selected={kind:null,id:null};save();sync();resetView(false);render()};
+$("reloadBtn").onclick=async()=>{try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}if("caches"in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(_){}const u=new URL(location.href);u.searchParams.set("v",Date.now());location.replace(u.toString())};
+
+$("zoomInBtn").onclick=()=>{const r=svg.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25)};
+$("zoomOutBtn").onclick=()=>{const r=svg.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,.8)};
+$("fitBtn").onclick=()=>resetView();
+
+function center(a,b){return{x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2}}
+function distance(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}
+function startPinch(){
+ const ps=[...activePointers.values()];if(ps.length<2)return;
+ drag=null;serviceDrag=null;pan=null;
+ const c=center(ps[0],ps[1]);pinch={startDist:distance(ps[0],ps[1]),startView:{...view},centerClient:c};
+}
+function updatePinch(){
+ const ps=[...activePointers.values()];if(ps.length<2||!pinch)return;
+ const c=center(ps[0],ps[1]),d=Math.max(20,distance(ps[0],ps[1])),factor=d/pinch.startDist;
+ view={...pinch.startView};
+ const p=pointFromClient(pinch.centerClient.x,pinch.centerClient.y),ow=view.w,oh=view.h;
+ let nw=Math.max(baseView.w/5,Math.min(baseView.w,ow/factor)),nh=Math.max(baseView.h/5,Math.min(baseView.h,oh/factor));
+ const rx=(p.x-view.x)/ow,ry=(p.y-view.y)/oh;view.x=p.x-rx*nw;view.y=p.y-ry*nh;view.w=nw;view.h=nh;
+ const pNow=pointFromClient(c.x,c.y);view.x+=p.x-pNow.x;view.y+=p.y-pNow.y;clampView();applyView();render();
+}
+
+svg.addEventListener("pointerdown",e=>{
+ activePointers.set(e.pointerId,{clientX:e.clientX,clientY:e.clientY});
+ if(activePointers.size===2){e.preventDefault();startPinch()}
+},{capture:true,passive:false});
+
+svg.addEventListener("pointerdown",e=>{
+ if(activePointers.size>=2)return;
+ if(manualMode){
+  if(e.target===svg||e.target.classList.contains("roomfill")||e.target.classList.contains("gridMajor")||e.target.classList.contains("gridMinor")){e.preventDefault();handleMeasureTap(e)}
+  return;
+ }
+ if(e.target===svg||e.target.classList.contains("roomfill")||e.target.classList.contains("gridMajor")||e.target.classList.contains("gridMinor")){
+  selected={kind:null,id:null};closeObjectSheet();
+  if(currentZoom()>1.01){
+   const p=point(e);pan={pointerId:e.pointerId,startSvg:p,startView:{...view}};try{svg.setPointerCapture(e.pointerId)}catch(_){}
+  }
+  render();
+ }
+},{passive:false});
+
+svg.addEventListener("pointermove",e=>{
+ if(activePointers.has(e.pointerId))activePointers.set(e.pointerId,{clientX:e.clientX,clientY:e.clientY});
+ if(activePointers.size>=2){e.preventDefault();updatePinch();return}
+ if(moveItem(e)||moveService(e))return;
+ if(pan&&e.pointerId===pan.pointerId){
+  e.preventDefault();const now=pointFromClient(e.clientX,e.clientY);view={...pan.startView};view.x+=pan.startSvg.x-now.x;view.y+=pan.startSvg.y-now.y;clampView();applyView();render();
+ }
+},{passive:false});
+
+function finishPointer(e){
+ activePointers.delete(e.pointerId);
+ if(pan&&e.pointerId===pan.pointerId)pan=null;
+ if(activePointers.size<2)pinch=null;
+ endDrags(e);
+}
+svg.addEventListener("pointerup",finishPointer);
+svg.addEventListener("pointercancel",finishPointer);
+
+sync();updateUndoRedo();resetView(false);render();
+$("statusHint").textContent="Drag fixtures · pinch to zoom · tap an item for measurements. · V"+VERSION;
 })();
 </script>
 </body>

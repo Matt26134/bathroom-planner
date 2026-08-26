@@ -115,7 +115,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.9 · wall-mounted fixtures</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.9.1 · hotfix</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -326,6 +326,13 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Bottom above floor (mm)<input id="itemZ" type="number"></label>
         <label>Height (mm)<input id="itemHeight" type="number"></label>
         <label id="itemShowerMountWrap" class="hidden">Shower mount side<select id="itemShowerMount"><option value="left">Fixed shower layout</option><option value="right">Fixed shower layout</option></select></label>
+        <label id="itemMirrorWallWrap" class="hidden">Mounted wall<select id="itemMirrorWall">
+          <option value="left">Vanity wall / opposite door</option>
+          <option value="right">Door-side wall</option>
+          <option value="window">Window wall</option>
+          <option value="opposite">Wall opposite window</option>
+        </select></label>
+        <label id="itemMirrorAlongWrap" class="hidden">Position along wall (mm)<input id="itemMirrorAlong" type="number"></label>
       </div>
     </div>
 
@@ -573,7 +580,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.8.9", KEY="bathroomPlannerStable";
+const VERSION="1.8.9.1", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 

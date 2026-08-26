@@ -110,12 +110,15 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 .zoneHint{font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.4}
 @media(max-width:620px){.tileCard{grid-template-columns:1fr}.zoneFields{grid-template-columns:1fr}}
 
+
+.bootError{position:fixed;left:14px;right:14px;bottom:14px;z-index:9999;background:#fff1ef;border:1px solid #d8938a;border-radius:14px;padding:12px 14px;color:#783a34;font-weight:750;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+
 @media(max-width:480px){.grid.three{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.canvas{height:64vh;min-height:420px}.toolbar{gap:5px}.toolbar button{padding-inline:9px}.canvasHeader{height:42px}.canvasControls .desktopOnly{display:none}}
 </style>
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.9.1 · hotfix</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.9.0 · stable wall-mount rebuild</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -294,6 +297,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
   </div>
 </section>
 </main>
+<div id="bootError" class="bootError hidden"></div>
 
 <div id="objectSheet" class="sheet objectEditor hidden">
   <div class="sheetCard">
@@ -578,9 +582,10 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </div>
 
 <script>
+window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="1.8.9.1", KEY="bathroomPlannerStable";
+const VERSION="1.9.0", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -648,8 +653,15 @@ try{
   const parsed=JSON.parse(localStorage.getItem(KEY)||"null");
   state=parsed||clone(starter);
 }catch(e){state=clone(starter)}
+state = state && typeof state==="object" ? state : clone(starter);
+state.project = {...clone(starter.project), ...(state.project||{})};
+state.room = {...clone(starter.room), ...(state.room||{})};
+state.room.window = {...clone(starter.room.window), ...(state.room.window||{})};
+state.room.door = {...clone(starter.room.door), ...(state.room.door||{})};
+if(!Array.isArray(state.items)) state.items=[];
 state.ui=state.ui||{};
 if(!state.ui.measureMode) state.ui.measureMode="selected";
+if(state.ui.snap==null) state.ui.snap=true;
 if(!Array.isArray(state.services)) state.services=[];
 if(!Array.isArray(state.products))state.products=[];
 if(!state.products.some(p=>p.id==="prod-lille-800")){
@@ -660,7 +672,10 @@ if(!Array.isArray(state.tileProducts)) state.tileProducts=[];
 if(!Array.isArray(state.surfaceZones)) state.surfaceZones=[];
 if(!state.surfaceZones.length) state.surfaceZones=clone(starter.surfaceZones);
 if(!Array.isArray(state.wallFixtures)) state.wallFixtures=[];
-(starter.wallFixtures||[]).forEach(f=>{ if(!state.wallFixtures.some(x=>x.id===f.id)) state.wallFixtures.push(clone(f)); });
+(starter.wallFixtures||[]).forEach(f=>{
+ const existing=state.wallFixtures.find(x=>x.id===f.id);
+ if(existing) Object.assign(existing,clone(f)); else state.wallFixtures.push(clone(f));
+});
 
 if(!Array.isArray(state.manualMeasurements)) state.manualMeasurements=[];
 const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],mirror:[1150,800],niche:[1000,400],custom:[0,900]};
@@ -728,8 +743,8 @@ let snapFeedback=null;
 let manualMode=false,manualFirst=null;
 
 const sEl=(tag,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e};
-const itemDims=i=>(i.rotation===90||i.rotation===270)?{w:i.h,h:i.w}:{w:i.w,h:i.h};
-const box=i=>{const d=itemDims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}};
+function itemDims(i){return (i.rotation===90||i.rotation===270)?{w:i.h,h:i.w}:{w:i.w,h:i.h}}
+function box(i){const d=itemDims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}}
 const overlap1D=(a1,a2,b1,b2)=>Math.min(a2,b2)-Math.max(a1,b1)>0;
 const collide=(a,b)=>{const A=box(a),B=box(b);return A.x1<B.x2&&A.x2>B.x1&&A.y1<B.y2&&A.y2>B.y1};
 const floorItems=()=>state.items.filter(i=>i.type!=="niche"&&i.type!=="mirror");
@@ -912,8 +927,8 @@ function drawItem(i){
  }
  if(i.type==="radiator"){for(let y=i.y+22;y<i.y+d.h-18;y+=42)svg.appendChild(sEl("line",{x1:i.x+12,y1:y,x2:i.x+d.w-12,y2:y,class:"archLine"}))}
  if(i.type==="mirror"){
-   const hitH=Math.max(d.h,90), hitY=i.y-(hitH-d.h)/2;
-   const hit=sEl("rect",{x:i.x-10,y:hitY,width:d.w+20,height:hitH,fill:"transparent","data-id":i.id});
+   const hitW=Math.max(d.w,140),hitH=Math.max(d.h,140),hitX=i.x-(hitW-d.w)/2,hitY=i.y-(hitH-d.h)/2;
+   const hit=sEl("rect",{x:hitX,y:hitY,width:hitW,height:hitH,fill:"transparent","data-id":i.id,style:"cursor:grab"});
    hit.addEventListener("pointerdown",itemDown);svg.appendChild(hit);
    const oval=sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+d.h/2,rx:Math.max(10,d.w*.44),ry:Math.max(10,d.h*.44),fill:"#eef4f4",stroke:"#8aa1a6","stroke-width":"2","vector-effect":"non-scaling-stroke","data-id":i.id,style:"cursor:grab"});
    oval.addEventListener("pointerdown",itemDown);
@@ -1188,7 +1203,13 @@ function addItem(type){
   bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower",1400,800],
   stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],mirror:["Mirror",800,40],niche:["Niche",400,70],custom:["Custom object",400,400]
  }[type];
- checkpoint();const hd=HEIGHT_DEFAULTS[type]||[0,900];const i={id:type+Date.now(),type,name:p[0],x:250,y:850,w:p[1],h:p[2],rotation:0,locked:false,z:hd[0],height:hd[1]};state.items.push(i);selected={kind:"item",id:i.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
+ checkpoint();const hd=HEIGHT_DEFAULTS[type]||[0,900];const i={id:type+Date.now(),type,name:p[0],x:250,y:850,w:p[1],h:p[2],rotation:0,locked:false,z:hd[0],height:hd[1]};
+ if(type==="mirror"){
+  i.w=500;i.h=25;i.height=500;i.z=1200;i.mountWall="left";
+  const vanity=state.items.find(x=>x.type==="vanity"),vd=vanity?itemDims(vanity):null;
+  i.mountAlong=vd?vanity.y+vd.h/2:state.room.depth/2;syncMirrorPlanFromMount(i);
+ }
+ state.items.push(i);selected={kind:"item",id:i.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
 }
 function addService(type){
  const names={hot:"Hot entry",cold:"Cold entry",waste:"Waste outlet",soil:"Soil stack",electric:"Electrical point"};
@@ -1620,7 +1641,7 @@ $("rotateBtn").onclick=()=>{
  save();render();openSelectedSheet();
 };
 $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();i.locked=!i.locked;save();render();openSelectedSheet()};
-$("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.x+=50;c.y+=50;c.locked=false;state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
+$("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.locked=false;if(c.type==="mirror"){c.mountAlong=(Number(c.mountAlong)||0)+80;syncMirrorPlanFromMount(c)}else{c.x+=50;c.y+=50}state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
 
 ["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMirrorWall","itemMirrorAlong"].forEach(id=>$(id).onchange=()=>{
@@ -1646,7 +1667,7 @@ Object.entries(numPaths).forEach(([id,path])=>$(id).onchange=()=>{
 [["projectName","name"],["projectPlanName","planName"],["notes","notes"]].forEach(([id,key])=>$(id).onchange=()=>{checkpoint();state.project[key]=$(id).value;save();render()});
 
 $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download="bathroom-planner-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),500)};
-$("importInput").onchange=async e=>{try{const p=JSON.parse(await e.target.files[0].text());if(!p.room||!p.items)throw Error("Invalid backup");checkpoint();state=p;state.services=state.services||[];state.manualMeasurements=state.manualMeasurements||[];state.ui=state.ui||{measureMode:"selected",snap:true};selected={kind:null,id:null};save();sync();resetView(false);render();alert("Backup imported")}catch(err){alert(err.message)}e.target.value=""};
+$("importInput").onchange=async e=>{try{const p=JSON.parse(await e.target.files[0].text());if(!p.room||!Array.isArray(p.items))throw Error("Invalid backup");checkpoint();localStorage.setItem(KEY,JSON.stringify(p));location.reload()}catch(err){alert(err.message)}e.target.value=""};
 $("resetBtn").onclick=()=>{if(!confirm("Reset to the starter plan?"))return;checkpoint();state=clone(starter);selected={kind:null,id:null};save();sync();resetView(false);render()};
 $("reloadBtn").onclick=async()=>{try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}if("caches"in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(_){}const u=new URL(location.href);u.searchParams.set("v",Date.now());location.replace(u.toString())};
 

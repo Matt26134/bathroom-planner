@@ -390,8 +390,9 @@ if (!api || !legacy) {
     const hand=fixtures.find(f=>f.type==="handset");
     const g=new THREE.Group();
 
-    // In this bathroom the wall opposite the door is the LEFT wall (x=0),
-    // which is the same wall the vanity is mounted against.
+    // FIXED ROOM ARCHITECTURE: wall opposite the door = LEFT wall (x=0).
+    // This is the same physical wall the vanity sits against. Shower tray rotation
+    // is deliberately ignored; these fittings are room-wall fixtures.
     if(rain && rain.mountWall==="left"){
       const zc=mm(rain.along||2140), y=mm(rain.height||2080), proj=mm(rain.projection||320);
       const x0=.012;

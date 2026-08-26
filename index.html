@@ -115,7 +115,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.0 · surfaces & tiles</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.1 · tile visual fix</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -505,6 +505,10 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <option value="brick">Brick bond</option>
         <option value="herringbone">Herringbone</option>
       </select></label>
+      <label>Tile orientation<select id="zoneOrientation">
+        <option value="landscape">Landscape</option>
+        <option value="portrait">Portrait</option>
+      </select></label>
       <label>Grout width (mm)<input id="zoneGrout" type="number"></label>
       <label>Grout colour<input id="zoneGroutColor" type="color"></label>
       <label>Waste allowance %<input id="zoneWaste" type="number"></label>
@@ -562,7 +566,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.8.0", KEY="bathroomPlannerStable";
+const VERSION="1.8.1", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -609,12 +613,12 @@ const starter={
   {id:"tile-granley-pink",name:"Granley Rustic Pink Gloss Wall Tiles 70 x 280mm",supplier:"Victorian Plumbing",sku:"GRN728PNK",finish:"Rustic pink gloss",width:70,height:280,tilesPerBox:30,wall:true,floor:false,pricePerBox:29.47,pricePerM2:49.95,defaultPattern:"herringbone",image:"./granley-pink-tile.webp",patternImage:"./granley-pink-herringbone.webp",builtIn:true}
  ],
  surfaceZones:[
-  {id:"zone-floor",name:"Main floor",surface:"floor",full:true,x1:0,x2:2280,y1:0,y2:2545,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-  {id:"zone-window-wall",name:"Window wall",surface:"window",full:true,start:0,end:2280,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-  {id:"zone-back-wall",name:"Back wall",surface:"opposite",full:true,start:0,end:2280,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-  {id:"zone-left-wall",name:"Left wall",surface:"left",full:true,start:0,end:2545,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-  {id:"zone-door-wall",name:"Door wall",surface:"right",full:true,start:0,end:2545,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-  {id:"zone-vanity-feature",name:"Vanity feature wall",surface:"left",full:false,start:700,end:1670,bottom:900,top:2470,tileId:"tile-granley-pink",pattern:"herringbone",grout:2,groutColor:"#f4efed",waste:12,enabled:true}
+  {id:"zone-floor",name:"Main floor",surface:"floor",full:true,x1:0,x2:2280,y1:0,y2:2545,tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-window-wall",name:"Window wall",surface:"window",full:true,start:0,end:2280,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-back-wall",name:"Back wall",surface:"opposite",full:true,start:0,end:2280,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-left-wall",name:"Left wall",surface:"left",full:true,start:0,end:2545,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-door-wall",name:"Door wall",surface:"right",full:true,start:0,end:2545,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-vanity-feature",name:"Vanity feature wall",surface:"left",full:false,start:700,end:1670,bottom:900,top:2470,tileId:"tile-granley-pink",pattern:"herringbone",orientation:"landscape",grout:2,groutColor:"#f4efed",waste:12,enabled:true}
  ],
  services:[],
  manualMeasurements:[]

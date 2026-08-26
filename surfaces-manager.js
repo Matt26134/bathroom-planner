@@ -129,7 +129,7 @@
       const card = document.createElement("div");
       card.className = "zoneCard";
       card.innerHTML = `<div class="zoneTitle">${esc(z.name)}</div>
-        <div class="zoneMeta">${esc(surfaceLabel(z.surface))} · ${z.full?"Full coverage":"Partial zone"} · ${esc(patternLabel(z.pattern||"stack"))}${z.enabled===false?" · Hidden":""}</div>
+        <div class="zoneMeta">${esc(surfaceLabel(z.surface))} · ${z.full?"Full coverage":"Partial zone"} · ${esc(patternLabel(z.pattern||"stack"))} · ${z.orientation==="portrait"?"Portrait":"Landscape"}${z.enabled===false?" · Hidden":""}</div>
         <div class="tagRow">
           <span class="tag">${t?esc(t.name):"No tile selected"}</span>
           <span class="tag">${area.toFixed(2)} m²</span>
@@ -239,6 +239,7 @@
     $("zoneName").value = z?.name || (preset==="floor" ? "New floor zone" : "New wall zone");
     $("zoneSurface").value = z?.surface || (preset==="floor" ? "floor" : "left");
     $("zonePattern").value = z?.pattern || "stack";
+    $("zoneOrientation").value = z?.orientation || "landscape";
     $("zoneGrout").value = z?.grout ?? 2;
     $("zoneGroutColor").value = z?.groutColor || "#ece6df";
     $("zoneWaste").value = z?.waste ?? 10;
@@ -287,6 +288,7 @@
       surface: $("zoneSurface").value,
       tileId: $("zoneTile").value,
       pattern: $("zonePattern").value,
+      orientation: $("zoneOrientation").value,
       grout: Math.max(0, Number($("zoneGrout").value)||0),
       groutColor: $("zoneGroutColor").value || "#ece6df",
       waste: Math.max(0, Number($("zoneWaste").value)||0),
@@ -321,21 +323,21 @@
   function resetSuggestedScheme(){
     if(!confirm("Reset surfaces to the suggested Laurito + Granley scheme?")) return;
     const s = state(), r = s.room, defaults = [
-      {id:"zone-floor",name:"Main floor",surface:"floor",full:true,x1:0,x2:Number(r.width||0),y1:0,y2:Number(r.depth||0),tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-      {id:"zone-window-wall",name:"Window wall",surface:"window",full:true,start:0,end:Number(r.width||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-      {id:"zone-back-wall",name:"Back wall",surface:"opposite",full:true,start:0,end:Number(r.width||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-      {id:"zone-left-wall",name:"Left wall",surface:"left",full:true,start:0,end:Number(r.depth||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-      {id:"zone-door-wall",name:"Door wall",surface:"right",full:true,start:0,end:Number(r.depth||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true}
+      {id:"zone-floor",name:"Main floor",surface:"floor",full:true,x1:0,x2:Number(r.width||0),y1:0,y2:Number(r.depth||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+      {id:"zone-window-wall",name:"Window wall",surface:"window",full:true,start:0,end:Number(r.width||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+      {id:"zone-back-wall",name:"Back wall",surface:"opposite",full:true,start:0,end:Number(r.width||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+      {id:"zone-left-wall",name:"Left wall",surface:"left",full:true,start:0,end:Number(r.depth||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+      {id:"zone-door-wall",name:"Door wall",surface:"right",full:true,start:0,end:Number(r.depth||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true}
     ];
     const vanity = (s.items||[]).find(i=>i.type==="vanity");
     if(vanity){
       const dims = (vanity.rotation===90||vanity.rotation===270) ? {w:vanity.h,h:vanity.w} : {w:vanity.w,h:vanity.h};
       if(vanity.x <= 60){
-        defaults.push({id:"zone-vanity-feature",name:"Vanity feature wall",surface:"left",full:false,start:Math.max(0,Number(vanity.y||0)),end:Math.min(Number(r.depth||0),Number(vanity.y||0)+Number(dims.h||0)),bottom:900,top:Number(r.ceiling||0),tileId:"tile-granley-pink",pattern:"herringbone",grout:2,groutColor:"#f4efed",waste:12,enabled:true});
+        defaults.push({id:"zone-vanity-feature",name:"Vanity feature wall",surface:"left",full:false,start:Math.max(0,Number(vanity.y||0)),end:Math.min(Number(r.depth||0),Number(vanity.y||0)+Number(dims.h||0)),bottom:900,top:Number(r.ceiling||0),tileId:"tile-granley-pink",pattern:"herringbone",orientation:"landscape",grout:2,groutColor:"#f4efed",waste:12,enabled:true});
       } else if(vanity.x + dims.w >= Number(r.width||0)-60){
-        defaults.push({id:"zone-vanity-feature",name:"Vanity feature wall",surface:"right",full:false,start:Math.max(0,Number(vanity.y||0)),end:Math.min(Number(r.depth||0),Number(vanity.y||0)+Number(dims.h||0)),bottom:900,top:Number(r.ceiling||0),tileId:"tile-granley-pink",pattern:"herringbone",grout:2,groutColor:"#f4efed",waste:12,enabled:true});
+        defaults.push({id:"zone-vanity-feature",name:"Vanity feature wall",surface:"right",full:false,start:Math.max(0,Number(vanity.y||0)),end:Math.min(Number(r.depth||0),Number(vanity.y||0)+Number(dims.h||0)),bottom:900,top:Number(r.ceiling||0),tileId:"tile-granley-pink",pattern:"herringbone",orientation:"landscape",grout:2,groutColor:"#f4efed",waste:12,enabled:true});
       } else if(vanity.y + dims.h >= Number(r.depth||0)-60){
-        defaults.push({id:"zone-vanity-feature",name:"Vanity feature wall",surface:"opposite",full:false,start:Math.max(0,Number(vanity.x||0)),end:Math.min(Number(r.width||0),Number(vanity.x||0)+Number(dims.w||0)),bottom:900,top:Number(r.ceiling||0),tileId:"tile-granley-pink",pattern:"herringbone",grout:2,groutColor:"#f4efed",waste:12,enabled:true});
+        defaults.push({id:"zone-vanity-feature",name:"Vanity feature wall",surface:"opposite",full:false,start:Math.max(0,Number(vanity.x||0)),end:Math.min(Number(r.width||0),Number(vanity.x||0)+Number(dims.w||0)),bottom:900,top:Number(r.ceiling||0),tileId:"tile-granley-pink",pattern:"herringbone",orientation:"landscape",grout:2,groutColor:"#f4efed",waste:12,enabled:true});
       }
     }
     api.checkpoint(); s.surfaceZones = defaults; api.persist(); render();
@@ -368,7 +370,7 @@
   $("saveZoneBtn")?.addEventListener("click", saveZone);
   $("duplicateZoneBtn")?.addEventListener("click", ()=>{ if(editingZoneId) duplicateZone(editingZoneId); });
   $("deleteZoneBtn")?.addEventListener("click", ()=>{ if(editingZoneId) deleteZone(editingZoneId); });
-  ["zoneSurface","zoneTile","zonePattern","zoneGrout","zoneGroutColor","zoneWaste","zoneFull","zoneX1","zoneX2","zoneY1","zoneY2","zoneStart","zoneEnd","zoneBottom","zoneTop"].forEach(id=>{
+  ["zoneSurface","zoneTile","zonePattern","zoneOrientation","zoneGrout","zoneGroutColor","zoneWaste","zoneFull","zoneX1","zoneX2","zoneY1","zoneY2","zoneStart","zoneEnd","zoneBottom","zoneTop"].forEach(id=>{
     $(id)?.addEventListener("input", ()=>{ if(id==="zoneSurface"||id==="zoneFull") syncZoneFields(); updateZoneMetrics(); });
     $(id)?.addEventListener("change", ()=>{ if(id==="zoneSurface"||id==="zoneFull") syncZoneFields(); updateZoneMetrics(); });
   });

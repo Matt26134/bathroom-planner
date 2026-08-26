@@ -4,6 +4,7 @@ const api = window.BP3D;
 const legacy = document.getElementById("threeDCanvas");
 const viewMode = document.getElementById("viewMode");
 const wallsToggle = document.getElementById("wallsToggle");
+const floorXrayToggle = document.getElementById("floorXrayToggle");
 const elevationWrap = document.getElementById("elevationWrap");
 
 if (!api || !legacy) {
@@ -36,9 +37,10 @@ if (!api || !legacy) {
   const root = new THREE.Group();
   const wallRoot = new THREE.Group();
   const surfaceRoot = new THREE.Group();
+  const structureRoot = new THREE.Group();
   const itemRoot = new THREE.Group();
   const fixedRoot = new THREE.Group();
-  scene.add(root, wallRoot, surfaceRoot, itemRoot, fixedRoot);
+  scene.add(root, wallRoot, surfaceRoot, structureRoot, itemRoot, fixedRoot);
 
   const hemi = new THREE.HemisphereLight(0xfffbf2, 0xb8b5ab, 1.75);
   scene.add(hemi);
@@ -70,6 +72,8 @@ if (!api || !legacy) {
     oak: new THREE.MeshStandardMaterial({ color: 0xa7835e, roughness: 0.78 }),
     oakDark: new THREE.MeshStandardMaterial({ color: 0x866845, roughness: 0.82 }),
     timber: new THREE.MeshStandardMaterial({ color: 0xb39875, roughness: 0.8 }),
+    joist: new THREE.MeshStandardMaterial({ color: 0x9b7857, roughness: 0.9 }),
+    heating: new THREE.MeshStandardMaterial({ color: 0xb95037, roughness: 0.7, transparent:true, opacity:.62, side:THREE.DoubleSide }),
     brass: new THREE.MeshStandardMaterial({ color: 0xb88943, roughness: 0.28, metalness: 0.7 }),
     metal: new THREE.MeshStandardMaterial({ color: 0xc8c8c3, roughness: 0.34, metalness: 0.68 }),
     dark: new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.76, metalness: 0.12 }),
@@ -227,6 +231,39 @@ if (!api || !legacy) {
     root.add(new THREE.LineSegments(geo,lineMat));
   }
 
+
+
+  function floorBuildTotal(s){
+    return ((s.floorBuild&&s.floorBuild.layers)||[]).filter(l=>l.enabled!==false).reduce((a,l)=>a+Math.max(0,Number(l.thickness)||0),0);
+  }
+
+  function generatedJoists(s){
+    const st=s.structure||{},arr=[],spacing=Math.max(100,Number(st.spacing)||400),width=Math.max(20,Number(st.width)||47),offset=Math.max(0,Number(st.offset)||0);
+    if(st.direction==="left-right"){
+      for(let y=offset;y<s.room.depth+width;y+=spacing)arr.push({x:0,y:y-width/2,w:s.room.width,h:width});
+    }else{
+      for(let x=offset;x<s.room.width+width;x+=spacing)arr.push({x:x-width/2,y:0,w:width,h:s.room.depth});
+    }
+    return arr;
+  }
+
+  function buildStructure(s){
+    const aboveDeck=mm(floorBuildTotal(s)),deck=mm(Math.max(1,Number(s.structure?.deckThickness)||18)),depth=mm(Math.max(50,Number(s.structure?.depth)||195));
+    const joistTop=-(aboveDeck+deck);
+    generatedJoists(s).forEach(j=>{
+      const m=meshBox(mm(j.w),depth,mm(j.h),mats.joist,mm(j.x+j.w/2),joistTop-depth/2,mm(j.y+j.h/2));
+      structureRoot.add(m);
+    });
+    (s.structure?.noggins||[]).forEach(n=>{
+      const w=Math.max(10,Number(n.w)||300),h=Math.max(10,Number(n.h)||47);
+      const m=meshBox(mm(w),depth*.72,mm(h),mats.joist,mm((Number(n.x)||0)+w/2),joistTop-depth*.36,mm((Number(n.y)||0)+h/2));structureRoot.add(m);
+    });
+    structureRoot.add(meshBox(mm(s.room.width),deck,mm(s.room.depth),mats.wallSide,mm(s.room.width)/2,-aboveDeck-deck/2,mm(s.room.depth)/2,false));
+    if(s.heating?.enabled){
+      const margin=mm(Math.max(0,Number(s.heating.margin)||0)),W=mm(s.room.width)-margin*2,D=mm(s.room.depth)-margin*2;
+      if(W>.05&&D>.05){const heat=meshBox(W,.006,D,mats.heating,mm(s.room.width)/2,-mm(7),mm(s.room.depth)/2,false);structureRoot.add(heat)}
+    }
+  }
 
   function tileById(s,id) {
     return (s.tileProducts || []).find(t => t.id === id);
@@ -776,13 +813,16 @@ if (!api || !legacy) {
       products:(s.products||[]).map(p=>({id:p.id,finish:p.finish,style:p.style,width:p.width,depth:p.depth,height:p.height})),
       tileProducts:(s.tileProducts||[]).map(t=>({id:t.id,w:t.width,h:t.height,finish:t.finish,dp:t.defaultPattern,imgKey:(t.image||"").length+":"+(t.image||"").slice(0,64),pKey:(t.patternImage||"").length+":"+(t.patternImage||"").slice(0,64)})),
       surfaceZones:(s.surfaceZones||[]).map(z=>({id:z.id,name:z.name,surface:z.surface,full:z.full,x1:z.x1,x2:z.x2,y1:z.y1,y2:z.y2,start:z.start,end:z.end,bottom:z.bottom,top:z.top,tileId:z.tileId,pattern:z.pattern,orientation:z.orientation,enabled:z.enabled,grout:z.grout,groutColor:z.groutColor,waste:z.waste})),
-      wallFixtures:s.wallFixtures||[]
+      wallFixtures:s.wallFixtures||[],
+      floorBuild:s.floorBuild||{},
+      structure:s.structure||{},
+      heating:s.heating||{}
     });
     if(!force && sig===signature) return;
     signature=sig; room=s.room;
-    clearGroup(root);clearGroup(wallRoot);clearGroup(surfaceRoot);clearGroup(itemRoot);clearGroup(fixedRoot);
+    clearGroup(root);clearGroup(wallRoot);clearGroup(surfaceRoot);clearGroup(structureRoot);clearGroup(itemRoot);clearGroup(fixedRoot);
     itemMeshes=[];
-    buildFloor(s);buildWalls(s);buildRoomWallShowerHardware(s);buildSurfaceZones(s);
+    buildFloor(s);buildWalls(s);buildRoomWallShowerHardware(s);buildSurfaceZones(s);buildStructure(s);
     (s.items||[]).forEach(i=>{
       const g=buildItem(i,s);
       itemRoot.add(g);
@@ -804,9 +844,11 @@ if (!api || !legacy) {
 
   function updateWallVisibility() {
     if(!room)return;
-    const W=mm(room.width),D=mm(room.depth),show=wallsToggle?.checked!==false;
+    const W=mm(room.width),D=mm(room.depth),show=wallsToggle?.checked!==false,xray=floorXrayToggle?.checked===true;
+    root.visible=!xray;
+    structureRoot.visible=xray;
     Object.values(wallSets).flat().forEach(m=>m.visible=show);
-    Object.entries(surfaceSets).forEach(([side,list])=>list.forEach(m=>m.visible=(side==="floor")?true:show));
+    Object.entries(surfaceSets).forEach(([side,list])=>list.forEach(m=>m.visible=(side==="floor")?!xray:show));
     if(!show)return;
     const margin=.06;
     if(camera.position.x < -margin){ wallSets.left.forEach(m=>m.visible=false); surfaceSets.left.forEach(m=>m.visible=false); }

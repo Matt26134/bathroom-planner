@@ -1,1 +1,1 @@
-// V1.7.4 compatibility file. Core app code remains embedded in index.html.
+// V2.0.0 compatibility file. Core app remains embedded; new Build features live in build-manager.js.

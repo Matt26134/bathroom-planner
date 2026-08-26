@@ -620,10 +620,14 @@ if (!api || !legacy) {
     if(ctl){
       const along=THREE.MathUtils.clamp(mm(Number(ctl.along||0)-Number(i.x||0))-w/2,-w*.42,w*.42);
       const cy=mm(ctl.bottom||950)+.10;
-      const face=d/2+.012; // shower-facing side for current horizontal stud
+      // In this room the shower-facing side is the negative local-Z face of the
+      // half-height stud. V1.9.0 used the opposite face, so the controls appeared
+      // on the vanity side. Keep the plate just proud of the shower face and let
+      // the knobs project further into the shower.
+      const face=-d/2-.012;
       const plate=meshBox(.15,.20,.018,mats.dark,along,cy,face,false);g.add(plate);
-      const k1=cylinder(.021,.03,mats.dark,"z",20);k1.position.set(along,cy+.055,face+.022);g.add(k1);
-      const k2=cylinder(.021,.03,mats.dark,"z",20);k2.position.set(along,cy-.055,face+.022);g.add(k2);
+      const k1=cylinder(.021,.03,mats.dark,"z",20);k1.position.set(along,cy+.055,face-.022);g.add(k1);
+      const k2=cylinder(.021,.03,mats.dark,"z",20);k2.position.set(along,cy-.055,face-.022);g.add(k2);
     }
     return setItemId(g,i.id);
   }

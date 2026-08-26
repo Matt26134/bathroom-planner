@@ -1,21 +1,27 @@
-# Bathroom Planner V1.7.2
+# Bathroom Planner V1.7.3
 
-Rotation correction.
+Product-aware bath rendering.
 
-Fixed:
-- objects rotate around their centre instead of their top-left corner
-- 0° -> 90° -> 180° -> 270° -> 0°
-- 90° and 270° swap the footprint correctly
-- the 2D plan and Three.js 3D use the same angle convention
-- the editor shows which wall the object's FRONT is facing
-- clearer front-direction marker in 2D and a small matching marker in 3D
-- removed duplicated old Product/3D code that had accumulated inside index.html
+Why the imported bath looked generic:
+- the Product Library stored its image and real dimensions correctly
+- but the V1.7 renderer only had a generic bath model
+- the Lille vanity looked better because it already had a dedicated 2-drawer vanity renderer
 
-The previous version could rotate the angle but move the footprint around the wrong anchor,
-which made the 2D and 3D layouts look inconsistent.
+V1.7.3 fixes that gap:
+- imported bath products can now choose bath-specific 3D styles
+- Straight single-ended bath · right
+- Straight single-ended bath · left
+- Straight double-ended bath
+- Freestanding oval bath (library option prepared for later renderer extension)
+- the Legend right-hand bath JSON style `straightSingleEndedRight` is now understood by 3D
+- better bath rim, acrylic body, inner floor, sloping bath sides/end, waste/overflow detail
+- handed end is visually differentiated
+- product image remains a reference image, while type/dimensions/3D style drive geometry
+- removed the teal 3D orientation arrows now that rotation has been debugged
 
 Update:
 1. Extract the ZIP.
-2. Upload ALL files to the root of the existing bathroom-planner repo.
+2. Upload ALL files to the repo root.
 3. Commit.
-4. Open the app and tap Reload latest if needed.
+4. Tap Reload latest.
+5. Existing imported Legend product should automatically render with its product-specific style.

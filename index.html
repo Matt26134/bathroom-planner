@@ -96,7 +96,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.7.2 · rotation fix</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.7.3 · product-aware bath</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -333,10 +333,18 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       </select></label>
       <label>Finish / colour<input id="prodFinish"></label>
       <label>3D style<select id="prodStyle">
-        <option value="box">Generic</option><option value="vanity2drawer">2-drawer vanity</option>
+        <option value="box">Generic</option>
+        <option value="vanity2drawer">2-drawer vanity</option>
+        <option value="straightSingleEndedRight">Straight single-ended bath · right</option>
+        <option value="straightSingleEndedLeft">Straight single-ended bath · left</option>
+        <option value="doubleEndedBath">Straight double-ended bath</option>
+        <option value="freestandingOvalBath">Freestanding oval bath</option>
       </select></label>
     </div>
 
+    <div id="product3dNote" class="productNote">
+      Product images are saved as references. The 3D model is generated from the product type, dimensions and 3D style.
+    </div>
     <div class="section">Dimensions</div>
     <div class="grid">
       <label>Width (mm)<input id="prodWidth" type="number"></label>
@@ -379,7 +387,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.7.2", KEY="bathroomPlannerStable";
+const VERSION="1.7.3", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 

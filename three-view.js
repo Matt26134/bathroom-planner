@@ -184,21 +184,93 @@ if (!api || !legacy) {
     root.add(new THREE.LineSegments(geo,lineMat));
   }
 
-  function buildBath(i) {
+  function buildBath(i,s) {
     const g=groupForItem(i), w=mm(i.w), d=mm(i.h), h=mm(i.height || 550), z=mm(i.z||0);
-    const body=meshBox(w,h*.80,d,mats.ceramic,0,z+h*.40,0);
-    g.add(body);
-    const rimH=.045, rimT=Math.min(.07,Math.min(w,d)*.10);
-    g.add(meshBox(w,rimH,rimT,mats.ceramic,0,z+h-rimH/2,-d/2+rimT/2));
-    g.add(meshBox(w,rimH,rimT,mats.ceramic,0,z+h-rimH/2,d/2-rimT/2));
-    g.add(meshBox(rimT,rimH,Math.max(.03,d-rimT*2),mats.ceramic,-w/2+rimT/2,z+h-rimH/2,0));
-    g.add(meshBox(rimT,rimH,Math.max(.03,d-rimT*2),mats.ceramic,w/2-rimT/2,z+h-rimH/2,0));
-    const cavity=meshBox(Math.max(.05,w-rimT*2.5),.025,Math.max(.05,d-rimT*2.5),mats.ceramicInner,0,z+h-.065,0,false);
-    g.add(cavity);
-    const drain=cylinder(.018,.006,mats.metal,"y",24);drain.position.set(w*.32,z+h-.048,0);g.add(drain);
+    const prod=(s.products||[]).find(p=>p.id===i.productId);
+    const style=prod?.style || "box";
+
+    // Slightly warmer white acrylic than the ceramic WC/vanity basin.
+    const acrylic=new THREE.MeshStandardMaterial({color:0xf8f7f3,roughness:.34});
+    const panel=new THREE.MeshStandardMaterial({color:0xf1f0ec,roughness:.52});
+    const inner=new THREE.MeshStandardMaterial({color:0xe8e8e4,roughness:.42});
+
+    // Outer panels / bath body.
+    const panelT=.035;
+    g.add(meshBox(w,h*.78,panelT,panel,0,z+h*.39,d/2-panelT/2));
+    g.add(meshBox(w,h*.78,panelT,panel,0,z+h*.39,-d/2+panelT/2));
+    g.add(meshBox(panelT,h*.78,d,panel,-w/2+panelT/2,z+h*.39,0));
+    g.add(meshBox(panelT,h*.78,d,panel,w/2-panelT/2,z+h*.39,0));
+
+    // Top rim.
+    const rimH=.045, rimT=Math.min(.065,Math.min(w,d)*.09);
+    g.add(meshBox(w,rimH,rimT,acrylic,0,z+h-rimH/2,-d/2+rimT/2));
+    g.add(meshBox(w,rimH,rimT,acrylic,0,z+h-rimH/2,d/2-rimT/2));
+    g.add(meshBox(rimT,rimH,Math.max(.04,d-rimT*2),acrylic,-w/2+rimT/2,z+h-rimH/2,0));
+    g.add(meshBox(rimT,rimH,Math.max(.04,d-rimT*2),acrylic,w/2-rimT/2,z+h-rimH/2,0));
+
+    // Inner floor.
+    const innerW=Math.max(.25,w-rimT*2.6), innerD=Math.max(.18,d-rimT*2.6);
+    g.add(meshBox(innerW,.025,innerD,inner,0,z+h*.27,0,false));
+
+    // Inner long side slopes.
+    const longSideH=h*.50;
+    const ls1=meshBox(innerW,longSideH,.025,inner,0,z+h*.54,-innerD/2,false);
+    ls1.rotation.x=-0.16; g.add(ls1);
+    const ls2=meshBox(innerW,longSideH,.025,inner,0,z+h*.54,innerD/2,false);
+    ls2.rotation.x=0.16; g.add(ls2);
+
+    // End profiles. Single-ended baths get one stronger backrest.
+    const singleRight=style==="straightSingleEndedRight";
+    const singleLeft=style==="straightSingleEndedLeft";
+    const doubleEnded=style==="doubleEndedBath";
+    const backH=h*.58;
+
+    const leftEnd=meshBox(.03,backH,innerD,inner,-innerW/2,z+h*.58,0,false);
+    const rightEnd=meshBox(.03,backH,innerD,inner,innerW/2,z+h*.58,0,false);
+
+    if(singleRight){
+      leftEnd.rotation.z=-0.23;
+      rightEnd.rotation.z=0.04;
+    }else if(singleLeft){
+      leftEnd.rotation.z=-0.04;
+      rightEnd.rotation.z=0.23;
+    }else if(doubleEnded){
+      leftEnd.rotation.z=-0.20;
+      rightEnd.rotation.z=0.20;
+    }else{
+      leftEnd.rotation.z=-0.14;
+      rightEnd.rotation.z=0.14;
+    }
+    g.add(leftEnd,rightEnd);
+
+    // Waste and overflow.
+    let drainX=0;
+    if(singleRight) drainX=w*.23;
+    if(singleLeft) drainX=-w*.23;
+    const drain=cylinder(.018,.007,mats.metal,"y",26);
+    drain.position.set(drainX,z+h*.295,0); g.add(drain);
+
+    const overflow=cylinder(.012,.007,mats.metal,"x",22);
+    overflow.position.set(singleRight?w*.41:singleLeft?-w*.41:0,z+h*.66,0);
+    overflow.rotation.z=Math.PI/2;
+    g.add(overflow);
+
+    // Centre-deck tap holes / minimal tap placeholder when product data says centre.
+    const tapLoc=(prod?.tapLocation||"").toLowerCase();
+    if(tapLoc.includes("centre")){
+      const tapBase=cylinder(.012,.025,mats.metal,"y",20);
+      tapBase.position.set(0,z+h+.015,-d/2+rimT*.65);
+      g.add(tapBase);
+    }
+
+    // A subtle bath-end marker on the "handed" end so left/right styles are visually distinct.
+    if(singleRight || singleLeft){
+      const marker=meshBox(.09,.012,.018,mats.brass,singleRight?w*.39:-w*.39,z+h+.012,-d/2+rimT*.62,false);
+      g.add(marker);
+    }
+
     return setItemId(g,i.id);
   }
-
   function buildWC(i) {
     const g=groupForItem(i), w=mm(i.w), d=mm(i.h), h=mm(i.height||800), z=mm(i.z||0);
     const cis=meshBox(w*.82,h*.46,d*.26,mats.ceramic,0,z+h*.66,-d*.34);
@@ -313,7 +385,7 @@ if (!api || !legacy) {
 
   function buildItem(i,s) {
     if(i.type==="niche") return buildNiche(i,s);
-    if(i.type==="bath") return buildBath(i);
+    if(i.type==="bath") return buildBath(i,s);
     if(i.type==="wc") return buildWC(i);
     if(i.type==="vanity") return buildVanity(i,s);
     if(i.type==="shower") return buildShower(i);
@@ -323,17 +395,6 @@ if (!api || !legacy) {
     return buildGeneric(i);
   }
 
-  function addFacingMarker(i,g) {
-    if(i.type==="niche" || i.type==="stud" || i.type==="radiator") return;
-    const d0=mm(i.h);
-    const len=Math.max(.08,Math.min(.18,Math.min(mm(i.w),mm(i.h))*.28));
-    const mat=new THREE.MeshStandardMaterial({color:0x55777f,roughness:.42});
-    const shaft=meshBox(.014,.010,len,mat,0,.022,d0/2+len/2+.018,false);
-    const tip=new THREE.Mesh(new THREE.ConeGeometry(.026,.07,16),mat);
-    tip.rotation.x=Math.PI/2;
-    tip.position.set(0,.022,d0/2+len+.055);
-    g.add(shaft,tip);
-  }
 
   function clearGroup(g) {
     while(g.children.length){
@@ -360,7 +421,6 @@ if (!api || !legacy) {
     buildFloor(s);buildWalls(s);
     (s.items||[]).forEach(i=>{
       const g=buildItem(i,s);
-      addFacingMarker(i,g);
       itemRoot.add(g);
       itemMeshes.push(g);
     });

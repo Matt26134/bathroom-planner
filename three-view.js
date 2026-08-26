@@ -177,7 +177,7 @@ if (!api || !legacy) {
     // Closed leaf runs from hinge towards 'before door'; positive Y rotation swings it into the room.
     const doorPivot = new THREE.Group();
     doorPivot.position.set(W-.028,0,de);
-    doorPivot.rotation.y = THREE.MathUtils.degToRad(58);
+    doorPivot.rotation.y = THREE.MathUtils.degToRad(22);
     const leaf = meshBox(leafT,dh-.03,dw-.035,doorLeafMat,-leafT/2,(dh-.03)/2,-(dw-.035)/2);
     doorPivot.add(leaf);
 
@@ -588,7 +588,7 @@ if (!api || !legacy) {
       // is the physical back wall of the room. Hardware is therefore mounted
       // against +d/2, not on the glass/stud at the entry.
       const backZ=d/2-.025;
-      const headX=w*.23;
+      const headX=-w*.23;
       const headY=Math.min(mm(s.room.ceiling)-.22,2.08);
 
       // Vertical supply/riser visibly touching the back wall.
@@ -612,7 +612,7 @@ if (!api || !legacy) {
       g.add(head);
 
       // Handset and slide rail: also mounted on the back wall.
-      const railX=-w*.22;
+      const railX=w*.22;
       const rail=cylinder(.008,.62,mats.brass,"y",16);
       rail.position.set(railX,z+h+1.27,backZ-.005);
       g.add(rail);
@@ -625,7 +625,7 @@ if (!api || !legacy) {
       // Controls belong on the half-height stud / entry wall, facing into shower.
       // local -Z is the entry edge where the current stud wall sits.
       const frontZ=-d/2+.022;
-      const controlsX=-w*.13;
+      const controlsX=w*.13;
       const plate=meshBox(.15,.20,.018,mats.brass,controlsX,z+h+1.03,frontZ,false);
       g.add(plate);
 

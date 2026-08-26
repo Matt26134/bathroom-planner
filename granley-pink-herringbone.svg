@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="840" viewBox="0 0 840 840">
+  <rect width="100%" height="100%" fill="#f7f2f1"/>
+  <defs>
+    <pattern id="diag" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="12" height="12" fill="#e8bcc6"/>
+      <rect width="6" height="12" fill="#e4b4c0" opacity="0.35"/>
+    </pattern>
+    <g id="tileA">
+      <rect x="0" y="0" width="84" height="336" rx="2" fill="url(#diag)" stroke="#f8f1f0" stroke-width="10" transform="rotate(45 42 168)"/>
+    </g>
+    <g id="tileB">
+      <rect x="0" y="0" width="84" height="336" rx="2" fill="url(#diag)" stroke="#f8f1f0" stroke-width="10" transform="rotate(-45 42 168)"/>
+    </g>
+  </defs>
+  <g transform="translate(42,42)">
+    <g transform="translate(-126.0,-252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(126.0,-252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(378.0,-252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(630.0,-252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(882.0,-252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(1134.0,-252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(-252,0)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(0,0)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(252,0)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(504,0)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(756,0)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(1008,0)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(-126.0,252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(126.0,252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(378.0,252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(630.0,252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(882.0,252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(1134.0,252)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(-252,504)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(0,504)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(252,504)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(504,504)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(756,504)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(1008,504)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(-126.0,756)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(126.0,756)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(378.0,756)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(630.0,756)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(882.0,756)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(1134.0,756)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(-252,1008)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(0,1008)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(252,1008)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(504,1008)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(756,1008)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+    <g transform="translate(1008,1008)"><use href="#tileA"/><use href="#tileB" transform="translate(168,0)"/></g>
+  </g>
+</svg>

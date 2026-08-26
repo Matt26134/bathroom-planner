@@ -12,13 +12,20 @@
 
   const DEFAULT_TILES = [
     {id:"tile-laurito-3060",name:"Laurito White Marble Effect Wall & Floor Tiles 300 x 600mm",supplier:"Victorian Plumbing",sku:"LAU3060",finish:"White marble effect",width:300,height:600,tilesPerBox:7,wall:true,floor:true,pricePerBox:31.44,pricePerM2:24.95,defaultPattern:"stack",image:"./laurito-tile.webp",builtIn:true},
-    {id:"tile-granley-pink",name:"Granley Rustic Pink Gloss Wall Tiles 70 x 280mm",supplier:"Victorian Plumbing",sku:"GRN728PNK",finish:"Rustic pink gloss",width:70,height:280,tilesPerBox:30,wall:true,floor:false,pricePerBox:29.47,pricePerM2:49.95,defaultPattern:"herringbone",image:"./granley-pink-tile.webp",patternImage:"./granley-pink-herringbone.webp",builtIn:true}
+    {id:"tile-granley-pink",name:"Granley Rustic Pink Gloss Wall Tiles 70 x 280mm",supplier:"Victorian Plumbing",sku:"GRN728PNK",finish:"Rustic pink gloss",width:70,height:280,tilesPerBox:30,wall:true,floor:false,pricePerBox:29.47,pricePerM2:49.95,defaultPattern:"herringbone",image:"./granley-pink-tile.webp",patternImage:"./granley-pink-herringbone.svg",builtIn:true}
   ];
 
   function ensureData(){
     const s = state();
     if(!Array.isArray(s.tileProducts)) s.tileProducts = [];
-    DEFAULT_TILES.forEach(t=>{ if(!s.tileProducts.some(x=>x.id===t.id)) s.tileProducts.push(clone(t)); });
+    DEFAULT_TILES.forEach(t=>{
+      const existing = s.tileProducts.find(x=>x.id===t.id);
+      if(existing){
+        if(existing.builtIn!==false) Object.assign(existing, clone(t), {image: existing.image || t.image});
+      }else{
+        s.tileProducts.push(clone(t));
+      }
+    });
     if(!Array.isArray(s.surfaceZones)) s.surfaceZones = [];
   }
   function tileById(id){ return (state().tileProducts||[]).find(t=>t.id===id); }

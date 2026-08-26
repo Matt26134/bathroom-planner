@@ -163,6 +163,34 @@ if (!api || !legacy) {
     addWallBox("right", T,H,after, W+T/2,H/2,de+after/2);
     addWallBox("right", T,over,dw, W+T/2,dh+over/2,db+dw/2);
 
+    // Visible door frame + inward-opening door leaf.
+    // The wall opening remains the source of truth; the leaf is a visual aid.
+    const doorFrameMat = new THREE.MeshStandardMaterial({color:0xe9e4da,roughness:.62});
+    const doorLeafMat = new THREE.MeshStandardMaterial({color:0xf1eee7,roughness:.72});
+    const trim=.045, leafT=.035;
+
+    fixedRoot.add(meshBox(trim,dh+.07,.07,doorFrameMat,W-.018,(dh+.07)/2,db,false));
+    fixedRoot.add(meshBox(trim,dh+.07,.07,doorFrameMat,W-.018,(dh+.07)/2,de,false));
+    fixedRoot.add(meshBox(trim,dw+.09,.07,doorFrameMat,W-.018,dh+.025,db+dw/2,false));
+
+    // Hinged at the back/lower end of the opening and shown partially open.
+    // Closed leaf runs from hinge towards 'before door'; positive Y rotation swings it into the room.
+    const doorPivot = new THREE.Group();
+    doorPivot.position.set(W-.028,0,de);
+    doorPivot.rotation.y = THREE.MathUtils.degToRad(58);
+    const leaf = meshBox(leafT,dh-.03,dw-.035,doorLeafMat,-leafT/2,(dh-.03)/2,-(dw-.035)/2);
+    doorPivot.add(leaf);
+
+    const handleMat=mats.brass;
+    const handleY=Math.min(1.02,dh*.52);
+    const handleZ=-(dw-.035)*.78;
+    const handleStem=cylinder(.012,.055,handleMat,"x",18);
+    handleStem.position.set(-.045,handleY,handleZ);
+    doorPivot.add(handleStem);
+    const handleBar=meshBox(.018,.018,.11,handleMat,-.074,handleY,handleZ-.045,false);
+    doorPivot.add(handleBar);
+    fixedRoot.add(doorPivot);
+
     // Window frame + glass
     const frameMat = new THREE.MeshStandardMaterial({color:0xc8c2b6,roughness:.55});
     const fw=.035;
@@ -518,45 +546,96 @@ if (!api || !legacy) {
     const prod=(s.products||[]).find(p=>p.id===i.productId);
     const style=prod?.style || "showerWalkInRain";
 
-    // Tray with a shallow inset standing area.
+    // Low tray / shower floor.
     g.add(meshBox(w,h,d,mats.ceramic,0,z+h/2,0));
-    const inset=meshBox(Math.max(.10,w-.08),.008,Math.max(.10,d-.08),mats.ceramicInner,0,z+h+.004,0,false);
+    const inset=meshBox(Math.max(.10,w-.07),.008,Math.max(.10,d-.07),mats.ceramicInner,0,z+h+.004,0,false);
     g.add(inset);
 
+    // Waste positioned towards the back/outer corner, clear of the entry.
     const drain=cylinder(.032,.008,mats.metal,"y",28);
-    drain.position.set(-w*.28,z+h+.01,d*.22);g.add(drain);
+    drain.position.set(-w*.28,z+h+.012,d*.27);
+    g.add(drain);
 
-    // Walk-in glass panel down the left side of the local shower footprint.
-    const glassH=Math.min(2.05,Math.max(1.75,mm(s.room.ceiling)-.35));
-    const panelLen=Math.min(d*.72,1.00);
-    const glass=meshBox(.012,glassH,panelLen,mats.glass,-w/2+.012,z+h+glassH/2,-d/2+panelLen/2+.05,false);
-    g.add(glass);
+    // Check whether a separate half-height stud wall already borders the shower.
+    // If it does, buildStud() supplies the glass above it, so do NOT add another
+    // freestanding glass panel here.
+    const showerBox={
+      x1:i.x, x2:i.x+itemDims(i).w,
+      y1:i.y, y2:i.y+itemDims(i).d
+    };
+    const nearbyStud=(s.items||[]).find(o=>{
+      if(o.type!=="stud") return false;
+      const od=itemDims(o), b={x1:o.x,x2:o.x+od.w,y1:o.y,y2:o.y+od.d};
+      const xOverlap=Math.min(showerBox.x2,b.x2)-Math.max(showerBox.x1,b.x1);
+      const yOverlap=Math.min(showerBox.y2,b.y2)-Math.max(showerBox.y1,b.y1);
+      const nearFront=Math.abs(b.y2-showerBox.y1)<=.12*1000 || Math.abs(b.y1-showerBox.y1)<=.12*1000;
+      return xOverlap>80 && (yOverlap>0 || nearFront);
+    });
 
-    // Minimal brass/metal top brace.
-    const brace=meshBox(Math.min(w*.55,.65),.016,.016,mats.brass,-w/2+Math.min(w*.55,.65)/2,z+h+glassH-.04,-d/2+panelLen+.04,false);
-    g.add(brace);
+    if(!nearbyStud){
+      // Generic walk-in fallback: a front-edge glass screen rather than a side
+      // panel, leaving an open entry gap.
+      const glassH=Math.min(2.05,Math.max(1.75,mm(s.room.ceiling)-.35));
+      const panelW=Math.min(w*.66,1.00);
+      const glass=meshBox(panelW,glassH,.012,mats.glass,-w/2+panelW/2,z+h+glassH/2,-d/2+.012,false);
+      g.add(glass);
+      const cap=meshBox(panelW,.018,.025,mats.brass,-w/2+panelW/2,z+h+glassH+.009,-d/2+.012,false);
+      g.add(cap);
+    }
 
     if(style==="showerWalkInRain"){
-      // Rain head and wall arm on the back wall of the shower's local footprint.
-      const riser=cylinder(.010,1.15,mats.brass,"y",18);
-      riser.position.set(w*.30,z+h+1.30,-d/2+.06);g.add(riser);
+      // IMPORTANT: local +Z is the rear of the shower. In the current plan that
+      // is the physical back wall of the room. Hardware is therefore mounted
+      // against +d/2, not on the glass/stud at the entry.
+      const backZ=d/2-.025;
+      const headX=w*.23;
+      const headY=Math.min(mm(s.room.ceiling)-.22,2.08);
 
-      const arm=meshBox(.018,.018,.28,mats.brass,w*.30,z+h+1.86,-d/2+.18);
+      // Vertical supply/riser visibly touching the back wall.
+      const riser=cylinder(.010,.72,mats.brass,"y",18);
+      riser.position.set(headX,headY-.42,backZ);
+      g.add(riser);
+
+      // Wall arm comes OUT from the back wall towards the shower centre.
+      const armLen=.30;
+      const arm=meshBox(.018,.018,armLen,mats.brass,headX,headY,backZ-armLen/2,false);
       g.add(arm);
 
-      const head=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.018,42),mats.brass);
-      head.position.set(w*.30,z+h+1.86,-d/2+.34);g.add(head);
+      // Short drop and overhead rain head.
+      const drop=cylinder(.010,.07,mats.brass,"y",18);
+      drop.position.set(headX,headY-.035,backZ-armLen+.015);
+      g.add(drop);
 
-      // Handset + rail.
+      const head=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.018,42),mats.brass);
+      head.position.set(headX,headY-.075,backZ-armLen+.015);
+      head.castShadow=true;
+      g.add(head);
+
+      // Handset and slide rail: also mounted on the back wall.
+      const railX=-w*.22;
       const rail=cylinder(.008,.62,mats.brass,"y",16);
-      rail.position.set(-w*.18,z+h+1.15,-d/2+.05);g.add(rail);
-      const handset=cylinder(.018,.16,mats.brass,"y",18);
-      handset.position.set(-w*.18,z+h+1.38,-d/2+.09);handset.rotation.z=.24;g.add(handset);
+      rail.position.set(railX,z+h+1.27,backZ-.005);
+      g.add(rail);
 
-      // Control plate on the side nearest the stud/entry.
-      const controls=meshBox(.10,.18,.018,mats.brass,-w/2+.055,z+h+1.05,0,false);g.add(controls);
-      const knob1=cylinder(.018,.022,mats.brass,"x",20);knob1.position.set(-w/2+.035,z+h+1.10,-.03);g.add(knob1);
-      const knob2=cylinder(.018,.022,mats.brass,"x",20);knob2.position.set(-w/2+.035,z+h+1.00,.03);g.add(knob2);
+      const handset=cylinder(.018,.17,mats.brass,"y",18);
+      handset.position.set(railX+.035,z+h+1.43,backZ-.07);
+      handset.rotation.z=.25;
+      g.add(handset);
+
+      // Controls belong on the half-height stud / entry wall, facing into shower.
+      // local -Z is the entry edge where the current stud wall sits.
+      const frontZ=-d/2+.022;
+      const controlsX=-w*.13;
+      const plate=meshBox(.15,.20,.018,mats.brass,controlsX,z+h+1.03,frontZ,false);
+      g.add(plate);
+
+      const knob1=cylinder(.021,.028,mats.brass,"z",20);
+      knob1.position.set(controlsX,z+h+1.09,frontZ+.022);
+      g.add(knob1);
+
+      const knob2=cylinder(.021,.028,mats.brass,"z",20);
+      knob2.position.set(controlsX,z+h+.98,frontZ+.022);
+      g.add(knob2);
     }
 
     return setItemId(g,i.id);

@@ -195,7 +195,7 @@ if (!api || !legacy) {
     doorPivot.add(handleStem);
     const handleBar=meshBox(.016,.016,.09,handleMat,-.062,handleY,handleZ-(dir*.03),false);
     doorPivot.add(handleBar);
-    fixedRoot.add(doorPivot);
+    addWallPart("right", doorPivot);
 
     // Window frame + glass
     const frameMat = new THREE.MeshStandardMaterial({color:0xc8c2b6,roughness:.55});
@@ -594,7 +594,28 @@ if (!api || !legacy) {
       // is the physical back wall of the room. Hardware is therefore mounted
       // against +d/2, not on the glass/stud at the entry.
       const backZ=d/2-.025;
-      const side=(i.showerMountSide||"right")==="left" ? -1 : 1;
+      let adjacentSide=1;
+      const showerCenterX=i.x + itemDims(i).w/2;
+      if(nearbyStud){
+        const sd=itemDims(nearbyStud);
+        const studCenterX=nearbyStud.x + sd.w/2;
+        adjacentSide = studCenterX >= showerCenterX ? 1 : -1;
+      }else{
+        const nearestVanity=(s.items||[]).filter(o=>o.type==="vanity").sort((a,b)=>{
+          const ad=itemDims(a), bd=itemDims(b);
+          const acx=a.x+ad.w/2, acy=a.y+ad.d/2;
+          const bcx=b.x+bd.w/2, bcy=b.y+bd.d/2;
+          const scy=i.y+itemDims(i).d/2;
+          return ((acx-showerCenterX)**2 + (acy-scy)**2) - ((bcx-showerCenterX)**2 + (bcy-scy)**2);
+        })[0];
+        if(nearestVanity){
+          const vd=itemDims(nearestVanity);
+          const vanityCenterX=nearestVanity.x + vd.w/2;
+          adjacentSide = vanityCenterX >= showerCenterX ? 1 : -1;
+        }
+      }
+      const pref=(i.showerMountSide||"right");
+      const side=pref==="left" ? -adjacentSide : adjacentSide;
       const headX=side*w*.23;
       const headY=Math.min(mm(s.room.ceiling)-.22,2.08);
 
@@ -619,7 +640,7 @@ if (!api || !legacy) {
       g.add(head);
 
       // Handset and slide rail: also mounted on the back wall.
-      const railX=side*w*.14;
+      const railX=side*w*.18;
       const rail=cylinder(.008,.62,mats.brass,"y",16);
       rail.position.set(railX,z+h+1.27,backZ-.005);
       g.add(rail);
@@ -632,7 +653,7 @@ if (!api || !legacy) {
       // Controls belong on the half-height stud / entry wall, facing into shower.
       // local -Z is the entry edge where the current stud wall sits.
       const frontZ=-d/2+.022;
-      const controlsX=side*w*.14;
+      const controlsX=side*w*.20;
       const plate=meshBox(.15,.20,.018,mats.brass,controlsX,z+h+1.03,frontZ,false);
       g.add(plate);
 

@@ -83,7 +83,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 .view3dShell{background:var(--panel);border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow)}
 .view3dTop{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px;border-bottom:1px solid #ece8df}
 .view3dTop .spacer{flex:1}.view3dTop select{width:auto;min-height:36px}.view3dTop button{min-height:36px;font-size:.82rem}
-#threeDCanvas{display:block;width:100%;height:min(66vh,680px);min-height:440px;background:linear-gradient(#fbfaf7,#f2efe8);touch-action:none}
+#threeDCanvas{display:block;width:100%;height:min(66vh,680px);min-height:440px;background:linear-gradient(#fbfaf7,#f2efe8);touch-action:none}.legacy3d-hidden{display:none!important}.threeWebgl{display:block;width:100%;height:min(66vh,680px);min-height:440px;background:linear-gradient(#faf8f3,#eee9df);touch-action:none}.threeStatus{position:absolute;left:10px;bottom:10px;z-index:4;background:rgba(255,253,249,.88);backdrop-filter:blur(7px);border:1px solid rgba(205,199,187,.85);border-radius:999px;padding:6px 9px;font-size:.72rem;font-weight:800;color:#5d6058;pointer-events:none}.view3dShell{position:relative}
 .threeDHint{font-size:.79rem;color:var(--muted);padding:8px 10px;border-top:1px solid #ece8df}
 .elevationWrap{display:none;background:#fffefa}.elevationWrap.show{display:block}
 .elevationSvg{display:block;width:100%;height:min(66vh,680px);min-height:440px;background:#fffefa}
@@ -96,7 +96,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.6.0 · product library</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.7.0 · visual 3D</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -166,7 +166,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
     </div>
     <canvas id="threeDCanvas"></canvas>
     <div id="elevationWrap" class="elevationWrap"><svg id="elevationSvg" class="elevationSvg"></svg></div>
-    <div class="threeDHint">3D: drag to orbit · pinch to zoom · tap an object to edit its height. Heights are starter estimates until you measure them.</div>
+    <div class="threeDHint">3D: drag to orbit · pinch to zoom · tap a fixture to edit it. The nearest wall hides automatically so you can see into the room.</div>
   </div>
 </section>
 
@@ -379,7 +379,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.6.0", KEY="bathroomPlannerStable";
+const VERSION="1.7.0", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -1737,7 +1737,20 @@ svg.addEventListener("pointercancel",finishPointer);
 
 sync();updateUndoRedo();resetView(false);render();renderProducts();
 $("statusHint").textContent="Drag fixtures · pinch to zoom · tap an item for measurements. · V"+VERSION;
+
+window.BP3D={
+ getState:()=>state,
+ getSelected:()=>selected,
+ selectItem:(id)=>{
+  selected={kind:"item",id};
+  render();
+  openSelectedSheet();
+ },
+ refresh2D:()=>render()
+};
+
 })();
 </script>
+<script type="module" src="./three-view.js"></script>
 </body>
 </html>

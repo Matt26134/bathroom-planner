@@ -1,23 +1,36 @@
-# Bathroom Planner V1.6.0
+# Bathroom Planner V1.7.0
 
 Complete replacement package.
 
-New:
-- Product Library tab
-- Bath Lab Lille 800mm antique-oak wall-hung vanity seeded as the first test product
-- exact real product dimensions: 805 W x 460 D x 539 H mm
-- custom 2D representation and enhanced 3D vanity representation
-- add a product photo directly in the app
-- create/edit reusable products without rebuilding GitHub
-- locally compressed product photos
-- place products into the plan with one tap
-- import/export individual product JSON files
-- product URLs, supplier, SKU, finish, mounting type and notes stored in the library
+V1.7 is the final major V1 feature pass before plumbing.
 
-Important:
-The static app can store a photo and manually-entered product details directly.
-It cannot reliably scrape arbitrary retailer webpages or use AI vision by itself without a backend/API.
-For AI extraction, a product can be analysed in ChatGPT and imported as a small product JSON file — no app rebuild required.
+3D overhaul:
+- new Three.js WebGL renderer for the 3D room
+- no permanent floating object labels
+- automatic hiding of the nearest exterior wall
+- proper segmented walls around the real window and door openings
+- window frame and transparent glazing
+- better lighting, shadows and perspective
+- recognisable bath with rim/cavity/drain
+- recognisable WC with cistern, bowl and seat
+- improved Lille/product vanity with antique-oak body, drawer fronts, brass handles,
+  ceramic top, basin detail and tap
+- shower tray and drain rather than a large transparent cuboid
+- half-height stud wall with transparent glass above
+- towel radiator modelled as rails rather than a box
+- storage shown as cabinetry
+- niches rendered as wall/stud recess panels rather than floor boxes
+- touch orbit, pinch zoom and tap-to-edit
+- Door / Window / Top / Reset camera presets retained
+- wall toggle retained
+- wall elevations retained
+- 2D Plan, measurements and Product Library unchanged
+
+The 3D renderer loads Three.js from jsDelivr when the 3D view is used, so an internet
+connection is needed for the visual 3D engine. The rest of the app remains local/static.
 
 Update:
-Extract and upload ALL files to the root of the existing GitHub repo, then commit.
+1. Extract the ZIP.
+2. Upload ALL files to the root of your existing bathroom-planner repo.
+3. Commit.
+4. Open the app and tap Reload latest if needed.

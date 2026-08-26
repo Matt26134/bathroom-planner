@@ -1,1 +1,1 @@
-// V1.6.0 compatibility file. App code is embedded in index.html.
+// V1.7.0 compatibility file. Core app code remains embedded in index.html.

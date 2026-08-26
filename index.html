@@ -115,7 +115,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.7 · fixed shower hardware</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.8 · shower wall + mirror drag fix</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -573,7 +573,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.8.7", KEY="bathroomPlannerStable";
+const VERSION="1.8.8", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -869,7 +869,11 @@ function drawItem(i){
  }
  if(i.type==="radiator"){for(let y=i.y+22;y<i.y+d.h-18;y+=42)svg.appendChild(sEl("line",{x1:i.x+12,y1:y,x2:i.x+d.w-12,y2:y,class:"archLine"}))}
  if(i.type==="mirror"){
-   const oval=sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+d.h/2,rx:Math.max(10,d.w*.44),ry:Math.max(10,d.h*.44),fill:"#eef4f4",stroke:"#8aa1a6","stroke-width":"2","vector-effect":"non-scaling-stroke"});
+   const hitH=Math.max(d.h,90), hitY=i.y-(hitH-d.h)/2;
+   const hit=sEl("rect",{x:i.x-10,y:hitY,width:d.w+20,height:hitH,fill:"transparent","data-id":i.id});
+   hit.addEventListener("pointerdown",itemDown);svg.appendChild(hit);
+   const oval=sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+d.h/2,rx:Math.max(10,d.w*.44),ry:Math.max(10,d.h*.44),fill:"#eef4f4",stroke:"#8aa1a6","stroke-width":"2","vector-effect":"non-scaling-stroke","data-id":i.id,style:"cursor:grab"});
+   oval.addEventListener("pointerdown",itemDown);
    svg.appendChild(oval);
  }
  productItemDetails2D(i,d);

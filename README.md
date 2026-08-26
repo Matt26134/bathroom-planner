@@ -1,18 +1,15 @@
-# Bathroom Planner V1.8.7
+# Bathroom Planner V1.8.8
 
-This build hard-fixes the shower hardware layout in 3D based on your latest instruction.
+This build focuses on the two problems reported after V1.8.7.
 
-## What changed
-- The **door fix remains in place**.
-- The **shower hardware is now fixed** rather than trying to follow the shower mount-side toggle.
-- The **rain head and handset now come from the back wall**.
-- The **controls stay on the half-height stud / entry wall**.
-- The shower hardware is now **matte black**.
-- The hardware is rendered to stay aligned to the room intent even if the shower tray is rotated.
-
-## Notes
-- This is intentionally a pragmatic fix: the shower hardware is now treated as a fixed design decision.
-- The old shower-side toggle is no longer meaningful for this shower setup.
+## Fixes in this build
+- **Shower hardware remapped again**.
+  - Rain head and handset are now hard-fixed to the **wall opposite the door / the same wall run the vanity comes off**.
+  - Controls are hard-fixed to the **stud / vanity-side wall**.
+  - Shower hardware finish is now **matte black**.
+- **Mirror dragging improved**.
+  - Mirrors now have a much larger invisible tap/drag target in plan view.
+  - The visible mirror outline itself is also draggable.
 
 ## Update steps
 1. Extract the ZIP.

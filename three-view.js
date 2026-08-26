@@ -75,6 +75,10 @@ if (!api || !legacy) {
       roughness: 0.08, metalness: 0, thickness: 0.012, side: THREE.DoubleSide,
       depthWrite: false
     }),
+    mirror: new THREE.MeshPhysicalMaterial({
+      color: 0xdde7e8, metalness: 0.58, roughness: 0.13,
+      transparent: true, opacity: 0.90, side: THREE.DoubleSide
+    }),
     windowGlass: new THREE.MeshPhysicalMaterial({
       color: 0xc7e2e7, transmission: 0.76, transparent: true, opacity: 0.24,
       roughness: 0.05, thickness: 0.01, side: THREE.DoubleSide, depthWrite: false
@@ -271,17 +275,61 @@ if (!api || !legacy) {
 
     return setItemId(g,i.id);
   }
-  function buildWC(i) {
+  function buildWC(i,s) {
     const g=groupForItem(i), w=mm(i.w), d=mm(i.h), h=mm(i.height||800), z=mm(i.z||0);
-    const cis=meshBox(w*.82,h*.46,d*.26,mats.ceramic,0,z+h*.66,-d*.34);
-    cis.geometry.translate(0,0,0); g.add(cis);
-    const bowl=new THREE.Mesh(new THREE.SphereGeometry(.5,32,20),mats.ceramic);
-    bowl.scale.set(w*.78,h*.34,d*.72);bowl.position.set(0,z+h*.30,d*.08);bowl.castShadow=true;g.add(bowl);
-    const seat=new THREE.Mesh(new THREE.TorusGeometry(Math.min(w,d)*.24,.025,12,40),mats.ceramicInner);
-    seat.rotation.x=Math.PI/2;seat.scale.z=1.25;seat.position.set(0,z+h*.52,d*.10);g.add(seat);
+    const prod=(s.products||[]).find(p=>p.id===i.productId);
+    const style=prod?.style || "wcCloseCoupledRound";
+
+    const isBack=style==="wcBackToWallRound";
+    const isHung=style==="wcWallHungRound";
+    const isSquare=style==="wcCompactSquare";
+
+    // Cistern / back body.
+    if(!isHung){
+      const cisH=isBack?h*.50:h*.44;
+      const cisD=isBack?d*.20:d*.27;
+      const cisY=isBack?-d*.38:-d*.34;
+      const cis=meshBox(w*(isSquare?.88:.82),cisH,cisD,mats.ceramic,0,z+h*.72,cisY);
+      g.add(cis);
+      const lid=meshBox(w*.84,.025,cisD*1.04,mats.ceramic,0,z+h*.96,cisY);
+      g.add(lid);
+    }
+
+    // Bowl: rounded or more squared compact form.
+    if(isSquare){
+      const bowl=meshBox(w*.78,h*.30,d*.54,mats.ceramic,0,z+(isHung?h*.38:h*.28),d*.10);
+      bowl.scale.set(1,1,1);
+      g.add(bowl);
+      const seat=meshBox(w*.66,.035,d*.43,mats.ceramicInner,0,z+(isHung?h*.57:h*.50),d*.12);
+      g.add(seat);
+    }else{
+      const bowl=new THREE.Mesh(new THREE.SphereGeometry(.5,32,20),mats.ceramic);
+      bowl.scale.set(w*.78,h*.34,d*.72);
+      bowl.position.set(0,z+(isHung?h*.38:h*.30),d*.08);
+      bowl.castShadow=true;g.add(bowl);
+
+      const seat=new THREE.Mesh(new THREE.TorusGeometry(Math.min(w,d)*.24,.025,12,40),mats.ceramicInner);
+      seat.rotation.x=Math.PI/2;seat.scale.z=1.25;
+      seat.position.set(0,z+(isHung?h*.57:h*.52),d*.10);g.add(seat);
+    }
+
+    // Wall-hung pedestal gap.
+    if(isHung){
+      const shadow=meshBox(w*.62,.028,d*.38,new THREE.MeshStandardMaterial({color:0xbdbbb5,transparent:true,opacity:.20}),0,z+.025,d*.08,false);
+      g.add(shadow);
+    }else{
+      const foot=meshBox(w*.42,h*.28,d*.34,mats.ceramic,0,z+h*.14,-d*.02);
+      g.add(foot);
+    }
+
+    // Flush button.
+    if(!isHung){
+      const flush=cylinder(.015,.006,mats.metal,"y",24);
+      flush.position.set(0,z+h*.985,-d*.34);g.add(flush);
+    }
+
     return setItemId(g,i.id);
   }
-
   function buildVanity(i,s) {
     const g=groupForItem(i), w=mm(i.w), d=mm(i.h), h=mm(i.height||850), z=mm(i.z||0);
     const prod=(s.products||[]).find(p=>p.id===i.productId);
@@ -305,13 +353,54 @@ if (!api || !legacy) {
     return setItemId(g,i.id);
   }
 
-  function buildShower(i) {
+  function buildShower(i,s) {
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=Math.max(.025,mm(i.height||40)),z=mm(i.z||0);
-    const tray=meshBox(w,h,d,mats.ceramic,0,z+h/2,0);g.add(tray);
-    const drain=cylinder(.035,.008,mats.metal,"y",28);drain.position.set(-w*.28,z+h+.005,d*.26);g.add(drain);
+    const prod=(s.products||[]).find(p=>p.id===i.productId);
+    const style=prod?.style || "showerWalkInRain";
+
+    // Tray with a shallow inset standing area.
+    g.add(meshBox(w,h,d,mats.ceramic,0,z+h/2,0));
+    const inset=meshBox(Math.max(.10,w-.08),.008,Math.max(.10,d-.08),mats.ceramicInner,0,z+h+.004,0,false);
+    g.add(inset);
+
+    const drain=cylinder(.032,.008,mats.metal,"y",28);
+    drain.position.set(-w*.28,z+h+.01,d*.22);g.add(drain);
+
+    // Walk-in glass panel down the left side of the local shower footprint.
+    const glassH=Math.min(2.05,Math.max(1.75,mm(s.room.ceiling)-.35));
+    const panelLen=Math.min(d*.72,1.00);
+    const glass=meshBox(.012,glassH,panelLen,mats.glass,-w/2+.012,z+h+glassH/2,-d/2+panelLen/2+.05,false);
+    g.add(glass);
+
+    // Minimal brass/metal top brace.
+    const brace=meshBox(Math.min(w*.55,.65),.016,.016,mats.brass,-w/2+Math.min(w*.55,.65)/2,z+h+glassH-.04,-d/2+panelLen+.04,false);
+    g.add(brace);
+
+    if(style==="showerWalkInRain"){
+      // Rain head and wall arm on the back wall of the shower's local footprint.
+      const riser=cylinder(.010,1.15,mats.brass,"y",18);
+      riser.position.set(w*.30,z+h+1.30,-d/2+.06);g.add(riser);
+
+      const arm=meshBox(.018,.018,.28,mats.brass,w*.30,z+h+1.86,-d/2+.18);
+      g.add(arm);
+
+      const head=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.018,42),mats.brass);
+      head.position.set(w*.30,z+h+1.86,-d/2+.34);g.add(head);
+
+      // Handset + rail.
+      const rail=cylinder(.008,.62,mats.brass,"y",16);
+      rail.position.set(-w*.18,z+h+1.15,-d/2+.05);g.add(rail);
+      const handset=cylinder(.018,.16,mats.brass,"y",18);
+      handset.position.set(-w*.18,z+h+1.38,-d/2+.09);handset.rotation.z=.24;g.add(handset);
+
+      // Control plate on the side nearest the stud/entry.
+      const controls=meshBox(.10,.18,.018,mats.brass,-w/2+.055,z+h+1.05,0,false);g.add(controls);
+      const knob1=cylinder(.018,.022,mats.brass,"x",20);knob1.position.set(-w/2+.035,z+h+1.10,-.03);g.add(knob1);
+      const knob2=cylinder(.018,.022,mats.brass,"x",20);knob2.position.set(-w/2+.035,z+h+1.00,.03);g.add(knob2);
+    }
+
     return setItemId(g,i.id);
   }
-
   function buildStud(i,s) {
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||1100),z=mm(i.z||0);
     g.add(meshBox(w,h,d,mats.wallSide,0,z+h/2,0));
@@ -331,20 +420,42 @@ if (!api || !legacy) {
     return setItemId(g,i.id);
   }
 
-  function buildRadiator(i) {
+  function buildRadiator(i,s) {
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||1200),z=mm(i.z||0);
-    const wallLength=Math.max(w,d), projection=Math.min(w,d);
-    const alongZ=d>=w;
-    const railR=.013, edge=wallLength*.38;
-    const collector1=cylinder(railR,h,mats.metal,"y",18);collector1.position.set(alongZ?0:-edge,z+h/2,alongZ?-edge:0);g.add(collector1);
-    const collector2=cylinder(railR,h,mats.metal,"y",18);collector2.position.set(alongZ?0:edge,z+h/2,alongZ?edge:0);g.add(collector2);
-    for(let yy=z+.08;yy<z+h-.05;yy+=.11){
-      const rail=cylinder(railR,wallLength*.76,mats.metal,alongZ?"z":"x",18);
-      rail.position.set(0,yy,0);g.add(rail);
+    const prod=(s.products||[]).find(p=>p.id===i.productId);
+    const style=prod?.style || "radiatorLadder";
+    const wallLength=Math.max(w,d), alongZ=d>=w;
+    const railR=.012;
+
+    if(style==="radiatorVerticalBars"){
+      const count=Math.max(4,Math.round(wallLength/.055));
+      for(let n=0;n<count;n++){
+        const pos=-wallLength*.42 + n*(wallLength*.84/Math.max(1,count-1));
+        const bar=cylinder(.016,h,mats.metal,"y",18);
+        bar.position.set(alongZ?0:pos,z+h/2,alongZ?pos:0);g.add(bar);
+      }
+    }else{
+      const edge=wallLength*.39;
+      const collector1=cylinder(railR,h,mats.metal,"y",18);
+      collector1.position.set(alongZ?0:-edge,z+h/2,alongZ?-edge:0);g.add(collector1);
+      const collector2=cylinder(railR,h,mats.metal,"y",18);
+      collector2.position.set(alongZ?0:edge,z+h/2,alongZ?edge:0);g.add(collector2);
+      for(let yy=z+.08;yy<z+h-.05;yy+=.105){
+        const rail=cylinder(railR,wallLength*.78,mats.metal,alongZ?"z":"x",18);
+        rail.position.set(0,yy,0);g.add(rail);
+      }
     }
+
+    // Wall stand-offs and valves.
+    const standoff=meshBox(.025,.025,.055,mats.metal,0,z+h*.2,alongZ?-.04:0,false);
+    g.add(standoff);
+    const valve1=cylinder(.018,.055,mats.metal,alongZ?"z":"x",18);
+    valve1.position.set(alongZ?0:-wallLength*.34,z-.015,alongZ?-wallLength*.34:0);g.add(valve1);
+    const valve2=cylinder(.018,.055,mats.metal,alongZ?"z":"x",18);
+    valve2.position.set(alongZ?0:wallLength*.34,z-.015,alongZ?wallLength*.34:0);g.add(valve2);
+
     return setItemId(g,i.id);
   }
-
   function intersects2D(a,b) {
     const A=itemDims(a),B=itemDims(b);
     return a.x < b.x+B.w && a.x+A.w > b.x && a.y < b.y+B.d && a.y+A.d > b.y;
@@ -377,6 +488,39 @@ if (!api || !legacy) {
     return setItemId(g,i.id);
   }
 
+  function buildMirror(i,s) {
+    const g=groupForItem(i),w=mm(i.w),d=Math.max(.025,mm(i.h)),h=mm(i.height||800),z=mm(i.z||1150);
+    const prod=(s.products||[]).find(p=>p.id===i.productId);
+    const style=prod?.style || "mirrorRectangle";
+    const brassFrame=new THREE.MeshStandardMaterial({color:0xb88943,roughness:.28,metalness:.70});
+
+    if(style==="mirrorRound"){
+      const r=Math.min(w,h)/2;
+      const frame=new THREE.Mesh(new THREE.TorusGeometry(r,.015,14,64),brassFrame);
+      frame.rotation.x=Math.PI/2;
+      frame.position.set(0,z+h/2,0);g.add(frame);
+
+      const face=new THREE.Mesh(new THREE.CircleGeometry(Math.max(.04,r-.022),64),mats.mirror);
+      face.rotation.x=Math.PI/2;
+      face.position.set(0,z+h/2,.004);g.add(face);
+    }else{
+      const frameT=.018;
+      const top=meshBox(w,frameT,d,brassFrame,0,z+h-frameT/2,0,false);g.add(top);
+      const bot=meshBox(w,frameT,d,brassFrame,0,z+frameT/2,0,false);g.add(bot);
+      const l=meshBox(frameT,h,d,brassFrame,-w/2+frameT/2,z+h/2,0,false);g.add(l);
+      const rgt=meshBox(frameT,h,d,brassFrame,w/2-frameT/2,z+h/2,0,false);g.add(rgt);
+      const face=meshBox(Math.max(.04,w-frameT*2),Math.max(.04,h-frameT*2),.008,mats.mirror,0,z+h/2,.008,false);g.add(face);
+
+      if(style==="mirrorArch"){
+        const arch=new THREE.Mesh(new THREE.TorusGeometry(w*.36,.014,12,48,Math.PI),brassFrame);
+        arch.rotation.x=Math.PI/2;arch.rotation.z=Math.PI;
+        arch.position.set(0,z+h-.02,.008);g.add(arch);
+      }
+    }
+
+    return setItemId(g,i.id);
+  }
+
   function buildGeneric(i) {
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||900),z=mm(i.z||0);
     g.add(meshBox(w,h,d,mats.timber,0,z+h/2,0));
@@ -386,12 +530,13 @@ if (!api || !legacy) {
   function buildItem(i,s) {
     if(i.type==="niche") return buildNiche(i,s);
     if(i.type==="bath") return buildBath(i,s);
-    if(i.type==="wc") return buildWC(i);
+    if(i.type==="wc") return buildWC(i,s);
     if(i.type==="vanity") return buildVanity(i,s);
-    if(i.type==="shower") return buildShower(i);
+    if(i.type==="shower") return buildShower(i,s);
     if(i.type==="stud") return buildStud(i,s);
     if(i.type==="storage") return buildStorage(i);
-    if(i.type==="radiator") return buildRadiator(i);
+    if(i.type==="radiator") return buildRadiator(i,s);
+    if(i.type==="mirror") return buildMirror(i,s);
     return buildGeneric(i);
   }
 

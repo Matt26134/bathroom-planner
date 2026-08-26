@@ -96,7 +96,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.7.3 · product-aware bath</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.7.4 · fixture visual pass</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -259,7 +259,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Type<select id="itemType">
           <option value="bath">Bath</option><option value="wc">WC</option><option value="vanity">Vanity</option>
           <option value="shower">Shower</option><option value="stud">Stud wall</option><option value="storage">Storage</option>
-          <option value="radiator">Radiator</option><option value="niche">Niche</option><option value="custom">Custom</option>
+          <option value="radiator">Radiator</option><option value="mirror">Mirror</option><option value="niche">Niche</option><option value="custom">Custom</option>
         </select></label>
         <label>From left wall (mm)<input id="itemX" type="number"></label>
         <label>From window wall (mm)<input id="itemY" type="number"></label>
@@ -325,7 +325,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       <label>SKU / product code<input id="prodSku"></label>
       <label>Type<select id="prodType">
         <option value="vanity">Vanity</option><option value="bath">Bath</option><option value="wc">WC</option>
-        <option value="shower">Shower</option><option value="storage">Storage</option><option value="radiator">Radiator</option>
+        <option value="shower">Shower</option><option value="storage">Storage</option><option value="radiator">Radiator</option><option value="mirror">Mirror</option>
         <option value="custom">Other</option>
       </select></label>
       <label>Mounting<select id="prodMount">
@@ -339,6 +339,17 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <option value="straightSingleEndedLeft">Straight single-ended bath · left</option>
         <option value="doubleEndedBath">Straight double-ended bath</option>
         <option value="freestandingOvalBath">Freestanding oval bath</option>
+        <option value="wcCloseCoupledRound">WC · close coupled round</option>
+        <option value="wcBackToWallRound">WC · back to wall round</option>
+        <option value="wcWallHungRound">WC · wall hung round</option>
+        <option value="wcCompactSquare">WC · compact square</option>
+        <option value="showerWalkInRain">Shower · walk in + rain head</option>
+        <option value="showerWalkInPanel">Shower · walk in glass panel</option>
+        <option value="radiatorLadder">Radiator · ladder towel rail</option>
+        <option value="radiatorVerticalBars">Radiator · vertical bars</option>
+        <option value="mirrorRound">Mirror · round</option>
+        <option value="mirrorRectangle">Mirror · rectangle</option>
+        <option value="mirrorArch">Mirror · arch</option>
       </select></label>
     </div>
 
@@ -372,7 +383,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       <button data-add-item="bath">Bath</button><button data-add-item="wc">WC</button>
       <button data-add-item="vanity">Floor vanity</button><button data-add-item="shower">Shower</button>
       <button data-add-item="stud">Stud wall</button><button data-add-item="storage">Storage</button>
-      <button data-add-item="radiator">Radiator</button><button data-add-item="niche">Niche</button>
+      <button data-add-item="radiator">Radiator</button><button data-add-item="mirror">Mirror</button><button data-add-item="niche">Niche</button>
       <button data-add-item="custom">Custom rectangle</button>
     </div>
     <div class="section">Service points</div>
@@ -387,7 +398,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.7.3", KEY="bathroomPlannerStable";
+const VERSION="1.7.4", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -447,7 +458,7 @@ if(!state.products.some(p=>p.id==="prod-lille-800")){
 }
 
 if(!Array.isArray(state.manualMeasurements)) state.manualMeasurements=[];
-const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],niche:[1000,400],custom:[0,900]};
+const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],mirror:[1150,800],niche:[1000,400],custom:[0,900]};
 function migrateHeights(){
  if(state.version!==VERSION && Number(state.room.ceiling)===2400) state.room.ceiling=2470;
  if(!state.room.window)state.room.window={before:660,width:930,after:690};
@@ -484,7 +495,7 @@ const itemDims=i=>(i.rotation===90||i.rotation===270)?{w:i.h,h:i.w}:{w:i.w,h:i.h
 const box=i=>{const d=itemDims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}};
 const overlap1D=(a1,a2,b1,b2)=>Math.min(a2,b2)-Math.max(a1,b1)>0;
 const collide=(a,b)=>{const A=box(a),B=box(b);return A.x1<B.x2&&A.x2>B.x1&&A.y1<B.y2&&A.y2>B.y1};
-const floorItems=()=>state.items.filter(i=>i.type!=="niche");
+const floorItems=()=>state.items.filter(i=>i.type!=="niche"&&i.type!=="mirror");
 
 function save(){state.version=VERSION;localStorage.setItem(KEY,JSON.stringify(state))}
 function checkpoint(){history.push(clone(state));if(history.length>60)history.shift();future=[];updateUndoRedo()}
@@ -633,7 +644,7 @@ function drawOpenings(){
 
 
 function drawOrientationMarker(i,d){
- if(i.type==="niche"||i.type==="stud"||i.type==="radiator")return;
+ if(i.type==="niche"||i.type==="stud"||i.type==="radiator"||i.type==="mirror")return;
  const a=(Number(i.rotation)||0)%360;
  let x1=i.x+d.w/2,y1=i.y+d.h/2,x2=x1,y2=y1;
  const len=Math.min(55,Math.max(26,Math.min(d.w,d.h)*.16));
@@ -663,6 +674,10 @@ function drawItem(i){
   svg.appendChild(sEl("circle",{cx:i.x+d.w*.18,cy:i.y+d.h*.72,r:28,class:"archLine"}));
  }
  if(i.type==="radiator"){for(let y=i.y+22;y<i.y+d.h-18;y+=42)svg.appendChild(sEl("line",{x1:i.x+12,y1:y,x2:i.x+d.w-12,y2:y,class:"archLine"}))}
+ if(i.type==="mirror"){
+   const oval=sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+d.h/2,rx:Math.max(10,d.w*.44),ry:Math.max(10,d.h*.44),fill:"#eef4f4",stroke:"#8aa1a6","stroke-width":"2","vector-effect":"non-scaling-stroke"});
+   svg.appendChild(oval);
+ }
  productItemDetails2D(i,d);
  drawOrientationMarker(i,d);
 
@@ -911,7 +926,7 @@ function closeObjectSheet(){$("objectSheet").classList.add("hidden");$("itemDeta
 function addItem(type){
  const p={
   bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower",1400,800],
-  stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],niche:["Niche",400,70],custom:["Custom object",400,400]
+  stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],mirror:["Mirror",800,40],niche:["Niche",400,70],custom:["Custom object",400,400]
  }[type];
  checkpoint();const hd=HEIGHT_DEFAULTS[type]||[0,900];const i={id:type+Date.now(),type,name:p[0],x:250,y:850,w:p[1],h:p[2],rotation:0,locked:false,z:hd[0],height:hd[1]};state.items.push(i);selected={kind:"item",id:i.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
 }

@@ -36,8 +36,8 @@ main{max-width:980px;margin:auto;padding:10px 10px 60px}
 .pill{padding:5px 9px;border-radius:999px;background:#e8e5dc;color:#5a5c55;font-size:.78rem;font-weight:800}
 .hint{font-size:.82rem;color:var(--muted)}
 .canvasShell{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
-.canvasHeader{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #ece8df;font-size:.8rem;color:var(--muted)}
-.canvas{position:relative;background:#fffefa}
+.canvasHeader{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid #ece8df;font-size:.8rem;color:var(--muted)}
+.canvasMeta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}.zoomCtl{display:flex;align-items:center;gap:5px}.zoomCtl button{min-height:34px;padding:4px 9px;border-radius:9px;font-size:.86rem;background:#faf8f3}.zoomRead{min-width:48px;text-align:center;font-variant-numeric:tabular-nums;font-weight:800;color:#5f625d}.canvas{position:relative;background:#fffefa}.detaildim{stroke:#b18a52;stroke-width:1.25;fill:none;vector-effect:non-scaling-stroke}.detailtext{font-size:31px;font-weight:800;fill:#8c6b3f}.finedim{stroke:#8fa8ad;stroke-width:1.05;stroke-dasharray:7 6;fill:none;vector-effect:non-scaling-stroke}.finetext{font-size:27px;font-weight:750;fill:#657d82}
 svg{display:block;width:100%;height:auto;min-height:470px;touch-action:none;background:#fffefa}
 .gridline{stroke:#edeae3;stroke-width:1;vector-effect:non-scaling-stroke}
 .roomfill{fill:#fcfbf8}
@@ -89,7 +89,7 @@ textarea{resize:vertical}
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="ver">V1.1.0 · refined planner</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="ver">V1.2.0 · pinch zoom + detail dimensions</div></div></div>
   <button id="reload">Reload latest</button>
 </header>
 <nav>
@@ -109,16 +109,15 @@ textarea{resize:vertical}
 
   <div class="status">
     <span id="survey" class="pill">Survey dimensions reconcile</span>
-    <span id="boot" class="hint">Drag any unlocked item with one finger.</span>
+    <span id="boot" class="hint">Drag fixtures · pinch to zoom · drag blank space to pan.</span>
   </div>
 
   <div class="canvasShell">
     <div class="canvasHeader">
       <span id="planTitle">Current working layout</span>
-      <div class="legend">
-        <span><i class="sw" style="background:#ded0bb"></i>Fixture</span>
-        <span><i class="sw" style="background:#edf4f3"></i>Shower</span>
-        <span><i class="sw" style="background:#d8d3c7"></i>Stud</span>
+      <div class="canvasMeta">
+        <div class="zoomCtl"><button id="zoomOut">−</button><span id="zoomRead" class="zoomRead">100%</span><button id="zoomIn">+</button><button id="zoomReset">Fit</button></div>
+        <div class="legend"><span><i class="sw" style="background:#ded0bb"></i>Fixture</span><span><i class="sw" style="background:#edf4f3"></i>Shower</span><span><i class="sw" style="background:#d8d3c7"></i>Stud</span></div>
       </div>
     </div>
     <div class="canvas">
@@ -189,7 +188,7 @@ textarea{resize:vertical}
 <script>
 (function(){
 "use strict";
-const VERSION="1.1.0", KEY="bathroomPlannerStable";
+const VERSION="1.2.0", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("svg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 const starter={
@@ -209,7 +208,7 @@ const starter={
  {id:"n2",type:"niche",name:"Decorative bottle niche",x:20,y:2050,w:70,h:420,rotation:0,locked:false}
  ]};
 let state;try{state=JSON.parse(localStorage.getItem(KEY)||"null")||clone(starter)}catch(e){state=clone(starter)}
-let selected=null,history=[],future=[],drag=null;
+let selected=null,history=[],future=[],drag=null;let view=null,baseView=null,pan=null,pinch=null;const activePointers=new Map();
 const sEl=(tag,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);Object.keys(a).forEach(k=>e.setAttribute(k,a[k]));return e};
 const dims=i=>i.rotation===90?{w:i.h,h:i.w}:{w:i.w,h:i.h};
 const box=i=>{const d=dims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}};
@@ -220,6 +219,22 @@ function checkpoint(){history.push(clone(state));if(history.length>50)history.sh
 function buttons(){$("undo").disabled=!history.length;$("redo").disabled=!future.length}
 function undo(){if(!history.length)return;future.push(clone(state));state=history.pop();selected=null;save();sync();render();buttons()}
 function redo(){if(!future.length)return;history.push(clone(state));state=future.pop();selected=null;save();sync();render();buttons()}
+
+function makeBaseView(){const r=state.room;return{x:-360,y:-300,w:Math.max(3000,r.width+800),h:Math.max(3250,r.depth+700)}}
+function ensureView(){if(!baseView)baseView=makeBaseView();if(!view)view={...baseView}}
+function applyView(){ensureView();svg.setAttribute("viewBox",`${view.x} ${view.y} ${view.w} ${view.h}`);$("zoomRead").textContent=Math.round((baseView.w/view.w)*100)+"%"}
+function currentZoom(){ensureView();return baseView.w/view.w}
+function pointFromClient(x,y){const p=svg.createSVGPoint();p.x=x;p.y=y;return p.matrixTransform(svg.getScreenCTM().inverse())}
+function clampView(){ensureView();const minW=baseView.w/4.5,minH=baseView.h/4.5;view.w=Math.max(minW,Math.min(baseView.w,view.w));view.h=Math.max(minH,Math.min(baseView.h,view.h));const maxX=baseView.x+baseView.w-view.w,maxY=baseView.y+baseView.h-view.h;view.x=Math.min(Math.max(view.x,baseView.x),maxX);view.y=Math.min(Math.max(view.y,baseView.y),maxY)}
+function zoomAt(cx,cy,factor){ensureView();const p=pointFromClient(cx,cy),ow=view.w,oh=view.h;let nw=ow/factor,nh=oh/factor;nw=Math.max(baseView.w/4.5,Math.min(baseView.w,nw));nh=Math.max(baseView.h/4.5,Math.min(baseView.h,nh));const rx=(p.x-view.x)/ow,ry=(p.y-view.y)/oh;view.x=p.x-rx*nw;view.y=p.y-ry*nh;view.w=nw;view.h=nh;clampView();applyView();render()}
+function resetView(){baseView=makeBaseView();view={...baseView};applyView();render()}
+function ptrCenter(a,b){return{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}
+function ptrDist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function startPinch(){const v=[...activePointers.values()];if(v.length<2)return;drag=null;pan=null;const c=ptrCenter(v[0],v[1]);pinch={dist:ptrDist(v[0],v[1]),view:{...view},cx:c.x,cy:c.y}}
+function updatePinch(){const v=[...activePointers.values()];if(v.length<2||!pinch)return;const c=ptrCenter(v[0],v[1]),d=Math.max(20,ptrDist(v[0],v[1])),f=d/pinch.dist;view={...pinch.view};const p=pointFromClient(pinch.cx,pinch.cy),ow=view.w,oh=view.h;view.w=ow/f;view.h=oh/f;const rx=(p.x-view.x)/ow,ry=(p.y-view.y)/oh;view.x=p.x-rx*view.w;view.y=p.y-ry*view.h;clampView();applyView();render()}
+function drawGap(x1,y1,x2,y2,label,fine=false){const cls=fine?"finedim":"detaildim",tcls=fine?"finetext":"detailtext";svg.appendChild(sEl("line",{x1,y1,x2,y2,class:cls}));const vertical=Math.abs(y2-y1)>Math.abs(x2-x1),tick=14;if(vertical){svg.appendChild(sEl("line",{x1:x1-tick,y1,x2:x1+tick,y2:y1,class:cls}));svg.appendChild(sEl("line",{x1:x2-tick,y1:y2,x2:x2+tick,y2:y2,class:cls}))}else{svg.appendChild(sEl("line",{x1,y1:y1-tick,x2:x1,y2:y1+tick,class:cls}));svg.appendChild(sEl("line",{x1:x2,y1:y2-tick,x2:x2,y2:y2+tick,class:cls}))}const t=sEl("text",{x:(x1+x2)/2,y:(y1+y2)/2-9,class:tcls,"text-anchor":"middle"});t.textContent=label;svg.appendChild(t)}
+function drawDetailDimensions(){const z=currentZoom();if(z<1.28)return;const first=t=>state.items.find(i=>i.type===t),bath=first("bath"),wc=first("wc"),vanity=first("vanity"),shower=first("shower"),storage=first("storage");if(bath&&wc){const A=box(bath),B=box(wc),g=B.x1-A.x2;if(g>=0)drawGap(A.x2,A.y1+A.h*.72,B.x1,A.y1+A.h*.72,Math.round(g)+" mm")}if(vanity&&shower){const A=box(vanity),B=box(shower),g=B.y1-A.y2;if(g>=0)drawGap(A.x1+A.w*.75,A.y2,A.x1+A.w*.75,B.y1,Math.round(g)+" mm")}if(shower&&storage){const A=box(shower),B=box(storage),g=B.x1-A.x2;if(g>=0)drawGap(A.x2,A.y1+A.h*.82,B.x1,A.y1+A.h*.82,Math.round(g)+" mm")}if(z>=1.9&&selected){const i=state.items.find(x=>x.id===selected);if(i){const b=box(i),r=state.room,l=b.x1,rr=r.width-b.x2,t=b.y1,bt=r.depth-b.y2;if(l>0)drawGap(0,b.y1+b.h*.2,b.x1,b.y1+b.h*.2,Math.round(l)+" mm",true);if(rr>0)drawGap(b.x2,b.y1+b.h*.2,r.width,b.y1+b.h*.2,Math.round(rr)+" mm",true);if(t>0)drawGap(b.x1+b.w*.25,0,b.x1+b.w*.25,b.y1,Math.round(t)+" mm",true);if(bt>0)drawGap(b.x1+b.w*.25,b.y2,b.x1+b.w*.25,r.depth,Math.round(bt)+" mm",true)}}}
+
 function grid(r){
   const step=100;
   for(let x=0;x<=r.width;x+=step)svg.appendChild(sEl("line",{x1:x,y1:0,x2:x,y2:r.depth,class:"gridline"}));
@@ -227,8 +242,7 @@ function grid(r){
 }
 function render(){
  svg.innerHTML='<defs><filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity=".08"/></filter></defs>';
- const r=state.room;
- svg.setAttribute("viewBox",`-360 -300 ${Math.max(3000,r.width+800)} ${Math.max(3250,r.depth+700)}`);
+ const r=state.room;if(!baseView){baseView=makeBaseView();view={...baseView}}applyView();
  svg.appendChild(sEl("rect",{x:0,y:0,width:r.width,height:r.depth,class:"roomfill"}));grid(r);
  svg.appendChild(sEl("rect",{x:0,y:0,width:r.width,height:r.depth,class:"wallOuter"}));
  svg.appendChild(sEl("rect",{x:14,y:14,width:Math.max(0,r.width-28),height:Math.max(0,r.depth-28),class:"wallInner"}));
@@ -239,7 +253,7 @@ function render(){
  svg.appendChild(sEl("line",{x1:r.width,y1:d2,x2:r.width-leaf,y2:d2,class:"door"}));
  svg.appendChild(sEl("path",{d:`M ${r.width-leaf} ${d2} A ${leaf} ${leaf} 0 0 1 ${r.width} ${d2-leaf}`,class:"door","stroke-dasharray":"10 10"}));
  state.items.forEach(drawItem);
- if(state.ui.dims)drawDims();updateSurvey();updateInspector();$("planTitle").textContent=state.project.planName||"Plan"
+ if(state.ui.dims){drawDims();drawDetailDimensions()}updateSurvey();updateInspector();$("planTitle").textContent=state.project.planName||"Plan"
 }
 function drawItem(i){
  const d=dims(i),ws=warnings(i),g=sEl("g",{"data-id":i.id});
@@ -264,7 +278,7 @@ function drawDims(){
  svg.appendChild(sEl("line",{x1:-165,y1:0,x2:-135,y2:0,class:"dimline"}));svg.appendChild(sEl("line",{x1:-165,y1:r.depth,x2:-135,y2:r.depth,class:"dimline"}));
  t=sEl("text",{x:-205,y:r.depth/2,class:"dimtext",transform:`rotate(-90 -205 ${r.depth/2})`,"text-anchor":"middle"});t.textContent=r.depth+" mm";svg.appendChild(t)
 }
-function point(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+function point(e){return pointFromClient(e.clientX,e.clientY)}
 function down(e){
  e.preventDefault();const id=e.currentTarget.dataset.id,i=state.items.find(x=>x.id===id);selected=id;if(!i){render();return}if(i.locked){render();return}
  checkpoint();const p=point(e);drag={id,sx:p.x,sy:p.y,x:i.x,y:i.y,pointerId:e.pointerId};try{svg.setPointerCapture(e.pointerId)}catch(err){}render()
@@ -296,8 +310,12 @@ $("export").onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{typ
 $("import").onchange=async e=>{try{const p=JSON.parse(await e.target.files[0].text());if(!p.room||!p.items)throw Error("Invalid backup");checkpoint();state=p;selected=null;save();sync();render();alert("Backup imported")}catch(err){alert(err.message)}e.target.value=""};
 $("reset").onclick=()=>{if(!confirm("Reset to starter plan?"))return;checkpoint();state=clone(starter);selected=null;save();sync();render()};
 $("reload").onclick=async()=>{try{if("serviceWorker"in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()))}if("caches"in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}const u=new URL(location.href);u.searchParams.set("v",Date.now());location.replace(u.toString())};
-svg.addEventListener("pointermove",move,{passive:false});svg.addEventListener("pointerup",up);svg.addEventListener("pointercancel",up);svg.addEventListener("pointerdown",e=>{if(e.target===svg){selected=null;render()}});
-sync();buttons();render();$("boot").textContent="Drag any unlocked item with one finger · V"+VERSION;
+svg.addEventListener("pointerdown",e=>{activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(activePointers.size===2){e.preventDefault();startPinch();return}if(e.target===svg||e.target.classList.contains("roomfill")||e.target.classList.contains("gridline")){selected=null;if(currentZoom()>1.01){pan={id:e.pointerId,start:{...view},p:point(e)};try{svg.setPointerCapture(e.pointerId)}catch(_){}}render()}},{passive:false});
+svg.addEventListener("pointermove",e=>{if(activePointers.has(e.pointerId))activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(activePointers.size>=2){e.preventDefault();updatePinch();return}if(pan&&e.pointerId===pan.id){e.preventDefault();const n=pointFromClient(e.clientX,e.clientY);view={...pan.start};view.x+=pan.p.x-n.x;view.y+=pan.p.y-n.y;clampView();applyView();render();return}move(e)},{passive:false});
+function finishPointer(e){activePointers.delete(e.pointerId);if(pan&&e.pointerId===pan.id)pan=null;if(activePointers.size<2)pinch=null;up(e)}
+svg.addEventListener("pointerup",finishPointer);svg.addEventListener("pointercancel",finishPointer);
+$("zoomIn").onclick=()=>{const r=svg.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,1.25)};$("zoomOut").onclick=()=>{const r=svg.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,.8)};$("zoomReset").onclick=resetView;
+sync();buttons();resetView();$("boot").textContent="Drag fixtures · pinch to zoom · drag blank space to pan · V"+VERSION;
 })();
 </script>
 </body>

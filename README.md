@@ -1,21 +1,23 @@
-# Bathroom Planner V1.5.0
+# Bathroom Planner V1.6.0
 
 Complete replacement package.
 
 New:
-- room ceiling updated to the measured 2470 mm
-- generic starter heights added to every existing fixture
-- all heights editable in the object sheet
-- window sill/window height and door height editable
-- service-point vertical height editable
-- interactive 3D room view
-- one-finger orbit and pinch zoom in 3D
-- tap a 3D object to edit it
-- preset Door / Window / Top views
-- walls on/off toggle
-- four wall elevations: Window, Door, Left, Right
-- existing V1.4 plan data is migrated rather than wiped
+- Product Library tab
+- Bath Lab Lille 800mm antique-oak wall-hung vanity seeded as the first test product
+- exact real product dimensions: 805 W x 460 D x 539 H mm
+- custom 2D representation and enhanced 3D vanity representation
+- add a product photo directly in the app
+- create/edit reusable products without rebuilding GitHub
+- locally compressed product photos
+- place products into the plan with one tap
+- import/export individual product JSON files
+- product URLs, supplier, SKU, finish, mounting type and notes stored in the library
 
-Starter heights are intentionally generic until measured.
+Important:
+The static app can store a photo and manually-entered product details directly.
+It cannot reliably scrape arbitrary retailer webpages or use AI vision by itself without a backend/API.
+For AI extraction, a product can be analysed in ChatGPT and imported as a small product JSON file — no app rebuild required.
 
-Update: extract and upload all 8 files over the existing repo files, then commit.
+Update:
+Extract and upload ALL files to the root of the existing GitHub repo, then commit.

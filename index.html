@@ -23,7 +23,7 @@ header{display:flex;justify-content:space-between;align-items:flex-start;padding
 .brand{display:flex;gap:9px;align-items:center}.mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(145deg,#6f7564,#a6987f);position:relative}
 .mark:after{content:"";position:absolute;inset:8px;border:2px solid rgba(255,255,255,.9);border-radius:3px}
 h1{font-size:1.15rem;line-height:1.1;margin:0}.version{color:var(--muted);font-size:.74rem;margin-top:3px}
-nav{display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,253,250,.9);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+nav{display:grid;grid-template-columns:repeat(5,1fr);background:rgba(255,253,250,.9);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
 nav button{border:0;border-radius:0;background:transparent;color:var(--muted)}nav button.active{color:var(--ink);box-shadow:inset 0 -2px 0 var(--olive)}
 main{max-width:1000px;margin:auto;padding:8px 8px 64px}.panel{display:none}.panel.active{display:block}
 .toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px}
@@ -65,6 +65,21 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 .canvas{position:relative}
 .focus-mode header,.focus-mode nav,.focus-mode #project,.focus-mode #backup{display:none!important}.focus-mode main{padding:0;max-width:none;height:100vh}.focus-mode #plan{display:block!important;height:100vh;background:var(--bg);padding:6px}.focus-mode .status{display:none}.focus-mode .canvasShell{height:calc(100vh - 58px);border-radius:12px}.focus-mode .canvas{height:calc(100% - 45px);min-height:0}.focus-mode .toolbar{height:46px;margin:0 0 6px}.focus-mode .canvasHeader{height:45px}
 
+
+.productTop{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:9px}.productTop .spacer{flex:1}
+.productGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:10px}
+.productCard{background:var(--panel);border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:var(--shadow)}
+.productImage{width:100%;aspect-ratio:4/3;object-fit:cover;background:#eeeae2;display:block}
+.productBody{padding:11px}.productBrand{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:900}
+.productTitle{font-size:.96rem;font-weight:850;line-height:1.2;margin:3px 0 7px}.specPills{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}
+.specPills span{font-size:.72rem;background:#f0ede6;border:1px solid #e4dfd5;border-radius:999px;padding:4px 7px;color:#5e615b;font-weight:750}
+.productMeta{font-size:.76rem;color:var(--muted);line-height:1.45}.productActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.productActions button{min-height:34px;font-size:.78rem}
+.photoDrop{display:grid;place-items:center;min-height:170px;border:1.5px dashed #c8c2b6;border-radius:13px;background:#faf8f3;overflow:hidden;text-align:center;color:var(--muted);font-size:.8rem;padding:8px}
+.photoDrop img{max-width:100%;max-height:250px;object-fit:contain;border-radius:9px}.photoDrop input{display:none}
+.productNote{font-size:.78rem;line-height:1.45;color:var(--muted);background:#f7f4ed;border-radius:10px;padding:9px;margin-top:9px}
+.linkField{word-break:break-word}
+.productBadge{display:inline-flex;align-items:center;gap:5px;font-size:.69rem;font-weight:850;color:#5d6557;background:#eef0e9;border-radius:999px;padding:4px 7px;margin-top:4px}
+
 .view3dShell{background:var(--panel);border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow)}
 .view3dTop{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px;border-bottom:1px solid #ece8df}
 .view3dTop .spacer{flex:1}.view3dTop select{width:auto;min-height:36px}.view3dTop button{min-height:36px;font-size:.82rem}
@@ -81,13 +96,14 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.5.0 · 3D + elevations</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.6.0 · product library</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
 <nav>
   <button class="tab active" data-tab="plan">Plan</button>
   <button class="tab" data-tab="threeD">3D</button>
+  <button class="tab" data-tab="products">Products</button>
   <button class="tab" data-tab="project">Project</button>
   <button class="tab" data-tab="backup">Backup</button>
 </nav>
@@ -152,6 +168,24 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
     <div id="elevationWrap" class="elevationWrap"><svg id="elevationSvg" class="elevationSvg"></svg></div>
     <div class="threeDHint">3D: drag to orbit · pinch to zoom · tap an object to edit its height. Heights are starter estimates until you measure them.</div>
   </div>
+</section>
+
+
+<section id="products" class="panel">
+  <div class="productTop">
+    <div>
+      <div class="eyebrow">Reusable objects</div>
+      <h2 style="margin:2px 0 0;font-size:1.08rem">Product library</h2>
+    </div>
+    <span class="spacer"></span>
+    <label class="filebtn">Import product JSON<input id="productImportInput" type="file" accept=".json,application/json"></label>
+    <button id="newProductBtn" class="primary">+ Product</button>
+  </div>
+  <div class="productNote">
+    Add products here once and reuse them in the plan. Product photos are compressed and stored locally on this device.
+    A photo can be added directly in the app; dimensions and product details remain editable.
+  </div>
+  <div id="productGrid" class="productGrid" style="margin-top:10px"></div>
 </section>
 
 <section id="project" class="panel">
@@ -269,6 +303,59 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
   </div>
 </div>
 
+
+<div id="productSheet" class="sheet hidden">
+  <div class="sheetCard">
+    <div class="sheetHead">
+      <div><div class="eyebrow">Product library</div><h2 id="productSheetTitle" style="margin:2px 0 0">Add product</h2></div>
+      <button id="closeProductSheet">Close</button>
+    </div>
+
+    <label id="productPhotoDrop" class="photoDrop" style="margin-top:9px">
+      <div id="productPhotoPrompt">Tap to add a product image</div>
+      <img id="productPhotoPreview" class="hidden" alt="Product preview">
+      <input id="productPhotoInput" type="file" accept="image/*">
+    </label>
+
+    <div class="section">Product</div>
+    <div class="grid">
+      <label>Name<input id="prodName"></label>
+      <label>Brand<input id="prodBrand"></label>
+      <label>Supplier<input id="prodSupplier"></label>
+      <label>SKU / product code<input id="prodSku"></label>
+      <label>Type<select id="prodType">
+        <option value="vanity">Vanity</option><option value="bath">Bath</option><option value="wc">WC</option>
+        <option value="shower">Shower</option><option value="storage">Storage</option><option value="radiator">Radiator</option>
+        <option value="custom">Other</option>
+      </select></label>
+      <label>Mounting<select id="prodMount">
+        <option value="floor">Floor standing</option><option value="wall">Wall hung</option><option value="built-in">Built in</option>
+      </select></label>
+      <label>Finish / colour<input id="prodFinish"></label>
+      <label>3D style<select id="prodStyle">
+        <option value="box">Generic</option><option value="vanity2drawer">2-drawer vanity</option>
+      </select></label>
+    </div>
+
+    <div class="section">Dimensions</div>
+    <div class="grid">
+      <label>Width (mm)<input id="prodWidth" type="number"></label>
+      <label>Depth (mm)<input id="prodDepth" type="number"></label>
+      <label>Height (mm)<input id="prodHeight" type="number"></label>
+      <label>Default bottom above floor (mm)<input id="prodZ" type="number"></label>
+    </div>
+
+    <div class="section">Reference</div>
+    <label>Product URL<input id="prodUrl" class="linkField"></label>
+    <label style="margin-top:8px">Notes<textarea id="prodNotes" rows="3"></textarea></label>
+
+    <div class="quickActions">
+      <button id="saveProductBtn" class="primary">Save product</button>
+      <button id="deleteProductBtn" class="danger hidden">Delete product</button>
+    </div>
+  </div>
+</div>
+
 <div id="addSheet" class="sheet hidden">
   <div class="sheetCard">
     <div class="sheetHead"><div><div class="eyebrow">Plan object</div><h2 style="margin:2px 0 0">Add to plan</h2></div><button id="closeAddSheet">Close</button></div>
@@ -292,7 +379,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.5.0", KEY="bathroomPlannerStable";
+const VERSION="1.6.0", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -312,6 +399,28 @@ const starter={
   {id:"n1",type:"niche",name:"Large shampoo niche",x:120,y:1680,w:380,h:70,rotation:0,locked:false,z:950,height:450},
   {id:"n2",type:"niche",name:"Decorative bottle niche",x:20,y:2050,w:70,h:420,rotation:0,locked:false,z:1200,height:300}
  ],
+
+ products:[
+  {
+   id:"prod-lille-800",
+   name:"Lille 800mm Wall Hung 2 Drawer Vanity & Ceramic Basin",
+   brand:"Bath Lab",
+   supplier:"Bath Lab",
+   sku:"LIL2726C",
+   type:"vanity",
+   mounting:"wall",
+   finish:"Antique Oak Woodgrain",
+   style:"vanity2drawer",
+   width:805,
+   depth:460,
+   height:539,
+   defaultZ:300,
+   url:"https://www.bathlab.co.uk/products/lille-800mm-wall-hung-2-drawer-vanity-unit-minimalist-ceramic-basin-antique-oak-woodgrain",
+   notes:"Vitreous china basin, 1 tap hole, two soft-close drawers. Starter mounting height can be edited.",
+   image:"./lille-product.webp",
+   builtIn:true
+  }
+ ],
  services:[],
  manualMeasurements:[]
 };
@@ -324,6 +433,11 @@ try{
 state.ui=state.ui||{};
 if(!state.ui.measureMode) state.ui.measureMode="selected";
 if(!Array.isArray(state.services)) state.services=[];
+if(!Array.isArray(state.products))state.products=[];
+if(!state.products.some(p=>p.id==="prod-lille-800")){
+ state.products.unshift(clone(starter.products[0]));
+}
+
 if(!Array.isArray(state.manualMeasurements)) state.manualMeasurements=[];
 const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],niche:[1000,400],custom:[0,900]};
 function migrateHeights(){
@@ -519,6 +633,7 @@ function drawItem(i){
   svg.appendChild(sEl("circle",{cx:i.x+d.w*.18,cy:i.y+d.h*.72,r:28,class:"archLine"}));
  }
  if(i.type==="radiator"){for(let y=i.y+22;y<i.y+d.h-18;y+=42)svg.appendChild(sEl("line",{x1:i.x+12,y1:y,x2:i.x+d.w-12,y2:y,class:"archLine"}))}
+ productItemDetails2D(i,d);
 
  const z=currentZoom();
  if(d.w>240&&d.h>110){
@@ -733,7 +848,7 @@ function openSelectedSheet(){
  $("itemQuick").classList.add("hidden");$("itemDetails").classList.add("hidden");$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
  if(selected.kind==="item"){
   const i=state.items.find(x=>x.id===selected.id);if(!i)return;
-  $("sheetEyebrow").textContent="Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm`;
+  const prod=productById(i.productId);$("sheetEyebrow").textContent=prod?"Product object":"Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm`;
   $("itemQuick").classList.remove("hidden");$("detailsToggle").classList.remove("hidden");
   $("lockBtn").textContent=i.locked?"Unlock":"Lock";
   $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;
@@ -794,6 +909,125 @@ function toggleFocus(){
 }
 
 
+
+// --- V1.6 Product library ---
+let editingProductId=null,pendingProductImage=null;
+
+function escHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function renderProducts(){
+ const grid=$("productGrid");if(!grid)return;grid.innerHTML="";
+ if(!state.products.length){grid.innerHTML='<div class="card"><p class="muted">No products yet.</p></div>';return}
+ state.products.forEach(p=>{
+  const card=document.createElement("div");card.className="productCard";
+  const img=p.image?`<img class="productImage" src="${escHtml(p.image)}" alt="${escHtml(p.name)}">`:`<div class="productImage" style="display:grid;place-items:center;color:#888">No image</div>`;
+  card.innerHTML=`
+   ${img}
+   <div class="productBody">
+    <div class="productBrand">${escHtml(p.brand||p.supplier||"Product")}</div>
+    <div class="productTitle">${escHtml(p.name)}</div>
+    <div class="specPills">
+      <span>${Math.round(p.width||0)} W</span><span>${Math.round(p.depth||0)} D</span><span>${Math.round(p.height||0)} H mm</span>
+      ${p.mounting==="wall"?'<span>Wall hung</span>':""}
+    </div>
+    <div class="productMeta">${escHtml(p.finish||"")}${p.sku?` · ${escHtml(p.sku)}`:""}</div>
+    ${p.builtIn?'<div class="productBadge">Starter product</div>':""}
+    <div class="productActions">
+      <button data-place="${escHtml(p.id)}" class="primary">Add to plan</button>
+      <button data-edit-product="${escHtml(p.id)}">Edit</button>
+      <button data-export-product="${escHtml(p.id)}">Export JSON</button>
+    </div>
+   </div>`;
+  grid.appendChild(card);
+ });
+ grid.querySelectorAll("[data-place]").forEach(b=>b.onclick=()=>placeProduct(b.dataset.place));
+ grid.querySelectorAll("[data-edit-product]").forEach(b=>b.onclick=()=>openProductEditor(b.dataset.editProduct));
+ grid.querySelectorAll("[data-export-product]").forEach(b=>b.onclick=()=>exportProduct(b.dataset.exportProduct));
+}
+function openProductEditor(id=null){
+ editingProductId=id;pendingProductImage=null;
+ const p=id?productById(id):null;
+ $("productSheetTitle").textContent=p?"Edit product":"Add product";
+ $("prodName").value=p?.name||"";$("prodBrand").value=p?.brand||"";$("prodSupplier").value=p?.supplier||"";
+ $("prodSku").value=p?.sku||"";$("prodType").value=p?.type||"vanity";$("prodMount").value=p?.mounting||"floor";
+ $("prodFinish").value=p?.finish||"";$("prodStyle").value=p?.style||"box";$("prodWidth").value=p?.width||"";
+ $("prodDepth").value=p?.depth||"";$("prodHeight").value=p?.height||"";$("prodZ").value=p?.defaultZ??0;
+ $("prodUrl").value=p?.url||"";$("prodNotes").value=p?.notes||"";
+ const preview=$("productPhotoPreview"),prompt=$("productPhotoPrompt");
+ if(p?.image){preview.src=p.image;preview.classList.remove("hidden");prompt.classList.add("hidden")}else{preview.removeAttribute("src");preview.classList.add("hidden");prompt.classList.remove("hidden")}
+ $("deleteProductBtn").classList.toggle("hidden",!p||p.builtIn);
+ $("productSheet").classList.remove("hidden");
+}
+function closeProductEditor(){$("productSheet").classList.add("hidden");editingProductId=null;pendingProductImage=null}
+async function compressProductImage(file){
+ return new Promise((resolve,reject)=>{
+  const fr=new FileReader();
+  fr.onload=()=>{
+   const im=new Image();
+   im.onload=()=>{
+    const max=720,scale=Math.min(1,max/Math.max(im.width,im.height));
+    const c=document.createElement("canvas");c.width=Math.max(1,Math.round(im.width*scale));c.height=Math.max(1,Math.round(im.height*scale));
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+    resolve(c.toDataURL("image/jpeg",.72));
+   };im.onerror=reject;im.src=fr.result;
+  };fr.onerror=reject;fr.readAsDataURL(file);
+ });
+}
+function saveProduct(){
+ const old=editingProductId?productById(editingProductId):null;
+ const p={
+  id:old?.id||("prod-"+Date.now()),
+  name:$("prodName").value.trim()||"Untitled product",
+  brand:$("prodBrand").value.trim(),supplier:$("prodSupplier").value.trim(),sku:$("prodSku").value.trim(),
+  type:$("prodType").value,mounting:$("prodMount").value,finish:$("prodFinish").value.trim(),style:$("prodStyle").value,
+  width:Math.max(1,Number($("prodWidth").value)||1),depth:Math.max(1,Number($("prodDepth").value)||1),
+  height:Math.max(1,Number($("prodHeight").value)||1),defaultZ:Math.max(0,Number($("prodZ").value)||0),
+  url:$("prodUrl").value.trim(),notes:$("prodNotes").value.trim(),
+  image:pendingProductImage||old?.image||"",builtIn:old?.builtIn||false
+ };
+ checkpoint();
+ if(old){Object.assign(old,p)}else state.products.push(p);
+ save();renderProducts();closeProductEditor();
+}
+function placeProduct(id){
+ const p=productById(id);if(!p)return;
+ checkpoint();
+ const rotation=(p.type==="vanity"&&p.mounting==="wall")?90:0;
+ const item={id:p.type+Date.now(),type:p.type,name:p.name,x:120,y:780,w:p.width,h:p.depth,rotation,locked:false,z:p.defaultZ||0,height:p.height,productId:p.id};
+ state.items.push(item);selected={kind:"item",id:item.id};save();render();
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+ const planTab=document.querySelector('.tab[data-tab="plan"]');planTab.classList.add("active");$("plan").classList.add("active");
+ openSelectedSheet();
+}
+function exportProduct(id){
+ const p=productById(id);if(!p)return;
+ const blob=new Blob([JSON.stringify({bathroomPlannerProduct:1,product:p},null,2)],{type:"application/json"});
+ const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=(p.sku||p.name||"product").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(u),500);
+}
+async function importProductFile(file){
+ try{
+  const data=JSON.parse(await file.text()),p=data.product||data;
+  if(!p.name||!p.width||!p.depth||!p.height)throw Error("Product JSON needs name, width, depth and height.");
+  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;state.products.push(p);save();renderProducts();alert("Product imported.");
+ }catch(err){alert("Could not import product: "+err.message)}
+}
+$("newProductBtn").onclick=()=>openProductEditor();
+$("closeProductSheet").onclick=closeProductEditor;
+$("saveProductBtn").onclick=saveProduct;
+$("deleteProductBtn").onclick=()=>{
+ const p=productById(editingProductId);if(!p||p.builtIn)return;
+ if(!confirm("Delete "+p.name+" from the product library?"))return;
+ checkpoint();state.products=state.products.filter(x=>x.id!==p.id);save();renderProducts();closeProductEditor();
+};
+$("productPhotoInput").onchange=async e=>{
+ const f=e.target.files?.[0];if(!f)return;
+ try{
+  pendingProductImage=await compressProductImage(f);
+  $("productPhotoPreview").src=pendingProductImage;$("productPhotoPreview").classList.remove("hidden");$("productPhotoPrompt").classList.add("hidden");
+ }catch(_){alert("Could not read that image.")}
+ e.target.value="";
+};
+$("productImportInput").onchange=async e=>{const f=e.target.files?.[0];if(f)await importProductFile(f);e.target.value=""};
+
 // --- V1.5 3D and wall elevations ---
 const c3=$("threeDCanvas"),ctx3=c3.getContext("2d"),eSvg=$("elevationSvg");
 let cam3={yaw:-0.75,pitch:0.62,zoom:0.19},drag3=null,pointers3=new Map(),pinch3=null,hit3=[];
@@ -838,6 +1072,51 @@ function boxFaces3(i){
 function itemRgb(type){
  return {bath:[220,214,202],wc:[232,230,223],vanity:[196,174,143],shower:[196,218,218],stud:[182,178,166],storage:[188,166,137],radiator:[217,207,191],niche:[207,194,175],custom:[205,201,191]}[type]||[200,198,190];
 }
+
+function productById(id){return state.products.find(p=>p.id===id)}
+function productImageSrc(p){return p&&p.image?p.image:""}
+function productItemDetails2D(i,d){
+ const p=productById(i.productId);if(!p)return;
+ if(p.style==="vanity2drawer"){
+  // Cabinet drawer split
+  if(i.rotation===90){
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.12,y1:i.y+d.h/2,x2:i.x+d.w*.88,y2:i.y+d.h/2,class:"archLine"}));
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.29,x2:i.x+d.w*.20,y2:i.y+d.h*.44,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.56,x2:i.x+d.w*.20,y2:i.y+d.h*.71,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
+  }else{
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.08,y1:i.y+d.h/2,x2:i.x+d.w*.92,y2:i.y+d.h/2,class:"archLine"}));
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.38,y1:i.y+d.h*.22,x2:i.x+d.w*.62,y2:i.y+d.h*.22,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.38,y1:i.y+d.h*.68,x2:i.x+d.w*.62,y2:i.y+d.h*.68,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
+  }
+ }
+}
+function line3(a,b,color,w,h,width=1.5){
+ const A=proj3(a,w,h),B=proj3(b,w,h);ctx3.beginPath();ctx3.moveTo(A.x,A.y);ctx3.lineTo(B.x,B.y);ctx3.strokeStyle=color;ctx3.lineWidth=width;ctx3.stroke();
+}
+function drawProductDetails3D(i,w,h){
+ const p=productById(i.productId);if(!p||p.style!=="vanity2drawer")return;
+ const d=itemDims(i),z=i.z||0,Z=z+(i.height||1);
+ // White ceramic basin/top.
+ poly3([{x:i.x,y:i.y,z:Z+2},{x:i.x+d.w,y:i.y,z:Z+2},{x:i.x+d.w,y:i.y+d.h,z:Z+2},{x:i.x,y:i.y+d.h,z:Z+2}],
+       "rgba(248,247,243,.96)","rgba(155,153,146,.7)",w,h);
+ // Drawer split and brass handles on the room-facing side.
+ const zMid=z+(i.height||1)*.48;
+ const z1=z+(i.height||1)*.70,z2=z+(i.height||1)*.28;
+ if(i.rotation===90){
+  const fx=i.x+d.w+1;
+  line3({x:fx,y:i.y,z:zMid},{x:fx,y:i.y+d.h,z:zMid},"rgba(105,95,80,.75)",w,h);
+  const ya=i.y+d.h*.36,yb=i.y+d.h*.64;
+  line3({x:fx+1,y:ya,z:z1},{x:fx+1,y:yb,z:z1},"rgba(174,135,70,.95)",w,h,2.6);
+  line3({x:fx+1,y:ya,z:z2},{x:fx+1,y:yb,z:z2},"rgba(174,135,70,.95)",w,h,2.6);
+ }else{
+  const fy=i.y+d.h+1;
+  line3({x:i.x,y:fy,z:zMid},{x:i.x+d.w,y:fy,z:zMid},"rgba(105,95,80,.75)",w,h);
+  const xa=i.x+d.w*.36,xb=i.x+d.w*.64;
+  line3({x:xa,y:fy+1,z:z1},{x:xb,y:fy+1,z:z1},"rgba(174,135,70,.95)",w,h,2.6);
+  line3({x:xa,y:fy+1,z:z2},{x:xb,y:fy+1,z:z2},"rgba(174,135,70,.95)",w,h,2.6);
+ }
+}
+
 function draw3D(){
  if($("viewMode").value!=="3d")return;
  const r=c3.getBoundingClientRect(),w=r.width,h=r.height;if(!w||!h)return;
@@ -866,11 +1145,13 @@ function draw3D(){
  }));
  faces.sort((a,b)=>a.dep-b.dep);
  faces.forEach(({i,f})=>{
-  const rgb=itemRgb(i.type),sel=selected.kind==="item"&&selected.id===i.id;
+  const prod=productById(i.productId); const rgb=prod&&prod.style==="vanity2drawer"?[174,145,108]:itemRgb(i.type),sel=selected.kind==="item"&&selected.id===i.id;
   const alpha=i.type==="shower"?.38:.72,shade=1-f.shade*.045;
   const fill=`rgba(${Math.round(rgb[0]*shade)},${Math.round(rgb[1]*shade)},${Math.round(rgb[2]*shade)},${alpha})`;
   poly3(f.p,fill,sel?"rgba(55,105,116,.95)":"rgba(70,72,67,.62)",w,h);
  });
+
+ state.items.forEach(i=>drawProductDetails3D(i,w,h));
 
  state.items.forEach(i=>{
   const d=itemDims(i),p=proj3({x:i.x+d.w/2,y:i.y+d.h/2,z:(i.z||0)+(i.height||1)},w,h);
@@ -985,6 +1266,125 @@ c3.addEventListener("pointerup",end3);c3.addEventListener("pointercancel",end3);
 
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
  
+
+// --- V1.6 Product library ---
+let editingProductId=null,pendingProductImage=null;
+
+function escHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function renderProducts(){
+ const grid=$("productGrid");if(!grid)return;grid.innerHTML="";
+ if(!state.products.length){grid.innerHTML='<div class="card"><p class="muted">No products yet.</p></div>';return}
+ state.products.forEach(p=>{
+  const card=document.createElement("div");card.className="productCard";
+  const img=p.image?`<img class="productImage" src="${escHtml(p.image)}" alt="${escHtml(p.name)}">`:`<div class="productImage" style="display:grid;place-items:center;color:#888">No image</div>`;
+  card.innerHTML=`
+   ${img}
+   <div class="productBody">
+    <div class="productBrand">${escHtml(p.brand||p.supplier||"Product")}</div>
+    <div class="productTitle">${escHtml(p.name)}</div>
+    <div class="specPills">
+      <span>${Math.round(p.width||0)} W</span><span>${Math.round(p.depth||0)} D</span><span>${Math.round(p.height||0)} H mm</span>
+      ${p.mounting==="wall"?'<span>Wall hung</span>':""}
+    </div>
+    <div class="productMeta">${escHtml(p.finish||"")}${p.sku?` · ${escHtml(p.sku)}`:""}</div>
+    ${p.builtIn?'<div class="productBadge">Starter product</div>':""}
+    <div class="productActions">
+      <button data-place="${escHtml(p.id)}" class="primary">Add to plan</button>
+      <button data-edit-product="${escHtml(p.id)}">Edit</button>
+      <button data-export-product="${escHtml(p.id)}">Export JSON</button>
+    </div>
+   </div>`;
+  grid.appendChild(card);
+ });
+ grid.querySelectorAll("[data-place]").forEach(b=>b.onclick=()=>placeProduct(b.dataset.place));
+ grid.querySelectorAll("[data-edit-product]").forEach(b=>b.onclick=()=>openProductEditor(b.dataset.editProduct));
+ grid.querySelectorAll("[data-export-product]").forEach(b=>b.onclick=()=>exportProduct(b.dataset.exportProduct));
+}
+function openProductEditor(id=null){
+ editingProductId=id;pendingProductImage=null;
+ const p=id?productById(id):null;
+ $("productSheetTitle").textContent=p?"Edit product":"Add product";
+ $("prodName").value=p?.name||"";$("prodBrand").value=p?.brand||"";$("prodSupplier").value=p?.supplier||"";
+ $("prodSku").value=p?.sku||"";$("prodType").value=p?.type||"vanity";$("prodMount").value=p?.mounting||"floor";
+ $("prodFinish").value=p?.finish||"";$("prodStyle").value=p?.style||"box";$("prodWidth").value=p?.width||"";
+ $("prodDepth").value=p?.depth||"";$("prodHeight").value=p?.height||"";$("prodZ").value=p?.defaultZ??0;
+ $("prodUrl").value=p?.url||"";$("prodNotes").value=p?.notes||"";
+ const preview=$("productPhotoPreview"),prompt=$("productPhotoPrompt");
+ if(p?.image){preview.src=p.image;preview.classList.remove("hidden");prompt.classList.add("hidden")}else{preview.removeAttribute("src");preview.classList.add("hidden");prompt.classList.remove("hidden")}
+ $("deleteProductBtn").classList.toggle("hidden",!p||p.builtIn);
+ $("productSheet").classList.remove("hidden");
+}
+function closeProductEditor(){$("productSheet").classList.add("hidden");editingProductId=null;pendingProductImage=null}
+async function compressProductImage(file){
+ return new Promise((resolve,reject)=>{
+  const fr=new FileReader();
+  fr.onload=()=>{
+   const im=new Image();
+   im.onload=()=>{
+    const max=720,scale=Math.min(1,max/Math.max(im.width,im.height));
+    const c=document.createElement("canvas");c.width=Math.max(1,Math.round(im.width*scale));c.height=Math.max(1,Math.round(im.height*scale));
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+    resolve(c.toDataURL("image/jpeg",.72));
+   };im.onerror=reject;im.src=fr.result;
+  };fr.onerror=reject;fr.readAsDataURL(file);
+ });
+}
+function saveProduct(){
+ const old=editingProductId?productById(editingProductId):null;
+ const p={
+  id:old?.id||("prod-"+Date.now()),
+  name:$("prodName").value.trim()||"Untitled product",
+  brand:$("prodBrand").value.trim(),supplier:$("prodSupplier").value.trim(),sku:$("prodSku").value.trim(),
+  type:$("prodType").value,mounting:$("prodMount").value,finish:$("prodFinish").value.trim(),style:$("prodStyle").value,
+  width:Math.max(1,Number($("prodWidth").value)||1),depth:Math.max(1,Number($("prodDepth").value)||1),
+  height:Math.max(1,Number($("prodHeight").value)||1),defaultZ:Math.max(0,Number($("prodZ").value)||0),
+  url:$("prodUrl").value.trim(),notes:$("prodNotes").value.trim(),
+  image:pendingProductImage||old?.image||"",builtIn:old?.builtIn||false
+ };
+ checkpoint();
+ if(old){Object.assign(old,p)}else state.products.push(p);
+ save();renderProducts();closeProductEditor();
+}
+function placeProduct(id){
+ const p=productById(id);if(!p)return;
+ checkpoint();
+ const rotation=(p.type==="vanity"&&p.mounting==="wall")?90:0;
+ const item={id:p.type+Date.now(),type:p.type,name:p.name,x:120,y:780,w:p.width,h:p.depth,rotation,locked:false,z:p.defaultZ||0,height:p.height,productId:p.id};
+ state.items.push(item);selected={kind:"item",id:item.id};save();render();
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+ const planTab=document.querySelector('.tab[data-tab="plan"]');planTab.classList.add("active");$("plan").classList.add("active");
+ openSelectedSheet();
+}
+function exportProduct(id){
+ const p=productById(id);if(!p)return;
+ const blob=new Blob([JSON.stringify({bathroomPlannerProduct:1,product:p},null,2)],{type:"application/json"});
+ const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=(p.sku||p.name||"product").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".json";a.click();setTimeout(()=>URL.revokeObjectURL(u),500);
+}
+async function importProductFile(file){
+ try{
+  const data=JSON.parse(await file.text()),p=data.product||data;
+  if(!p.name||!p.width||!p.depth||!p.height)throw Error("Product JSON needs name, width, depth and height.");
+  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;state.products.push(p);save();renderProducts();alert("Product imported.");
+ }catch(err){alert("Could not import product: "+err.message)}
+}
+$("newProductBtn").onclick=()=>openProductEditor();
+$("closeProductSheet").onclick=closeProductEditor;
+$("saveProductBtn").onclick=saveProduct;
+$("deleteProductBtn").onclick=()=>{
+ const p=productById(editingProductId);if(!p||p.builtIn)return;
+ if(!confirm("Delete "+p.name+" from the product library?"))return;
+ checkpoint();state.products=state.products.filter(x=>x.id!==p.id);save();renderProducts();closeProductEditor();
+};
+$("productPhotoInput").onchange=async e=>{
+ const f=e.target.files?.[0];if(!f)return;
+ try{
+  pendingProductImage=await compressProductImage(f);
+  $("productPhotoPreview").src=pendingProductImage;$("productPhotoPreview").classList.remove("hidden");$("productPhotoPrompt").classList.add("hidden");
+ }catch(_){alert("Could not read that image.")}
+ e.target.value="";
+};
+$("productImportInput").onchange=async e=>{const f=e.target.files?.[0];if(f)await importProductFile(f);e.target.value=""};
+
 // --- V1.5 3D and wall elevations ---
 const c3=$("threeDCanvas"),ctx3=c3.getContext("2d"),eSvg=$("elevationSvg");
 let cam3={yaw:-0.75,pitch:0.62,zoom:0.19},drag3=null,pointers3=new Map(),pinch3=null,hit3=[];
@@ -1029,6 +1429,51 @@ function boxFaces3(i){
 function itemRgb(type){
  return {bath:[220,214,202],wc:[232,230,223],vanity:[196,174,143],shower:[196,218,218],stud:[182,178,166],storage:[188,166,137],radiator:[217,207,191],niche:[207,194,175],custom:[205,201,191]}[type]||[200,198,190];
 }
+
+function productById(id){return state.products.find(p=>p.id===id)}
+function productImageSrc(p){return p&&p.image?p.image:""}
+function productItemDetails2D(i,d){
+ const p=productById(i.productId);if(!p)return;
+ if(p.style==="vanity2drawer"){
+  // Cabinet drawer split
+  if(i.rotation===90){
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.12,y1:i.y+d.h/2,x2:i.x+d.w*.88,y2:i.y+d.h/2,class:"archLine"}));
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.29,x2:i.x+d.w*.20,y2:i.y+d.h*.44,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.56,x2:i.x+d.w*.20,y2:i.y+d.h*.71,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
+  }else{
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.08,y1:i.y+d.h/2,x2:i.x+d.w*.92,y2:i.y+d.h/2,class:"archLine"}));
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.38,y1:i.y+d.h*.22,x2:i.x+d.w*.62,y2:i.y+d.h*.22,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
+   svg.appendChild(sEl("line",{x1:i.x+d.w*.38,y1:i.y+d.h*.68,x2:i.x+d.w*.62,y2:i.y+d.h*.68,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
+  }
+ }
+}
+function line3(a,b,color,w,h,width=1.5){
+ const A=proj3(a,w,h),B=proj3(b,w,h);ctx3.beginPath();ctx3.moveTo(A.x,A.y);ctx3.lineTo(B.x,B.y);ctx3.strokeStyle=color;ctx3.lineWidth=width;ctx3.stroke();
+}
+function drawProductDetails3D(i,w,h){
+ const p=productById(i.productId);if(!p||p.style!=="vanity2drawer")return;
+ const d=itemDims(i),z=i.z||0,Z=z+(i.height||1);
+ // White ceramic basin/top.
+ poly3([{x:i.x,y:i.y,z:Z+2},{x:i.x+d.w,y:i.y,z:Z+2},{x:i.x+d.w,y:i.y+d.h,z:Z+2},{x:i.x,y:i.y+d.h,z:Z+2}],
+       "rgba(248,247,243,.96)","rgba(155,153,146,.7)",w,h);
+ // Drawer split and brass handles on the room-facing side.
+ const zMid=z+(i.height||1)*.48;
+ const z1=z+(i.height||1)*.70,z2=z+(i.height||1)*.28;
+ if(i.rotation===90){
+  const fx=i.x+d.w+1;
+  line3({x:fx,y:i.y,z:zMid},{x:fx,y:i.y+d.h,z:zMid},"rgba(105,95,80,.75)",w,h);
+  const ya=i.y+d.h*.36,yb=i.y+d.h*.64;
+  line3({x:fx+1,y:ya,z:z1},{x:fx+1,y:yb,z:z1},"rgba(174,135,70,.95)",w,h,2.6);
+  line3({x:fx+1,y:ya,z:z2},{x:fx+1,y:yb,z:z2},"rgba(174,135,70,.95)",w,h,2.6);
+ }else{
+  const fy=i.y+d.h+1;
+  line3({x:i.x,y:fy,z:zMid},{x:i.x+d.w,y:fy,z:zMid},"rgba(105,95,80,.75)",w,h);
+  const xa=i.x+d.w*.36,xb=i.x+d.w*.64;
+  line3({x:xa,y:fy+1,z:z1},{x:xb,y:fy+1,z:z1},"rgba(174,135,70,.95)",w,h,2.6);
+  line3({x:xa,y:fy+1,z:z2},{x:xb,y:fy+1,z:z2},"rgba(174,135,70,.95)",w,h,2.6);
+ }
+}
+
 function draw3D(){
  if($("viewMode").value!=="3d")return;
  const r=c3.getBoundingClientRect(),w=r.width,h=r.height;if(!w||!h)return;
@@ -1057,11 +1502,13 @@ function draw3D(){
  }));
  faces.sort((a,b)=>a.dep-b.dep);
  faces.forEach(({i,f})=>{
-  const rgb=itemRgb(i.type),sel=selected.kind==="item"&&selected.id===i.id;
+  const prod=productById(i.productId); const rgb=prod&&prod.style==="vanity2drawer"?[174,145,108]:itemRgb(i.type),sel=selected.kind==="item"&&selected.id===i.id;
   const alpha=i.type==="shower"?.38:.72,shade=1-f.shade*.045;
   const fill=`rgba(${Math.round(rgb[0]*shade)},${Math.round(rgb[1]*shade)},${Math.round(rgb[2]*shade)},${alpha})`;
   poly3(f.p,fill,sel?"rgba(55,105,116,.95)":"rgba(70,72,67,.62)",w,h);
  });
+
+ state.items.forEach(i=>drawProductDetails3D(i,w,h));
 
  state.items.forEach(i=>{
   const d=itemDims(i),p=proj3({x:i.x+d.w/2,y:i.y+d.h/2,z:(i.z||0)+(i.height||1)},w,h);
@@ -1176,7 +1623,7 @@ c3.addEventListener("pointerup",end3);c3.addEventListener("pointercancel",end3);
 
 document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
- b.classList.add("active");$(b.dataset.tab).classList.add("active");if(b.dataset.tab==="threeD")setTimeout(update3DMode,20);
+ b.classList.add("active");$(b.dataset.tab).classList.add("active");if(b.dataset.tab==="threeD")setTimeout(update3DMode,20);if(b.dataset.tab==="products")renderProducts();
 });
 
 $("undoBtn").onclick=undo;$("redoBtn").onclick=redo;
@@ -1288,7 +1735,7 @@ function finishPointer(e){
 svg.addEventListener("pointerup",finishPointer);
 svg.addEventListener("pointercancel",finishPointer);
 
-sync();updateUndoRedo();resetView(false);render();
+sync();updateUndoRedo();resetView(false);render();renderProducts();
 $("statusHint").textContent="Drag fixtures · pinch to zoom · tap an item for measurements. · V"+VERSION;
 })();
 </script>

@@ -96,7 +96,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.7.0 · visual 3D</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.7.1 · full rotation</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -379,7 +379,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.7.0", KEY="bathroomPlannerStable";
+const VERSION="1.7.1", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -456,6 +456,12 @@ function migrateHeights(){
 }
 migrateHeights();
 
+state.items.forEach(i=>{
+ const r=((Number(i.rotation)||0)%360+360)%360;
+ i.rotation=[0,90,180,270].includes(r)?r:Math.round(r/90)*90%360;
+});
+
+
 
 let selected={kind:null,id:null};
 let history=[],future=[];
@@ -466,7 +472,7 @@ let snapFeedback=null;
 let manualMode=false,manualFirst=null;
 
 const sEl=(tag,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e};
-const itemDims=i=>i.rotation===90?{w:i.h,h:i.w}:{w:i.w,h:i.h};
+const itemDims=i=>(i.rotation===90||i.rotation===270)?{w:i.h,h:i.w}:{w:i.w,h:i.h};
 const box=i=>{const d=itemDims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}};
 const overlap1D=(a1,a2,b1,b2)=>Math.min(a2,b2)-Math.max(a1,b1)>0;
 const collide=(a,b)=>{const A=box(a),B=box(b);return A.x1<B.x2&&A.x2>B.x1&&A.y1<B.y2&&A.y2>B.y1};
@@ -617,6 +623,22 @@ function drawOpenings(){
  arc.addEventListener("pointerdown",openingDown);svg.appendChild(arc);
 }
 
+
+function drawOrientationMarker(i,d){
+ if(i.type==="niche"||i.type==="stud"||i.type==="radiator")return;
+ const a=(Number(i.rotation)||0)%360;
+ let x1=i.x+d.w/2,y1=i.y+d.h/2,x2=x1,y2=y1;
+ const len=Math.min(55,Math.max(26,Math.min(d.w,d.h)*.16));
+ if(a===0)y2=i.y+d.h-12;
+ else if(a===90)x2=i.x+12;
+ else if(a===180)y2=i.y+12;
+ else if(a===270)x2=i.x+d.w-12;
+ const line=sEl("line",{x1,y1,x2,y2,stroke:"#7b7d76","stroke-width":"2","vector-effect":"non-scaling-stroke","pointer-events":"none"});
+ svg.appendChild(line);
+ const dot=sEl("circle",{cx:x2,cy:y2,r:6,fill:"#7b7d76","pointer-events":"none"});
+ svg.appendChild(dot);
+}
+
 function drawItem(i){
  const d=itemDims(i),b=box(i),status=itemStatusClass(i);
  const rect=sEl("rect",{x:i.x,y:i.y,width:d.w,height:d.h,rx:i.type==="wc"?65:7,class:`fixture ${i.type}${selected.kind==="item"&&selected.id===i.id?" selected":""}${status}`,"data-id":i.id});
@@ -634,6 +656,7 @@ function drawItem(i){
  }
  if(i.type==="radiator"){for(let y=i.y+22;y<i.y+d.h-18;y+=42)svg.appendChild(sEl("line",{x1:i.x+12,y1:y,x2:i.x+d.w-12,y2:y,class:"archLine"}))}
  productItemDetails2D(i,d);
+ drawOrientationMarker(i,d);
 
  const z=currentZoom();
  if(d.w>240&&d.h>110){
@@ -848,9 +871,9 @@ function openSelectedSheet(){
  $("itemQuick").classList.add("hidden");$("itemDetails").classList.add("hidden");$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
  if(selected.kind==="item"){
   const i=state.items.find(x=>x.id===selected.id);if(!i)return;
-  const prod=productById(i.productId);$("sheetEyebrow").textContent=prod?"Product object":"Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm`;
+  const prod=productById(i.productId);$("sheetEyebrow").textContent=prod?"Product object":"Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm · ${Number(i.rotation)||0}°`;
   $("itemQuick").classList.remove("hidden");$("detailsToggle").classList.remove("hidden");
-  $("lockBtn").textContent=i.locked?"Unlock":"Lock";
+  $("lockBtn").textContent=i.locked?"Unlock":"Lock";$("rotateBtn").textContent=`Rotate 90° · now ${Number(i.rotation)||0}°`;
   $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;
   const w=warningInfo(i);if(w.length){$("sheetWarning").classList.remove("hidden");$("sheetWarning").textContent=w.join(" ")}
  }else if(selected.kind==="opening"){
@@ -1079,7 +1102,7 @@ function productItemDetails2D(i,d){
  const p=productById(i.productId);if(!p)return;
  if(p.style==="vanity2drawer"){
   // Cabinet drawer split
-  if(i.rotation===90){
+  if(i.rotation===90||i.rotation===270){
    svg.appendChild(sEl("line",{x1:i.x+d.w*.12,y1:i.y+d.h/2,x2:i.x+d.w*.88,y2:i.y+d.h/2,class:"archLine"}));
    svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.29,x2:i.x+d.w*.20,y2:i.y+d.h*.44,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
    svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.56,x2:i.x+d.w*.20,y2:i.y+d.h*.71,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
@@ -1102,7 +1125,7 @@ function drawProductDetails3D(i,w,h){
  // Drawer split and brass handles on the room-facing side.
  const zMid=z+(i.height||1)*.48;
  const z1=z+(i.height||1)*.70,z2=z+(i.height||1)*.28;
- if(i.rotation===90){
+ if(i.rotation===90||i.rotation===270){
   const fx=i.x+d.w+1;
   line3({x:fx,y:i.y,z:zMid},{x:fx,y:i.y+d.h,z:zMid},"rgba(105,95,80,.75)",w,h);
   const ya=i.y+d.h*.36,yb=i.y+d.h*.64;
@@ -1436,7 +1459,7 @@ function productItemDetails2D(i,d){
  const p=productById(i.productId);if(!p)return;
  if(p.style==="vanity2drawer"){
   // Cabinet drawer split
-  if(i.rotation===90){
+  if(i.rotation===90||i.rotation===270){
    svg.appendChild(sEl("line",{x1:i.x+d.w*.12,y1:i.y+d.h/2,x2:i.x+d.w*.88,y2:i.y+d.h/2,class:"archLine"}));
    svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.29,x2:i.x+d.w*.20,y2:i.y+d.h*.44,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
    svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.56,x2:i.x+d.w*.20,y2:i.y+d.h*.71,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
@@ -1459,7 +1482,7 @@ function drawProductDetails3D(i,w,h){
  // Drawer split and brass handles on the room-facing side.
  const zMid=z+(i.height||1)*.48;
  const z1=z+(i.height||1)*.70,z2=z+(i.height||1)*.28;
- if(i.rotation===90){
+ if(i.rotation===90||i.rotation===270){
   const fx=i.x+d.w+1;
   line3({x:fx,y:i.y,z:zMid},{x:fx,y:i.y+d.h,z:zMid},"rgba(105,95,80,.75)",w,h);
   const ya=i.y+d.h*.36,yb=i.y+d.h*.64;
@@ -1644,7 +1667,7 @@ document.querySelectorAll("[data-add-service]").forEach(b=>b.onclick=()=>addServ
 $("closeObjectSheet").onclick=closeObjectSheet;
 $("detailsToggle").onclick=()=>{const d=$("itemDetails");d.classList.toggle("hidden");$("detailsToggle").textContent=d.classList.contains("hidden")?"Show exact details":"Hide exact details"};
 
-$("rotateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();i.rotation=i.rotation===90?0:90;save();render();openSelectedSheet()};
+$("rotateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();i.rotation=((Number(i.rotation)||0)+90)%360;save();render();openSelectedSheet()};
 $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();i.locked=!i.locked;save();render();openSelectedSheet()};
 $("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.x+=50;c.y+=50;c.locked=false;state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};

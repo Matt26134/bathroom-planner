@@ -92,7 +92,7 @@ if (!api || !legacy) {
   const mouse = new THREE.Vector2();
 
   const mm = v => (Number(v) || 0) / 1000;
-  const itemDims = i => i.rotation === 90 ? { w: i.h, d: i.w } : { w: i.w, d: i.h };
+  const itemDims = i => (i.rotation === 90 || i.rotation === 270) ? { w: i.h, d: i.w } : { w: i.w, d: i.h };
 
   function setItemId(obj, id) {
     obj.traverse?.(n => { n.userData.itemId = id; });
@@ -120,7 +120,7 @@ if (!api || !legacy) {
     const d = itemDims(i);
     const g = new THREE.Group();
     g.position.set(mm(i.x + d.w/2), 0, mm(i.y + d.d/2));
-    g.rotation.y = i.rotation === 90 ? -Math.PI/2 : 0;
+    g.rotation.y = -THREE.MathUtils.degToRad((Number(i.rotation)||0)%360);
     g.userData.itemId = i.id;
     return g;
   }

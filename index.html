@@ -115,7 +115,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.4 · door + tile cleanup</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.5 · controls + cleanup</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -325,6 +325,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Depth (mm)<input id="itemH" type="number"></label>
         <label>Bottom above floor (mm)<input id="itemZ" type="number"></label>
         <label>Height (mm)<input id="itemHeight" type="number"></label>
+        <label id="itemShowerMountWrap" class="hidden">Shower mount side<select id="itemShowerMount"><option value="left">Left side</option><option value="right">Right / vanity side</option></select></label>
       </div>
     </div>
 
@@ -341,6 +342,8 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Door width<input id="doorW" type="number"></label>
         <label>After door<input id="doorB" type="number"></label>
         <label>Door height<input id="doorOpenHeight" type="number"></label>
+        <label>Hinge side<select id="doorHinge"><option value="bottom">Bottom end</option><option value="top">Top end</option></select></label>
+        <label>Open angle °<input id="doorAngle" type="number" min="0" max="120"></label>
       </div>
     </div>
 
@@ -529,6 +532,10 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       <label>Bottom height (mm)<input id="zoneBottom" type="number"></label>
       <label>Top height (mm)<input id="zoneTop" type="number"></label>
     </div>
+    <div class="quickActions" style="margin-top:8px">
+      <button id="zoneFitVanityBtn" type="button">Fit zone to vanity</button>
+      <button id="zoneFullHeightBtn" type="button">Set full height</button>
+    </div>
 
     <div id="zoneMetrics" class="productNote" style="margin-top:10px"></div>
     <div class="zoneHint">
@@ -566,21 +573,21 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.8.4", KEY="bathroomPlannerStable";
+const VERSION="1.8.5", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 const starter={
  version:VERSION,
  project:{name:"Bathroom Redesign",planName:"Current working layout",notes:"Confirm final survey dimensions after strip-out before ordering fitted items."},
- room:{width:2280,depth:2545,ceiling:2470,tolerance:20,window:{before:660,width:930,after:690,sill:900,height:960},door:{before:835,width:860,after:850,height:1981}},
+ room:{width:2280,depth:2545,ceiling:2470,tolerance:20,window:{before:660,width:930,after:690,sill:900,height:960},door:{before:835,width:860,after:850,height:1981,hinge:"bottom",openAngle:26}},
  ui:{measureMode:"selected",snap:true},
  items:[
   {id:"bath1",type:"bath",name:"Bath",x:0,y:0,w:1600,h:700,rotation:0,locked:false,z:0,height:550},
   {id:"wc1",type:"wc",name:"New WC",x:1830,y:25,w:370,h:640,rotation:0,locked:false,z:0,height:800},
   {id:"vanity1",type:"vanity",name:"Floor-standing vanity",x:0,y:700,w:450,h:970,rotation:0,locked:false,z:0,height:850},
   {id:"stud1",type:"stud",name:"Half-height stud wall",x:0,y:1670,w:900,h:100,rotation:0,locked:false,z:0,height:1100},
-  {id:"shower1",type:"shower",name:"Walk-in shower",x:0,y:1745,w:1400,h:800,rotation:0,locked:false,z:0,height:40},
+  {id:"shower1",type:"shower",name:"Walk-in shower",x:0,y:1745,w:1400,h:800,rotation:0,locked:false,z:0,height:40,showerMountSide:"right"},
   {id:"storage1",type:"storage",name:"Tall storage",x:1460,y:2295,w:300,h:250,rotation:0,locked:false,z:0,height:1800},
   {id:"rad1",type:"radiator",name:"Towel radiator",x:2180,y:1900,w:100,h:520,rotation:0,locked:false,z:650,height:1200},
   {id:"n1",type:"niche",name:"Large shampoo niche",x:120,y:1680,w:380,h:70,rotation:0,locked:false,z:950,height:450},
@@ -610,7 +617,7 @@ const starter={
  ],
  tileProducts:[
   {id:"tile-laurito-3060",name:"Laurito White Marble Effect Wall & Floor Tiles 300 x 600mm",supplier:"Victorian Plumbing",sku:"LAU3060",finish:"White marble effect",width:300,height:600,tilesPerBox:7,wall:true,floor:true,pricePerBox:31.44,pricePerM2:24.95,defaultPattern:"stack",image:"./laurito-tile.webp",builtIn:true},
-  {id:"tile-granley-pink",name:"Granley Rustic Pink Gloss Wall Tiles 70 x 280mm",supplier:"Victorian Plumbing",sku:"GRN728PNK",finish:"Rustic pink gloss",width:70,height:280,tilesPerBox:30,wall:true,floor:false,pricePerBox:29.47,pricePerM2:49.95,defaultPattern:"herringbone",image:"./granley-pink-tile.webp",patternImage:"./granley-pink-herringbone.webp",builtIn:true}
+  {id:"tile-granley-pink",name:"Granley Rustic Pink Gloss Wall Tiles 70 x 280mm",supplier:"Victorian Plumbing",sku:"GRN728PNK",finish:"Rustic pink gloss",width:70,height:280,tilesPerBox:30,wall:true,floor:false,pricePerBox:29.47,pricePerM2:49.95,defaultPattern:"herringbone",image:"./granley-pink-tile.webp",patternImage:"./granley-pink-herringbone.png",builtIn:true}
  ],
  surfaceZones:[
   {id:"zone-floor",name:"Main floor",surface:"floor",full:true,x1:0,x2:2280,y1:0,y2:2545,tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
@@ -637,7 +644,7 @@ if(!state.products.some(p=>p.id==="prod-lille-800")){
  state.products.unshift(clone(starter.products[0]));
 }
 if(!Array.isArray(state.tileProducts)) state.tileProducts=[];
-(starter.tileProducts||[]).forEach(t=>{ if(!state.tileProducts.some(x=>x.id===t.id)) state.tileProducts.push(clone(t)); });
+(starter.tileProducts||[]).forEach(t=>{ const existing=state.tileProducts.find(x=>x.id===t.id); if(existing){ if(existing.builtIn!==false) Object.assign(existing, clone(t), {image: existing.image || t.image}); } else state.tileProducts.push(clone(t)); });
 if(!Array.isArray(state.surfaceZones)) state.surfaceZones=[];
 if(!state.surfaceZones.length) state.surfaceZones=clone(starter.surfaceZones);
 
@@ -650,10 +657,13 @@ function migrateHeights(){
  if(state.room.window.height==null)state.room.window.height=960;
  if(!state.room.door)state.room.door={before:835,width:860,after:850};
  if(state.room.door.height==null)state.room.door.height=1981;
+ if(!state.room.door.hinge) state.room.door.hinge="bottom";
+ if(state.room.door.openAngle==null) state.room.door.openAngle=26;
  state.items.forEach(i=>{
    const d=HEIGHT_DEFAULTS[i.type]||[0,900];
    if(i.z==null)i.z=d[0];
    if(i.height==null)i.height=d[1];
+   if(i.type==="shower" && !i.showerMountSide) i.showerMountSide="right";
  });
  state.services.forEach(s=>{if(s.z==null)s.z=300});
 }
@@ -1087,7 +1097,7 @@ function openSelectedSheet(){
   const prod=productById(i.productId);$("sheetEyebrow").textContent=prod?"Product object":"Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm · ${Number(i.rotation)||0}°`;
   $("itemQuick").classList.remove("hidden");$("detailsToggle").classList.remove("hidden");
   $("lockBtn").textContent=i.locked?"Unlock":"Lock";$("rotateBtn").textContent=`Rotate 90° · ${Number(i.rotation)||0}° · front → ${facingName(i.rotation)}`;
-  $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;
+  $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;$("itemShowerMountWrap").classList.toggle("hidden",i.type!=="shower"); if(i.type==="shower") $("itemShowerMount").value=i.showerMountSide||"right";
   const w=warningInfo(i);if(w.length){$("sheetWarning").classList.remove("hidden");$("sheetWarning").textContent=w.join(" ")}
  }else if(selected.kind==="opening"){
   $("detailsToggle").classList.add("hidden");$("openingDetails").classList.remove("hidden");
@@ -1096,7 +1106,7 @@ function openSelectedSheet(){
    $("openA").value=state.room.window.before;$("openW").value=state.room.window.width;$("openB").value=state.room.window.after;$("openSill").value=state.room.window.sill;$("openHeight").value=state.room.window.height;
   }else{
    $("sheetEyebrow").textContent="Opening";$("sheetTitle").textContent="Door";$("doorFields").classList.remove("hidden");$("windowFields").classList.add("hidden");
-   $("doorA").value=state.room.door.before;$("doorW").value=state.room.door.width;$("doorB").value=state.room.door.after;$("doorOpenHeight").value=state.room.door.height;
+   $("doorA").value=state.room.door.before;$("doorW").value=state.room.door.width;$("doorB").value=state.room.door.after;$("doorOpenHeight").value=state.room.door.height;$("doorHinge").value=state.room.door.hinge||"bottom";$("doorAngle").value=state.room.door.openAngle??26;
   }
  }else if(selected.kind==="service"){
   const s=state.services.find(x=>x.id===selected.id);if(!s)return;
@@ -1542,13 +1552,13 @@ $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)
 $("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.x+=50;c.y+=50;c.locked=false;state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
 
-["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight"].forEach(id=>$(id).onchange=()=>{
+["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemShowerMount"].forEach(id=>$(id).onchange=()=>{
  const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();
- i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(20,Number($("itemH").value)||20);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);
+ i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(20,Number($("itemH").value)||20);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);if(i.type==="shower") i.showerMountSide=$("itemShowerMount").value||"right";
  save();render();openSelectedSheet();
 });
 ["openA","openW","openB","openSill","openHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);save();sync();render();openSelectedSheet()});
-["doorA","doorW","doorB","doorOpenHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.door.before=Math.max(0,Number($("doorA").value)||0);state.room.door.width=Math.max(100,Number($("doorW").value)||100);state.room.door.after=Math.max(0,Number($("doorB").value)||0);state.room.door.height=Math.max(100,Number($("doorOpenHeight").value)||100);save();sync();render();openSelectedSheet()});
+["doorA","doorW","doorB","doorOpenHeight","doorHinge","doorAngle"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.door.before=Math.max(0,Number($("doorA").value)||0);state.room.door.width=Math.max(100,Number($("doorW").value)||100);state.room.door.after=Math.max(0,Number($("doorB").value)||0);state.room.door.height=Math.max(100,Number($("doorOpenHeight").value)||100);state.room.door.hinge=$("doorHinge").value||"bottom";state.room.door.openAngle=Math.max(0,Math.min(120,Number($("doorAngle").value)||0));save();sync();render();openSelectedSheet()});
 ["serviceName","serviceType","serviceX","serviceY","serviceZ"].forEach(id=>$(id).onchange=()=>{
  const s=state.services.find(x=>x.id===selected.id);if(!s)return;checkpoint();s.name=$("serviceName").value.trim()||s.name;s.type=$("serviceType").value;s.x=Number($("serviceX").value)||0;s.y=Number($("serviceY").value)||0;s.z=Math.max(0,Number($("serviceZ").value)||0);save();render();openSelectedSheet();
 });

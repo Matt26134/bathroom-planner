@@ -142,6 +142,10 @@ if (!api || !legacy) {
     wallRoot.add(m);
     wallSets[side].push(m);
   }
+  function addWallPart(side, mesh){
+    wallRoot.add(mesh);
+    wallSets[side].push(mesh);
+  }
 
   function buildWalls(s) {
     wallSets = { window: [], opposite: [], left: [], right: [] };
@@ -163,31 +167,33 @@ if (!api || !legacy) {
     addWallBox("right", T,H,after, W+T/2,H/2,de+after/2);
     addWallBox("right", T,over,dw, W+T/2,dh+over/2,db+dw/2);
 
-    // Visible door frame + inward-opening door leaf.
-    // The wall opening remains the source of truth; the leaf is a visual aid.
+    // Visible but simple door model. Frame pieces follow the right wall visibility,
+    // which stops the old floating top section appearing when the wall is hidden.
     const doorFrameMat = new THREE.MeshStandardMaterial({color:0xe9e4da,roughness:.62});
     const doorLeafMat = new THREE.MeshStandardMaterial({color:0xf1eee7,roughness:.72});
-    const trim=.045, leafT=.035;
+    const trim=.03, leafT=.028;
 
-    fixedRoot.add(meshBox(trim,dh+.07,.07,doorFrameMat,W-.018,(dh+.07)/2,db,false));
-    fixedRoot.add(meshBox(trim,dh+.07,.07,doorFrameMat,W-.018,(dh+.07)/2,de,false));
-    fixedRoot.add(meshBox(trim,dw+.09,.07,doorFrameMat,W-.018,dh+.025,db+dw/2,false));
+    addWallPart("right", meshBox(trim,dh+.02,.05,doorFrameMat,W-.018,(dh+.02)/2,db,false));
+    addWallPart("right", meshBox(trim,dh+.02,.05,doorFrameMat,W-.018,(dh+.02)/2,de,false));
+    addWallPart("right", meshBox(trim,.05,dw+.02,doorFrameMat,W-.018,dh+.01,db+dw/2,false));
 
-    // Hinged at the back/lower end of the opening and shown partially open.
-    // Closed leaf runs from hinge towards 'before door'; positive Y rotation swings it into the room.
+    const hinge=(door.hinge||"bottom");
+    const angle=THREE.MathUtils.degToRad(Math.max(0, Math.min(120, Number(door.openAngle ?? 26))));
+    const dir=hinge==="top" ? 1 : -1;
+    const swing=hinge==="top" ? -angle : angle;
     const doorPivot = new THREE.Group();
-    doorPivot.position.set(W-.028,0,de);
-    doorPivot.rotation.y = THREE.MathUtils.degToRad(22);
-    const leaf = meshBox(leafT,dh-.03,dw-.035,doorLeafMat,-leafT/2,(dh-.03)/2,-(dw-.035)/2);
+    doorPivot.position.set(W-.026,0,hinge==="top" ? db : de);
+    doorPivot.rotation.y = swing;
+    const leaf = meshBox(leafT,dh-.025,dw-.03,doorLeafMat,-leafT/2,(dh-.025)/2,dir*(dw-.03)/2,false);
     doorPivot.add(leaf);
 
     const handleMat=mats.brass;
     const handleY=Math.min(1.02,dh*.52);
-    const handleZ=-(dw-.035)*.78;
-    const handleStem=cylinder(.012,.055,handleMat,"x",18);
-    handleStem.position.set(-.045,handleY,handleZ);
+    const handleZ=dir*(dw-.03)*.78;
+    const handleStem=cylinder(.010,.045,handleMat,"x",18);
+    handleStem.position.set(-.038,handleY,handleZ);
     doorPivot.add(handleStem);
-    const handleBar=meshBox(.018,.018,.11,handleMat,-.074,handleY,handleZ-.045,false);
+    const handleBar=meshBox(.016,.016,.09,handleMat,-.062,handleY,handleZ-(dir*.03),false);
     doorPivot.add(handleBar);
     fixedRoot.add(doorPivot);
 
@@ -588,7 +594,8 @@ if (!api || !legacy) {
       // is the physical back wall of the room. Hardware is therefore mounted
       // against +d/2, not on the glass/stud at the entry.
       const backZ=d/2-.025;
-      const headX=-w*.23;
+      const side=(i.showerMountSide||"right")==="left" ? -1 : 1;
+      const headX=side*w*.23;
       const headY=Math.min(mm(s.room.ceiling)-.22,2.08);
 
       // Vertical supply/riser visibly touching the back wall.
@@ -612,20 +619,20 @@ if (!api || !legacy) {
       g.add(head);
 
       // Handset and slide rail: also mounted on the back wall.
-      const railX=w*.22;
+      const railX=side*w*.14;
       const rail=cylinder(.008,.62,mats.brass,"y",16);
       rail.position.set(railX,z+h+1.27,backZ-.005);
       g.add(rail);
 
       const handset=cylinder(.018,.17,mats.brass,"y",18);
-      handset.position.set(railX+.035,z+h+1.43,backZ-.07);
+      handset.position.set(railX+(side*.035),z+h+1.43,backZ-.07);
       handset.rotation.z=.25;
       g.add(handset);
 
       // Controls belong on the half-height stud / entry wall, facing into shower.
       // local -Z is the entry edge where the current stud wall sits.
       const frontZ=-d/2+.022;
-      const controlsX=w*.13;
+      const controlsX=side*w*.14;
       const plate=meshBox(.15,.20,.018,mats.brass,controlsX,z+h+1.03,frontZ,false);
       g.add(plate);
 

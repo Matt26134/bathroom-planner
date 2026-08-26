@@ -12,7 +12,7 @@
 
   const DEFAULT_TILES = [
     {id:"tile-laurito-3060",name:"Laurito White Marble Effect Wall & Floor Tiles 300 x 600mm",supplier:"Victorian Plumbing",sku:"LAU3060",finish:"White marble effect",width:300,height:600,tilesPerBox:7,wall:true,floor:true,pricePerBox:31.44,pricePerM2:24.95,defaultPattern:"stack",image:"./laurito-tile.webp",builtIn:true},
-    {id:"tile-granley-pink",name:"Granley Rustic Pink Gloss Wall Tiles 70 x 280mm",supplier:"Victorian Plumbing",sku:"GRN728PNK",finish:"Rustic pink gloss",width:70,height:280,tilesPerBox:30,wall:true,floor:false,pricePerBox:29.47,pricePerM2:49.95,defaultPattern:"herringbone",image:"./granley-pink-tile.webp",patternImage:"./granley-pink-herringbone.svg",builtIn:true}
+    {id:"tile-granley-pink",name:"Granley Rustic Pink Gloss Wall Tiles 70 x 280mm",supplier:"Victorian Plumbing",sku:"GRN728PNK",finish:"Rustic pink gloss",width:70,height:280,tilesPerBox:30,wall:true,floor:false,pricePerBox:29.47,pricePerM2:49.95,defaultPattern:"herringbone",image:"./granley-pink-tile.webp",patternImage:"./granley-pink-herringbone.png",builtIn:true}
   ];
 
   function ensureData(){
@@ -33,6 +33,7 @@
   function surfaceLabel(v){ return ({floor:"Floor",window:"Window wall",opposite:"Back wall",left:"Left wall",right:"Door wall"})[v] || v; }
   function patternLabel(v){ return v==="brick" ? "Brick bond" : v==="herringbone" ? "Herringbone" : "Stack"; }
   function surfaceAlong(surface){ const r = state().room; return (surface==="window"||surface==="opposite") ? Number(r.width||0) : Number(r.depth||0); }
+  function itemDims(i){ return ((Number(i?.rotation)||0)%180!==0) ? {w:Number(i.h||0), h:Number(i.w||0)} : {w:Number(i.w||0), h:Number(i.h||0)}; }
 
   function resolveZone(z){
     const r = state().room;
@@ -327,6 +328,24 @@
     api.checkpoint(); state().surfaceZones = state().surfaceZones.filter(x=>x.id!==id); api.persist(); render(); if(editingZoneId===id) closeZoneEditor();
   }
 
+  function fitZoneToVanity(){
+    const vanity=(state().items||[]).find(i=>i.type==="vanity");
+    if(!vanity){ alert("Add or keep a vanity in the plan first."); return; }
+    const d=itemDims(vanity), surface=$("zoneSurface").value;
+    if(surface==="floor") return;
+    if(surface==="window" || surface==="opposite"){
+      $("zoneStart").value=Math.max(0,Number(vanity.x||0));
+      $("zoneEnd").value=Math.min(surfaceAlong(surface), Number(vanity.x||0)+d.w);
+    } else {
+      $("zoneStart").value=Math.max(0,Number(vanity.y||0));
+      $("zoneEnd").value=Math.min(surfaceAlong(surface), Number(vanity.y||0)+d.h);
+    }
+    if(!$("zoneBottom").value) $("zoneBottom").value = Math.max(0, Number(vanity.z||0));
+    if(!$("zoneTop").value) $("zoneTop").value = Number(state().room.ceiling||0);
+    $("zoneFull").checked=false; syncZoneFields(); updateZoneMetrics();
+  }
+  function setZoneFullHeight(){ $("zoneBottom").value=0; $("zoneTop").value=Number(state().room.ceiling||0); $("zoneFull").checked=false; syncZoneFields(); updateZoneMetrics(); }
+
   function resetSuggestedScheme(){
     if(!confirm("Reset surfaces to the suggested Laurito + Granley scheme?")) return;
     const s = state(), r = s.room, defaults = [
@@ -377,6 +396,8 @@
   $("saveZoneBtn")?.addEventListener("click", saveZone);
   $("duplicateZoneBtn")?.addEventListener("click", ()=>{ if(editingZoneId) duplicateZone(editingZoneId); });
   $("deleteZoneBtn")?.addEventListener("click", ()=>{ if(editingZoneId) deleteZone(editingZoneId); });
+  $("zoneFitVanityBtn")?.addEventListener("click", fitZoneToVanity);
+  $("zoneFullHeightBtn")?.addEventListener("click", setZoneFullHeight);
   ["zoneSurface","zoneTile","zonePattern","zoneOrientation","zoneGrout","zoneGroutColor","zoneWaste","zoneFull","zoneX1","zoneX2","zoneY1","zoneY2","zoneStart","zoneEnd","zoneBottom","zoneTop"].forEach(id=>{
     $(id)?.addEventListener("input", ()=>{ if(id==="zoneSurface"||id==="zoneFull") syncZoneFields(); updateZoneMetrics(); });
     $(id)?.addEventListener("change", ()=>{ if(id==="zoneSurface"||id==="zoneFull") syncZoneFields(); updateZoneMetrics(); });

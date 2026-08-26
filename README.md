@@ -1,38 +1,37 @@
-# Bathroom Planner V1.7.4
+# Bathroom Planner V1.8.0
 
-Final V1 visual-model pass before Surfaces/Tiles (V1.8).
+Surfaces & Tiles build.
 
-New / improved 3D fixture visuals:
-- WC styles:
-  - close-coupled round
-  - back-to-wall round
-  - wall-hung round
-  - compact square
-- richer walk-in shower:
-  - low tray + inset standing area
-  - glass panel
-  - top brace
-  - drain
-  - rain head + arm
-  - handset + rail
-  - side controls
-- towel radiator:
-  - improved ladder rail model
-  - alternative vertical-bar style
-  - wall stand-offs and valves
-- mirror object + mirror product styles:
-  - round
-  - rectangle
-  - arch
-- mirror can be added directly from + Add or from Product Library
-- product editor now includes WC, shower, radiator and mirror 3D styles
-- mirror is excluded from floor-clearance calculations
-- bath and Lille/product vanity improvements from V1.7.3 retained
-
-This build does not yet add wall/floor tiles. That is the V1.8 Surfaces & Tiles build.
+Added:
+- new Surfaces tab
+- tile library with import/export JSON
+- starter tiles:
+  - Laurito White Marble Effect 300 x 600 mm
+  - Granley Rustic Pink Gloss 70 x 280 mm
+- surface zones for:
+  - floor
+  - window wall
+  - back wall
+  - left wall
+  - door wall
+  - vanity feature wall
+- partial-zone editing
+- pattern options:
+  - stack
+  - brick bond
+  - herringbone
+- area / box / cost summaries
+- 3D surface rendering with repeated tile textures
+- starter vanity feature wall in pink herringbone
 
 Update:
 1. Extract the ZIP.
-2. Upload ALL files to the repo root.
+2. Upload ALL files to the root of the repo.
 3. Commit.
-4. Tap Reload latest.
+4. Open the app.
+5. Tap Reload latest if needed.
+
+Notes:
+- wall/floor surfaces are now editable in-app without rebuilding GitHub every time
+- uploaded tile images are stored locally on your device and reused as textures
+- built-in herringbone uses a dedicated starter texture for the Granley pink tile

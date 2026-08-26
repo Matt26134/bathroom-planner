@@ -35,9 +35,10 @@ if (!api || !legacy) {
   const camera = new THREE.PerspectiveCamera(44, 1, 0.02, 30);
   const root = new THREE.Group();
   const wallRoot = new THREE.Group();
+  const surfaceRoot = new THREE.Group();
   const itemRoot = new THREE.Group();
   const fixedRoot = new THREE.Group();
-  scene.add(root, wallRoot, itemRoot, fixedRoot);
+  scene.add(root, wallRoot, surfaceRoot, itemRoot, fixedRoot);
 
   const hemi = new THREE.HemisphereLight(0xfffbf2, 0xb8b5ab, 1.75);
   scene.add(hemi);
@@ -56,6 +57,9 @@ if (!api || !legacy) {
   const fill = new THREE.DirectionalLight(0xdce9ef, 0.65);
   fill.position.set(-3, 3.5, -3);
   scene.add(fill);
+
+  const textureLoader = new THREE.TextureLoader();
+  const textureCache = new Map();
 
   const mats = {
     floor: new THREE.MeshStandardMaterial({ color: 0xe9e3d8, roughness: 0.92, metalness: 0 }),
@@ -87,6 +91,7 @@ if (!api || !legacy) {
 
   let room = null;
   let wallSets = { window: [], opposite: [], left: [], right: [] };
+  let surfaceSets = { floor: [], window: [], opposite: [], left: [], right: [] };
   let itemMeshes = [];
   let signature = "";
   let target = new THREE.Vector3(1.1, 0.9, 1.25);
@@ -186,6 +191,105 @@ if (!api || !legacy) {
     for(let z=0;z<=D+.001;z+=.25){pts.push(new THREE.Vector3(0,.002,z),new THREE.Vector3(W,.002,z))}
     const geo=new THREE.BufferGeometry().setFromPoints(pts);
     root.add(new THREE.LineSegments(geo,lineMat));
+  }
+
+
+  function tileById(s,id) {
+    return (s.tileProducts || []).find(t => t.id === id);
+  }
+
+  function cloneTexture(src) {
+    if (!src) return null;
+    if (!textureCache.has(src)) {
+      const base = textureLoader.load(src, () => { try { renderer.render(scene, camera); } catch(_) {} }, undefined, () => {});
+      base.wrapS = base.wrapT = THREE.RepeatWrapping;
+      base.colorSpace = THREE.SRGBColorSpace;
+      textureCache.set(src, base);
+    }
+    const t = textureCache.get(src).clone();
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.needsUpdate = true;
+    return t;
+  }
+
+  function tileFallbackColor(tile) {
+    const txt = ((tile?.finish || "") + " " + (tile?.name || "")).toLowerCase();
+    if (txt.includes("pink")) return 0xe6b7c2;
+    if (txt.includes("marble") || txt.includes("white")) return 0xf2efe8;
+    return 0xe5dfd4;
+  }
+
+  function zoneMat(tile, zone, repeatX, repeatY) {
+    const src = (zone.pattern === "herringbone" && tile?.patternImage) ? tile.patternImage : (tile?.image || "");
+    const tex = cloneTexture(src);
+    if (tex) {
+      tex.repeat.set(Math.max(.25, repeatX), Math.max(.25, repeatY));
+      if (zone.pattern === "brick") tex.offset.x = .5;
+    }
+    const gloss = ((tile?.finish || "").toLowerCase().includes("gloss"));
+    return new THREE.MeshStandardMaterial({
+      map: tex || null,
+      color: tex ? 0xffffff : tileFallbackColor(tile),
+      roughness: gloss ? .24 : .62,
+      metalness: 0,
+      side: THREE.DoubleSide
+    });
+  }
+
+  function addSurfaceMesh(side, mesh) {
+    surfaceRoot.add(mesh);
+    surfaceSets[side].push(mesh);
+  }
+
+  function buildSurfaceZones(s) {
+    surfaceSets = { floor: [], window: [], opposite: [], left: [], right: [] };
+    const W = mm(s.room.width), D = mm(s.room.depth);
+    const zones = (s.surfaceZones || []).filter(z => z.enabled !== false).slice().sort((a,b)=> (a.full === b.full ? 0 : (a.full ? -1 : 1)));
+    let lift = .0035;
+    zones.forEach(z => {
+      const tile = tileById(s, z.tileId);
+      if (z.surface === "floor") {
+        const x1 = mm(z.full ? 0 : Number(z.x1 || 0));
+        const x2 = mm(z.full ? s.room.width : Number(z.x2 || 0));
+        const y1 = mm(z.full ? 0 : Number(z.y1 || 0));
+        const y2 = mm(z.full ? s.room.depth : Number(z.y2 || 0));
+        const w = Math.max(.01, x2 - x1), d = Math.max(.01, y2 - y1);
+        const repX = Math.max(.25, (w * 1000) / Math.max(1, Number(tile?.width || 300)));
+        const repY = Math.max(.25, (d * 1000) / Math.max(1, Number(tile?.height || 300)));
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), zoneMat(tile, z, repX, repY));
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.set(x1 + w/2, lift, y1 + d/2);
+        mesh.receiveShadow = true;
+        addSurfaceMesh("floor", mesh);
+        lift += .0008;
+      } else {
+        const span = (z.surface === "window" || z.surface === "opposite") ? s.room.width : s.room.depth;
+        const start = mm(z.full ? 0 : Number(z.start || 0));
+        const end = mm(z.full ? span : Number(z.end || 0));
+        const bottom = mm(z.full ? 0 : Number(z.bottom || 0));
+        const top = mm(z.full ? s.room.ceiling : Number(z.top || 0));
+        const along = Math.max(.01, end - start), tall = Math.max(.01, top - bottom);
+        const repX = Math.max(.25, (along * 1000) / Math.max(1, Number(tile?.width || 300)));
+        const repY = Math.max(.25, (tall * 1000) / Math.max(1, Number(tile?.height || 300)));
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(along, tall), zoneMat(tile, z, repX, repY));
+        mesh.receiveShadow = true;
+        if (z.surface === "window") {
+          mesh.position.set(start + along/2, bottom + tall/2, .004 + lift);
+        } else if (z.surface === "opposite") {
+          mesh.rotation.y = Math.PI;
+          mesh.position.set(start + along/2, bottom + tall/2, D - .004 - lift);
+        } else if (z.surface === "left") {
+          mesh.rotation.y = Math.PI / 2;
+          mesh.position.set(.004 + lift, bottom + tall/2, start + along/2);
+        } else if (z.surface === "right") {
+          mesh.rotation.y = -Math.PI / 2;
+          mesh.position.set(W - .004 - lift, bottom + tall/2, start + along/2);
+        }
+        addSurfaceMesh(z.surface, mesh);
+        lift += .0008;
+      }
+    });
   }
 
   function buildBath(i,s) {
@@ -557,13 +661,15 @@ if (!api || !legacy) {
     const sig=JSON.stringify({
       room:s.room,
       items:s.items,
-      products:(s.products||[]).map(p=>({id:p.id,finish:p.finish,style:p.style,width:p.width,depth:p.depth,height:p.height}))
+      products:(s.products||[]).map(p=>({id:p.id,finish:p.finish,style:p.style,width:p.width,depth:p.depth,height:p.height})),
+      tileProducts:(s.tileProducts||[]).map(t=>({id:t.id,w:t.width,h:t.height,finish:t.finish,dp:t.defaultPattern,imgKey:(t.image||"").length+":"+(t.image||"").slice(0,64),pKey:(t.patternImage||"").length+":"+(t.patternImage||"").slice(0,64)})),
+      surfaceZones:(s.surfaceZones||[]).map(z=>({id:z.id,name:z.name,surface:z.surface,full:z.full,x1:z.x1,x2:z.x2,y1:z.y1,y2:z.y2,start:z.start,end:z.end,bottom:z.bottom,top:z.top,tileId:z.tileId,pattern:z.pattern,enabled:z.enabled,grout:z.grout,groutColor:z.groutColor,waste:z.waste}))
     });
     if(!force && sig===signature) return;
     signature=sig; room=s.room;
-    clearGroup(root);clearGroup(wallRoot);clearGroup(itemRoot);clearGroup(fixedRoot);
+    clearGroup(root);clearGroup(wallRoot);clearGroup(surfaceRoot);clearGroup(itemRoot);clearGroup(fixedRoot);
     itemMeshes=[];
-    buildFloor(s);buildWalls(s);
+    buildFloor(s);buildWalls(s);buildSurfaceZones(s);
     (s.items||[]).forEach(i=>{
       const g=buildItem(i,s);
       itemRoot.add(g);
@@ -587,12 +693,13 @@ if (!api || !legacy) {
     if(!room)return;
     const W=mm(room.width),D=mm(room.depth),show=wallsToggle?.checked!==false;
     Object.values(wallSets).flat().forEach(m=>m.visible=show);
+    Object.entries(surfaceSets).forEach(([side,list])=>list.forEach(m=>m.visible=(side==="floor")?true:show));
     if(!show)return;
     const margin=.06;
-    if(camera.position.x < -margin) wallSets.left.forEach(m=>m.visible=false);
-    if(camera.position.x > W+margin) wallSets.right.forEach(m=>m.visible=false);
-    if(camera.position.z < -margin) wallSets.window.forEach(m=>m.visible=false);
-    if(camera.position.z > D+margin) wallSets.opposite.forEach(m=>m.visible=false);
+    if(camera.position.x < -margin){ wallSets.left.forEach(m=>m.visible=false); surfaceSets.left.forEach(m=>m.visible=false); }
+    if(camera.position.x > W+margin){ wallSets.right.forEach(m=>m.visible=false); surfaceSets.right.forEach(m=>m.visible=false); }
+    if(camera.position.z < -margin){ wallSets.window.forEach(m=>m.visible=false); surfaceSets.window.forEach(m=>m.visible=false); }
+    if(camera.position.z > D+margin){ wallSets.opposite.forEach(m=>m.visible=false); surfaceSets.opposite.forEach(m=>m.visible=false); }
   }
 
   function setFromPosition(pos,tgt=null){

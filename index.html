@@ -91,12 +91,31 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 .eItem{fill:#e4d8c6;stroke:#676a63;stroke-width:2}.eOpening{fill:#eef5f5;stroke:#789ca4;stroke-width:2}
 .eDim{stroke:#9a7b52;stroke-width:1.3}.eText{font-size:30px;font-weight:800;fill:#6e573a}
 .heightNote{font-size:.78rem;color:var(--muted);margin-top:8px}
+
+.surfaceTop{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.surfaceNote{font-size:.86rem;color:var(--muted);line-height:1.45}
+.surfaceSplit{display:grid;grid-template-columns:1fr;gap:12px}
+.tileGrid,.zoneGrid{display:grid;gap:10px}
+.tileCard,.zoneCard,.surfaceSummary{border:1px solid var(--line);border-radius:16px;background:#fff;padding:10px}
+.tileCard{display:grid;grid-template-columns:86px 1fr;gap:10px;align-items:start}
+.tileThumb{width:86px;height:86px;border-radius:12px;border:1px solid var(--line);object-fit:cover;background:#f3f0ea}
+.tileTitle,.zoneTitle{font-weight:800}
+.tileMeta,.zoneMeta{font-size:.83rem;color:var(--muted);line-height:1.35}
+.tagRow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:.72rem;font-weight:800;border-radius:999px;padding:4px 8px;background:#f2eee6;border:1px solid #e4ddd2}
+.surfaceActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.surfaceActions button,.surfaceActions .filebtn{min-height:38px}
+.miniStat{font-size:.82rem;color:var(--muted)}
+.zoneFields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.zoneHint{font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.4}
+@media(max-width:620px){.tileCard{grid-template-columns:1fr}.zoneFields{grid-template-columns:1fr}}
+
 @media(max-width:480px){.grid.three{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.canvas{height:64vh;min-height:420px}.toolbar{gap:5px}.toolbar button{padding-inline:9px}.canvasHeader{height:42px}.canvasControls .desktopOnly{display:none}}
 </style>
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.7.4 · fixture visual pass</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.0 · surfaces & tiles</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -104,6 +123,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
   <button class="tab active" data-tab="plan">Plan</button>
   <button class="tab" data-tab="threeD">3D</button>
   <button class="tab" data-tab="products">Products</button>
+  <button class="tab" data-tab="surfaces">Surfaces</button>
   <button class="tab" data-tab="project">Project</button>
   <button class="tab" data-tab="backup">Backup</button>
 </nav>
@@ -186,6 +206,44 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
     A photo can be added directly in the app; dimensions and product details remain editable.
   </div>
   <div id="productGrid" class="productGrid" style="margin-top:10px"></div>
+</section>
+
+
+<section id="surfaces" class="panel">
+  <div class="surfaceTop">
+    <div>
+      <div class="eyebrow">Finishes</div>
+      <h2 style="margin:2px 0 0;font-size:1.08rem">Surfaces & tiles</h2>
+    </div>
+    <span class="spacer"></span>
+    <label class="filebtn">Import tile JSON<input id="tileImportInput" type="file" accept=".json,application/json"></label>
+    <button id="newTileBtn" class="primary">+ Tile</button>
+  </div>
+  <div class="surfaceNote" style="margin-top:8px">
+    Save floor and wall tiles once, then assign them to full surfaces or smaller feature zones.
+    This build starts with the Laurito white marble-look tile and the Granley pink feature tile.
+  </div>
+
+  <div class="surfaceSplit" style="margin-top:12px">
+    <div class="card">
+      <div class="surfaceTop">
+        <div><div class="eyebrow">Reusable finishes</div><h3 style="margin:2px 0 0">Tile library</h3></div>
+      </div>
+      <div id="tileGrid" class="tileGrid" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="surfaceTop">
+        <div><div class="eyebrow">Applied finishes</div><h3 style="margin:2px 0 0">Surface zones</h3></div>
+        <span class="spacer"></span>
+        <button id="addFloorZoneBtn">+ Floor zone</button>
+        <button id="addWallZoneBtn">+ Wall zone</button>
+        <button id="resetSurfacePresetBtn">Reset suggested scheme</button>
+      </div>
+      <div id="surfaceSummary" class="surfaceSummary" style="margin-top:10px"></div>
+      <div id="zoneGrid" class="zoneGrid" style="margin-top:10px"></div>
+    </div>
+  </div>
 </section>
 
 <section id="project" class="panel">
@@ -375,6 +433,112 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
   </div>
 </div>
 
+
+<div id="tileSheet" class="sheet hidden">
+  <div class="sheetCard">
+    <div class="sheetHead">
+      <div><div class="eyebrow">Tile library</div><h2 id="tileSheetTitle" style="margin:2px 0 0">Add tile</h2></div>
+      <button id="closeTileSheet">Close</button>
+    </div>
+
+    <label class="photoDrop" style="margin-top:9px">
+      <div id="tilePhotoPrompt">Tap to add a tile image or sample screenshot</div>
+      <img id="tilePhotoPreview" class="hidden" alt="Tile preview">
+      <input id="tilePhotoInput" type="file" accept="image/*">
+    </label>
+
+    <div class="section">Tile</div>
+    <div class="grid">
+      <label>Name<input id="tileName"></label>
+      <label>Supplier<input id="tileSupplier"></label>
+      <label>SKU / product code<input id="tileSku"></label>
+      <label>Finish / colour<input id="tileFinish"></label>
+      <label>Tile width (mm)<input id="tileWidth" type="number"></label>
+      <label>Tile height (mm)<input id="tileHeight" type="number"></label>
+      <label>Tiles per box<input id="tileTilesPerBox" type="number"></label>
+      <label>Default pattern<select id="tileDefaultPattern">
+        <option value="stack">Stack</option>
+        <option value="brick">Brick bond</option>
+        <option value="herringbone">Herringbone</option>
+      </select></label>
+      <label>Price per box (£)<input id="tilePriceBox" type="number" step="0.01"></label>
+      <label>Price per m² (£)<input id="tilePriceM2" type="number" step="0.01"></label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:24px"><input id="tileWall" type="checkbox" style="width:18px">Suitable for walls</label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:24px"><input id="tileFloor" type="checkbox" style="width:18px">Suitable for floors</label>
+    </div>
+
+    <div class="section">Reference</div>
+    <label>Product URL<input id="tileUrl" class="linkField"></label>
+    <label style="margin-top:8px">Notes<textarea id="tileNotes" rows="3"></textarea></label>
+
+    <div class="zoneHint">
+      Tile photos are stored locally on this device. The 3D view repeats the saved image as a surface texture.
+      Herringbone uses a dedicated pattern when one exists, otherwise it reuses the main tile image.
+    </div>
+
+    <div class="quickActions">
+      <button id="saveTileBtn" class="primary">Save tile</button>
+      <button id="deleteTileBtn" class="danger hidden">Delete tile</button>
+    </div>
+  </div>
+</div>
+
+<div id="zoneSheet" class="sheet hidden">
+  <div class="sheetCard">
+    <div class="sheetHead">
+      <div><div class="eyebrow">Surface zone</div><h2 id="zoneSheetTitle" style="margin:2px 0 0">Edit zone</h2></div>
+      <button id="closeZoneSheet">Close</button>
+    </div>
+
+    <div class="grid">
+      <label>Name<input id="zoneName"></label>
+      <label>Surface<select id="zoneSurface">
+        <option value="floor">Floor</option>
+        <option value="window">Window wall</option>
+        <option value="opposite">Back wall</option>
+        <option value="left">Left wall</option>
+        <option value="right">Door wall</option>
+      </select></label>
+      <label>Tile<select id="zoneTile"></select></label>
+      <label>Pattern<select id="zonePattern">
+        <option value="stack">Stack</option>
+        <option value="brick">Brick bond</option>
+        <option value="herringbone">Herringbone</option>
+      </select></label>
+      <label>Grout width (mm)<input id="zoneGrout" type="number"></label>
+      <label>Grout colour<input id="zoneGroutColor" type="color"></label>
+      <label>Waste allowance %<input id="zoneWaste" type="number"></label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:24px"><input id="zoneEnabled" type="checkbox" style="width:18px">Enabled</label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:24px"><input id="zoneFull" type="checkbox" style="width:18px">Cover full surface</label>
+    </div>
+
+    <div id="zoneFloorFields" class="zoneFields" style="margin-top:10px">
+      <label>X start (mm)<input id="zoneX1" type="number"></label>
+      <label>X end (mm)<input id="zoneX2" type="number"></label>
+      <label>Y start (mm)<input id="zoneY1" type="number"></label>
+      <label>Y end (mm)<input id="zoneY2" type="number"></label>
+    </div>
+
+    <div id="zoneWallFields" class="zoneFields hidden" style="margin-top:10px">
+      <label>Start along wall (mm)<input id="zoneStart" type="number"></label>
+      <label>End along wall (mm)<input id="zoneEnd" type="number"></label>
+      <label>Bottom height (mm)<input id="zoneBottom" type="number"></label>
+      <label>Top height (mm)<input id="zoneTop" type="number"></label>
+    </div>
+
+    <div id="zoneMetrics" class="productNote" style="margin-top:10px"></div>
+    <div class="zoneHint">
+      For wall zones, "along wall" runs left-to-right when facing that wall. For floor zones, X runs from the left wall to the right wall and Y runs from the window wall toward the door wall.
+    </div>
+
+    <div class="quickActions">
+      <button id="saveZoneBtn" class="primary">Save zone</button>
+      <button id="duplicateZoneBtn">Duplicate zone</button>
+      <button id="deleteZoneBtn" class="danger">Delete zone</button>
+    </div>
+  </div>
+</div>
+
 <div id="addSheet" class="sheet hidden">
   <div class="sheetCard">
     <div class="sheetHead"><div><div class="eyebrow">Plan object</div><h2 style="margin:2px 0 0">Add to plan</h2></div><button id="closeAddSheet">Close</button></div>
@@ -398,7 +562,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.7.4", KEY="bathroomPlannerStable";
+const VERSION="1.8.0", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -440,6 +604,18 @@ const starter={
    builtIn:true
   }
  ],
+ tileProducts:[
+  {id:"tile-laurito-3060",name:"Laurito White Marble Effect Wall & Floor Tiles 300 x 600mm",supplier:"Victorian Plumbing",sku:"LAU3060",finish:"White marble effect",width:300,height:600,tilesPerBox:7,wall:true,floor:true,pricePerBox:31.44,pricePerM2:24.95,defaultPattern:"stack",image:"./laurito-tile.webp",builtIn:true},
+  {id:"tile-granley-pink",name:"Granley Rustic Pink Gloss Wall Tiles 70 x 280mm",supplier:"Victorian Plumbing",sku:"GRN728PNK",finish:"Rustic pink gloss",width:70,height:280,tilesPerBox:30,wall:true,floor:false,pricePerBox:29.47,pricePerM2:49.95,defaultPattern:"herringbone",image:"./granley-pink-tile.webp",patternImage:"./granley-pink-herringbone.webp",builtIn:true}
+ ],
+ surfaceZones:[
+  {id:"zone-floor",name:"Main floor",surface:"floor",full:true,x1:0,x2:2280,y1:0,y2:2545,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-window-wall",name:"Window wall",surface:"window",full:true,start:0,end:2280,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-back-wall",name:"Back wall",surface:"opposite",full:true,start:0,end:2280,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-left-wall",name:"Left wall",surface:"left",full:true,start:0,end:2545,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-door-wall",name:"Door wall",surface:"right",full:true,start:0,end:2545,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+  {id:"zone-vanity-feature",name:"Vanity feature wall",surface:"left",full:false,start:700,end:1670,bottom:900,top:2470,tileId:"tile-granley-pink",pattern:"herringbone",grout:2,groutColor:"#f4efed",waste:12,enabled:true}
+ ],
  services:[],
  manualMeasurements:[]
 };
@@ -456,6 +632,10 @@ if(!Array.isArray(state.products))state.products=[];
 if(!state.products.some(p=>p.id==="prod-lille-800")){
  state.products.unshift(clone(starter.products[0]));
 }
+if(!Array.isArray(state.tileProducts)) state.tileProducts=[];
+(starter.tileProducts||[]).forEach(t=>{ if(!state.tileProducts.some(x=>x.id===t.id)) state.tileProducts.push(clone(t)); });
+if(!Array.isArray(state.surfaceZones)) state.surfaceZones=[];
+if(!state.surfaceZones.length) state.surfaceZones=clone(starter.surfaceZones);
 
 if(!Array.isArray(state.manualMeasurements)) state.manualMeasurements=[];
 const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],mirror:[1150,800],niche:[1000,400],custom:[0,900]};
@@ -1319,7 +1499,10 @@ c3.addEventListener("pointerup",end3);c3.addEventListener("pointercancel",end3);
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
 document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
- b.classList.add("active");$(b.dataset.tab).classList.add("active");if(b.dataset.tab==="threeD")setTimeout(update3DMode,20);if(b.dataset.tab==="products")renderProducts();
+ b.classList.add("active");$(b.dataset.tab).classList.add("active");
+ if(b.dataset.tab==="threeD")setTimeout(update3DMode,20);
+ if(b.dataset.tab==="products")renderProducts();
+ if(b.dataset.tab==="surfaces"&&window.BPSurfaces?.render) window.BPSurfaces.render();
 });
 
 $("undoBtn").onclick=undo;$("redoBtn").onclick=redo;
@@ -1441,7 +1624,7 @@ function finishPointer(e){
 svg.addEventListener("pointerup",finishPointer);
 svg.addEventListener("pointercancel",finishPointer);
 
-sync();updateUndoRedo();resetView(false);render();renderProducts();
+sync();updateUndoRedo();resetView(false);render();renderProducts();if(window.BPSurfaces?.render)window.BPSurfaces.render();
 $("statusHint").textContent="Drag fixtures · pinch to zoom · tap an item for measurements. · V"+VERSION;
 
 window.BP3D={
@@ -1452,11 +1635,16 @@ window.BP3D={
   render();
   openSelectedSheet();
  },
- refresh2D:()=>render()
+ refresh2D:()=>render(),
+ persist:()=>save(),
+ renderProducts:()=>renderProducts(),
+ checkpoint:()=>checkpoint(),
+ clone:(v)=>clone(v)
 };
 
 })();
 </script>
 <script type="module" src="./three-view.js"></script>
+<script src="./surfaces-manager.js"></script>
 </body>
 </html>

@@ -120,7 +120,8 @@ if (!api || !legacy) {
     const d = itemDims(i);
     const g = new THREE.Group();
     g.position.set(mm(i.x + d.w/2), 0, mm(i.y + d.d/2));
-    g.rotation.y = -THREE.MathUtils.degToRad((Number(i.rotation)||0)%360);
+    const angle=((Number(i.rotation)||0)%360+360)%360;
+    g.rotation.y = -THREE.MathUtils.degToRad(angle);
     g.userData.itemId = i.id;
     return g;
   }
@@ -322,6 +323,18 @@ if (!api || !legacy) {
     return buildGeneric(i);
   }
 
+  function addFacingMarker(i,g) {
+    if(i.type==="niche" || i.type==="stud" || i.type==="radiator") return;
+    const d0=mm(i.h);
+    const len=Math.max(.08,Math.min(.18,Math.min(mm(i.w),mm(i.h))*.28));
+    const mat=new THREE.MeshStandardMaterial({color:0x55777f,roughness:.42});
+    const shaft=meshBox(.014,.010,len,mat,0,.022,d0/2+len/2+.018,false);
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(.026,.07,16),mat);
+    tip.rotation.x=Math.PI/2;
+    tip.position.set(0,.022,d0/2+len+.055);
+    g.add(shaft,tip);
+  }
+
   function clearGroup(g) {
     while(g.children.length){
       const o=g.children.pop();
@@ -347,6 +360,7 @@ if (!api || !legacy) {
     buildFloor(s);buildWalls(s);
     (s.items||[]).forEach(i=>{
       const g=buildItem(i,s);
+      addFacingMarker(i,g);
       itemRoot.add(g);
       itemMeshes.push(g);
     });

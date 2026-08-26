@@ -1,16 +1,18 @@
-# Bathroom Planner V1.7.1
+# Bathroom Planner V1.7.2
 
-Small usability fix to V1.7.
+Rotation correction.
 
-Rotation now cycles properly:
-0° -> 90° -> 180° -> 270° -> 0°
+Fixed:
+- objects rotate around their centre instead of their top-left corner
+- 0° -> 90° -> 180° -> 270° -> 0°
+- 90° and 270° swap the footprint correctly
+- the 2D plan and Three.js 3D use the same angle convention
+- the editor shows which wall the object's FRONT is facing
+- clearer front-direction marker in 2D and a small matching marker in 3D
+- removed duplicated old Product/3D code that had accumulated inside index.html
 
-Also changed:
-- 90° and 270° correctly swap the footprint dimensions
-- 3D objects now use the full 0/90/180/270 orientation
-- the object sheet shows the current rotation angle
-- a small orientation marker appears in 2D so 180° and 270° are visibly different even for rectangular items
-- existing/imported objects are normalised to one of the four right-angle rotations
+The previous version could rotate the angle but move the footprint around the wrong anchor,
+which made the 2D and 3D layouts look inconsistent.
 
 Update:
 1. Extract the ZIP.

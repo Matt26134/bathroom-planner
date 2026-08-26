@@ -115,7 +115,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.8 · shower wall + mirror drag fix</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V1.8.9 · wall-mounted fixtures</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -303,7 +303,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
     </div>
 
     <div id="itemQuick" class="quickActions">
-      <button id="rotateBtn">Rotate 90°</button>
+      <button id="rotateBtn">Rotate 90°</button><button id="centreMirrorBtn" class="hidden">Centre over vanity</button>
       <button id="lockBtn">Lock</button>
       <button id="duplicateBtn">Duplicate</button>
       <button id="deleteBtn" class="danger">Delete</button>
@@ -573,7 +573,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 <script>
 (function(){
 "use strict";
-const VERSION="1.8.8", KEY="bathroomPlannerStable";
+const VERSION="1.8.9", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -627,6 +627,11 @@ const starter={
   {id:"zone-door-wall",name:"Door wall",surface:"right",full:true,start:0,end:2545,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
   {id:"zone-vanity-feature",name:"Vanity feature wall",surface:"left",full:false,start:700,end:1670,bottom:900,top:2470,tileId:"tile-granley-pink",pattern:"herringbone",orientation:"landscape",grout:2,groutColor:"#f4efed",waste:12,enabled:true}
  ],
+ wallFixtures:[
+  {id:"rain1",type:"rainHead",name:"Rain shower",mountWall:"left",along:2140,height:2080,projection:320,finish:"black"},
+  {id:"handset1",type:"handset",name:"Hand shower",mountWall:"left",along:2320,bottom:1050,height:720,finish:"black"},
+  {id:"controls1",type:"controls",name:"Shower controls",hostItemId:"stud1",along:620,bottom:950,finish:"black"}
+ ],
  services:[],
  manualMeasurements:[]
 };
@@ -647,6 +652,8 @@ if(!Array.isArray(state.tileProducts)) state.tileProducts=[];
 (starter.tileProducts||[]).forEach(t=>{ const existing=state.tileProducts.find(x=>x.id===t.id); if(existing){ if(existing.builtIn!==false) Object.assign(existing, clone(t), {image: existing.image || t.image}); } else state.tileProducts.push(clone(t)); });
 if(!Array.isArray(state.surfaceZones)) state.surfaceZones=[];
 if(!state.surfaceZones.length) state.surfaceZones=clone(starter.surfaceZones);
+if(!Array.isArray(state.wallFixtures)) state.wallFixtures=[];
+(starter.wallFixtures||[]).forEach(f=>{ if(!state.wallFixtures.some(x=>x.id===f.id)) state.wallFixtures.push(clone(f)); });
 
 if(!Array.isArray(state.manualMeasurements)) state.manualMeasurements=[];
 const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],mirror:[1150,800],niche:[1000,400],custom:[0,900]};
@@ -663,7 +670,6 @@ function migrateHeights(){
    const d=HEIGHT_DEFAULTS[i.type]||[0,900];
    if(i.z==null)i.z=d[0];
    if(i.height==null)i.height=d[1];
-   if(i.type==="shower" && !i.showerMountSide) i.showerMountSide="right";
  });
  state.services.forEach(s=>{if(s.z==null)s.z=300});
 }
@@ -672,6 +678,36 @@ migrateHeights();
 state.items.forEach(i=>{
  const r=((Number(i.rotation)||0)%360+360)%360;
  i.rotation=[0,90,180,270].includes(r)?r:Math.round(r/90)*90%360;
+});
+
+function syncMirrorPlanFromMount(i){
+ if(!i || i.type!=="mirror")return;
+ const wall=i.mountWall||"left", faceW=Math.max(40,Number(i.w)||500), proj=Math.max(10,Number(i.h)||25);
+ let along=Number(i.mountAlong);
+ if(!Number.isFinite(along)){
+  const vanity=state.items.find(x=>x.type==="vanity");
+  if(vanity){const vd=itemDims(vanity);along=(wall==="left"||wall==="right")?vanity.y+vd.h/2:vanity.x+vd.w/2}
+  else along=(wall==="left"||wall==="right")?state.room.depth/2:state.room.width/2;
+ }
+ if(wall==="left"){
+  i.rotation=90;i.x=0;i.y=Math.max(0,Math.min(state.room.depth-faceW,along-faceW/2));i.mountAlong=i.y+faceW/2;
+ }else if(wall==="right"){
+  i.rotation=270;i.x=Math.max(0,state.room.width-proj);i.y=Math.max(0,Math.min(state.room.depth-faceW,along-faceW/2));i.mountAlong=i.y+faceW/2;
+ }else if(wall==="window"){
+  i.rotation=0;i.y=0;i.x=Math.max(0,Math.min(state.room.width-faceW,along-faceW/2));i.mountAlong=i.x+faceW/2;
+ }else{
+  i.rotation=180;i.y=Math.max(0,state.room.depth-proj);i.x=Math.max(0,Math.min(state.room.width-faceW,along-faceW/2));i.mountAlong=i.x+faceW/2;
+ }
+}
+state.items.forEach(i=>{
+ if(i.type==="mirror"){
+  if(!i.mountWall)i.mountWall="left";
+  if(!Number.isFinite(Number(i.mountAlong))){
+   const vanity=state.items.find(x=>x.type==="vanity"),vd=vanity?itemDims(vanity):null;
+   i.mountAlong=vd?vanity.y+vd.h/2:state.room.depth/2;
+  }
+  syncMirrorPlanFromMount(i);
+ }
 });
 
 
@@ -1058,6 +1094,20 @@ function moveItem(e){
   if(!drag.checkpointed){checkpoint();drag.checkpointed=true}drag.moved=true;
  }
  snapFeedback=null;
+ if(i.type==="mirror"&&i.mountWall){
+  const wall=i.mountWall,vanity=state.items.find(o=>o.type==="vanity"),snap=55/currentZoom();
+  if(wall==="left"||wall==="right"){
+   y=Math.max(0,Math.min(state.room.depth-d.h,y));
+   x=wall==="left"?0:state.room.width-d.w;
+   if(vanity){const vd=itemDims(vanity),target=vanity.y+vd.h/2-d.h/2;if(Math.abs(y-target)<snap){y=Math.round(target);snapFeedback={axis:"y",coord:y+d.h/2,label:"Centred over vanity"}}}
+   i.x=x;i.y=y;i.mountAlong=y+d.h/2;render();return true;
+  }else{
+   x=Math.max(0,Math.min(state.room.width-d.w,x));
+   y=wall==="window"?0:state.room.depth-d.h;
+   if(vanity){const vd=itemDims(vanity),target=vanity.x+vd.w/2-d.w/2;if(Math.abs(x-target)<snap){x=Math.round(target);snapFeedback={axis:"x",coord:x+d.w/2,label:"Centred over vanity"}}}
+   i.x=x;i.y=y;i.mountAlong=x+d.w/2;render();return true;
+  }
+ }
  if(state.ui.snap!==false){
   const s=28/currentZoom();
   const tryX=(candidate,label)=>{if(Math.abs(x-candidate)<s){x=candidate;snapFeedback={axis:"x",coord:candidate,label}}};
@@ -1095,13 +1145,18 @@ function facingName(rotation){
 
 function openSelectedSheet(){
  const sheet=$("objectSheet");sheet.classList.remove("hidden");
+ $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");
  $("itemQuick").classList.add("hidden");$("itemDetails").classList.add("hidden");$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
  if(selected.kind==="item"){
   const i=state.items.find(x=>x.id===selected.id);if(!i)return;
   const prod=productById(i.productId);$("sheetEyebrow").textContent=prod?"Product object":"Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm · ${Number(i.rotation)||0}°`;
   $("itemQuick").classList.remove("hidden");$("detailsToggle").classList.remove("hidden");
   $("lockBtn").textContent=i.locked?"Unlock":"Lock";$("rotateBtn").textContent=`Rotate 90° · ${Number(i.rotation)||0}° · front → ${facingName(i.rotation)}`;
-  $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;$("itemShowerMountWrap").classList.toggle("hidden",i.type!=="shower"); if(i.type==="shower") $("itemShowerMount").value=i.showerMountSide||"right";
+  $("rotateBtn").classList.toggle("hidden",i.type==="mirror");$("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");
+  $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;
+  $("itemShowerMountWrap").classList.add("hidden");
+  $("itemMirrorWallWrap").classList.toggle("hidden",i.type!=="mirror");$("itemMirrorAlongWrap").classList.toggle("hidden",i.type!=="mirror");
+  if(i.type==="mirror"){$("itemMirrorWall").value=i.mountWall||"left";$("itemMirrorAlong").value=Math.round(Number(i.mountAlong)||0)}
   const w=warningInfo(i);if(w.length){$("sheetWarning").classList.remove("hidden");$("sheetWarning").textContent=w.join(" ")}
  }else if(selected.kind==="opening"){
   $("detailsToggle").classList.add("hidden");$("openingDetails").classList.remove("hidden");
@@ -1241,8 +1296,12 @@ function saveProduct(){
 function placeProduct(id){
  const p=productById(id);if(!p)return;
  checkpoint();
- const rotation=(p.type==="vanity"&&p.mounting==="wall")?90:0;
- const item={id:p.type+Date.now(),type:p.type,name:p.name,x:120,y:780,w:p.width,h:p.depth,rotation,locked:false,z:p.defaultZ||0,height:p.height,productId:p.id};
+ let rotation=(p.type==="vanity"&&p.mounting==="wall")?90:0;
+ let item={id:p.type+Date.now(),type:p.type,name:p.name,x:120,y:780,w:p.width,h:p.depth,rotation,locked:false,z:p.defaultZ||0,height:p.height,productId:p.id};
+ if(p.type==="mirror"){
+  const vanity=state.items.find(x=>x.type==="vanity"),vd=vanity?itemDims(vanity):null;
+  item.mountWall="left";item.mountAlong=vd?vanity.y+vd.h/2:state.room.depth/2;item.rotation=90;syncMirrorPlanFromMount(item);
+ }
  state.items.push(item);selected={kind:"item",id:item.id};save();render();
  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
  const planTab=document.querySelector('.tab[data-tab="plan"]');planTab.classList.add("active");$("plan").classList.add("active");
@@ -1541,8 +1600,9 @@ document.querySelectorAll("[data-add-service]").forEach(b=>b.onclick=()=>addServ
 $("closeObjectSheet").onclick=closeObjectSheet;
 $("detailsToggle").onclick=()=>{const d=$("itemDetails");d.classList.toggle("hidden");$("detailsToggle").textContent=d.classList.contains("hidden")?"Show exact details":"Hide exact details"};
 
+$("centreMirrorBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||i.type!=="mirror")return;const vanity=state.items.find(x=>x.type==="vanity");if(!vanity)return;checkpoint();const vd=itemDims(vanity);i.mountWall="left";i.mountAlong=vanity.y+vd.h/2;syncMirrorPlanFromMount(i);save();render();openSelectedSheet()};
 $("rotateBtn").onclick=()=>{
- const i=state.items.find(x=>x.id===selected.id);if(!i)return;
+ const i=state.items.find(x=>x.id===selected.id);if(!i||i.type==="mirror")return;
  checkpoint();
  const before=itemDims(i);
  const cx=i.x+before.w/2,cy=i.y+before.h/2;
@@ -1556,9 +1616,9 @@ $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)
 $("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.x+=50;c.y+=50;c.locked=false;state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
 
-["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemShowerMount"].forEach(id=>$(id).onchange=()=>{
+["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMirrorWall","itemMirrorAlong"].forEach(id=>$(id).onchange=()=>{
  const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();
- i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(20,Number($("itemH").value)||20);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);if(i.type==="shower") i.showerMountSide=$("itemShowerMount").value||"right";
+ i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(10,Number($("itemH").value)||10);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);if(i.type==="mirror"){i.mountWall=$("itemMirrorWall").value||"left";i.mountAlong=Math.max(0,Number($("itemMirrorAlong").value)||0);syncMirrorPlanFromMount(i)}
  save();render();openSelectedSheet();
 });
 ["openA","openW","openB","openSill","openHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);save();sync();render();openSelectedSheet()});

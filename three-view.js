@@ -72,7 +72,7 @@ if (!api || !legacy) {
     timber: new THREE.MeshStandardMaterial({ color: 0xb39875, roughness: 0.8 }),
     brass: new THREE.MeshStandardMaterial({ color: 0xb88943, roughness: 0.28, metalness: 0.7 }),
     metal: new THREE.MeshStandardMaterial({ color: 0xc8c8c3, roughness: 0.34, metalness: 0.68 }),
-    dark: new THREE.MeshStandardMaterial({ color: 0x161616, roughness: 0.78, metalness: 0.08 }),
+    dark: new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.76, metalness: 0.12 }),
     niche: new THREE.MeshStandardMaterial({ color: 0xb8aa96, roughness: 0.88 }),
     glass: new THREE.MeshPhysicalMaterial({
       color: 0xbfdce0, transmission: 0.74, transparent: true, opacity: 0.30,
@@ -382,6 +382,35 @@ if (!api || !legacy) {
       });
     });
   }
+  function buildRoomWallShowerHardware(s) {
+    const W=mm(s.room.width),D=mm(s.room.depth);
+    const finish=mats.dark;
+    const fixtures=s.wallFixtures||[];
+    const rain=fixtures.find(f=>f.type==="rainHead");
+    const hand=fixtures.find(f=>f.type==="handset");
+    const g=new THREE.Group();
+
+    // In this bathroom the wall opposite the door is the LEFT wall (x=0),
+    // which is the same wall the vanity is mounted against.
+    if(rain && rain.mountWall==="left"){
+      const zc=mm(rain.along||2140), y=mm(rain.height||2080), proj=mm(rain.projection||320);
+      const x0=.012;
+      const rose=cylinder(.012,.055,finish,"x",20);rose.position.set(x0+.025,y,zc);g.add(rose);
+      const arm=meshBox(proj,.018,.018,finish,x0+proj/2,y,zc,false);g.add(arm);
+      const drop=cylinder(.010,.075,finish,"y",18);drop.position.set(x0+proj-.015,y-.038,zc);g.add(drop);
+      const head=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.018,48),finish);
+      // Cylinder's natural Y axis makes the rain head horizontal as required.
+      head.position.set(x0+proj-.015,y-.082,zc);head.castShadow=true;g.add(head);
+    }
+    if(hand && hand.mountWall==="left"){
+      const zc=mm(hand.along||2320), bottom=mm(hand.bottom||1050), hh=mm(hand.height||720), x0=.014;
+      const rail=cylinder(.009,hh,finish,"y",18);rail.position.set(x0+.012,bottom+hh/2,zc);g.add(rail);
+      const handset=cylinder(.017,.18,finish,"y",18);handset.position.set(x0+.055,bottom+hh*.61,zc);handset.rotation.z=.34;g.add(handset);
+      const wallOutlet=cylinder(.018,.045,finish,"x",18);wallOutlet.position.set(x0+.025,bottom+.11,zc);g.add(wallOutlet);
+    }
+    if(g.children.length){wallRoot.add(g);wallSets.left.push(g);}
+  }
+
   function buildBath(i,s) {
     const g=groupForItem(i), w=mm(i.w), d=mm(i.h), h=mm(i.height || 550), z=mm(i.z||0);
     const prod=(s.products||[]).find(p=>p.id===i.productId);
@@ -549,121 +578,51 @@ if (!api || !legacy) {
 
   function buildShower(i,s) {
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=Math.max(.025,mm(i.height||40)),z=mm(i.z||0);
-    const prod=(s.products||[]).find(p=>p.id===i.productId);
-    const style=prod?.style || "showerWalkInRain";
 
-    // Low tray / shower floor.
+    // Tray only. Shower hardware is no longer a child of the tray and therefore
+    // cannot rotate/move when the tray changes.
     g.add(meshBox(w,h,d,mats.ceramic,0,z+h/2,0));
     const inset=meshBox(Math.max(.10,w-.07),.008,Math.max(.10,d-.07),mats.ceramicInner,0,z+h+.004,0,false);
     g.add(inset);
-
-    // Waste positioned towards the back/outer corner, clear of the entry.
     const drain=cylinder(.032,.008,mats.metal,"y",28);
-    drain.position.set(-w*.28,z+h+.012,d*.27);
-    g.add(drain);
+    drain.position.set(-w*.28,z+h+.012,d*.27);g.add(drain);
 
-    // Check whether a separate half-height stud wall already borders the shower.
-    // If it does, buildStud() supplies the glass above it, so do NOT add another
-    // freestanding glass panel here.
-    const showerBox={
-      x1:i.x, x2:i.x+itemDims(i).w,
-      y1:i.y, y2:i.y+itemDims(i).d
-    };
+    const showerBox={x1:i.x,x2:i.x+itemDims(i).w,y1:i.y,y2:i.y+itemDims(i).d};
     const nearbyStud=(s.items||[]).find(o=>{
-      if(o.type!=="stud") return false;
-      const od=itemDims(o), b={x1:o.x,x2:o.x+od.w,y1:o.y,y2:o.y+od.d};
+      if(o.type!=="stud")return false;
+      const od=itemDims(o),b={x1:o.x,x2:o.x+od.w,y1:o.y,y2:o.y+od.d};
       const xOverlap=Math.min(showerBox.x2,b.x2)-Math.max(showerBox.x1,b.x1);
       const yOverlap=Math.min(showerBox.y2,b.y2)-Math.max(showerBox.y1,b.y1);
-      const nearFront=Math.abs(b.y2-showerBox.y1)<=.12*1000 || Math.abs(b.y1-showerBox.y1)<=.12*1000;
-      return xOverlap>80 && (yOverlap>0 || nearFront);
+      const near=Math.min(Math.abs(b.y2-showerBox.y1),Math.abs(b.y1-showerBox.y2))<=120;
+      return xOverlap>80&&(yOverlap>0||near);
     });
-
     if(!nearbyStud){
-      // Generic walk-in fallback: a front-edge glass screen rather than a side
-      // panel, leaving an open entry gap.
       const glassH=Math.min(2.05,Math.max(1.75,mm(s.room.ceiling)-.35));
       const panelW=Math.min(w*.66,1.00);
-      const glass=meshBox(panelW,glassH,.012,mats.glass,-w/2+panelW/2,z+h+glassH/2,-d/2+.012,false);
-      g.add(glass);
-      const cap=meshBox(panelW,.018,.025,mats.brass,-w/2+panelW/2,z+h+glassH+.009,-d/2+.012,false);
-      g.add(cap);
+      const glass=meshBox(panelW,glassH,.012,mats.glass,-w/2+panelW/2,z+h+glassH/2,-d/2+.012,false);g.add(glass);
+      const cap=meshBox(panelW,.018,.025,mats.dark,-w/2+panelW/2,z+h+glassH+.009,-d/2+.012,false);g.add(cap);
     }
-
-    if(style==="showerWalkInRain"){
-      // HARD FIX per user brief:
-      // - rain head + handset on the wall opposite the door / same wall the vanity comes off
-      // - controls on the stud / vanity-side wall so the shower can be turned on without stepping in
-      // - matte black finish
-      // - fixed room layout regardless of tray rotation or shower product changes
-      const finish=mats.dark;
-      const angle=((Number(i.rotation)||0)%360+360)%360;
-      const hw = new THREE.Group();
-      hw.rotation.y = THREE.MathUtils.degToRad(angle); // cancel parent rotation; use room-aligned axes
-      g.add(hw);
-
-      const leftWallX = -w/2 + .015;   // wall opposite the door (same side as vanity wall run)
-      const rightWallX =  w/2 - .015;  // stud / vanity-side wall
-      const centerZ = THREE.MathUtils.clamp(-d*.06, -d*.18, d*.18);
-      const headY = Math.min(mm(s.room.ceiling)-.22, 2.08);
-      const valveY = z+h+1.02;
-      const armLen = .31;
-      const railZ = centerZ + .14;
-
-      // Main rain head on the left / opposite-door wall.
-      const riser = cylinder(.010,.74,finish,"y",18);
-      riser.position.set(leftWallX + .010, headY-.40, centerZ);
-      hw.add(riser);
-
-      const arm = meshBox(armLen,.018,.018,finish,leftWallX + armLen/2,headY,centerZ,false);
-      hw.add(arm);
-
-      const drop = cylinder(.010,.07,finish,"y",18);
-      drop.position.set(leftWallX + armLen -.010, headY-.035, centerZ);
-      hw.add(drop);
-
-      const head = new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.018,42), finish);
-      head.rotation.x = Math.PI/2;
-      head.position.set(leftWallX + armLen -.010, headY-.075, centerZ);
-      head.castShadow = true;
-      hw.add(head);
-
-      // Hand shower on the same left wall.
-      const rail = cylinder(.008,.64,finish,"y",16);
-      rail.position.set(leftWallX + .014, z+h+1.28, railZ);
-      hw.add(rail);
-
-      const handset = cylinder(.016,.18,finish,"y",18);
-      handset.position.set(leftWallX + .048, z+h+1.44, railZ);
-      handset.rotation.z = .35;
-      hw.add(handset);
-
-      const hose = cylinder(.004,.42,finish,"y",12);
-      hose.position.set(leftWallX + .030, z+h+1.17, railZ+.004);
-      hose.rotation.z = -.22;
-      hw.add(hose);
-
-      // Controls on the right / stud wall, facing into the shower.
-      const plate = meshBox(.018,.20,.15,finish,rightWallX,valveY,centerZ,false);
-      hw.add(plate);
-
-      const knob1 = cylinder(.021,.028,finish,"x",20);
-      knob1.position.set(rightWallX-.022,valveY+.055,centerZ);
-      hw.add(knob1);
-
-      const knob2 = cylinder(.021,.028,finish,"x",20);
-      knob2.position.set(rightWallX-.022,valveY-.055,centerZ);
-      hw.add(knob2);
-    }
-
     return setItemId(g,i.id);
   }
+
   function buildStud(i,s) {
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||1100),z=mm(i.z||0);
     g.add(meshBox(w,h,d,mats.wallSide,0,z+h/2,0));
-    const top=Math.min(mm(s.room.ceiling)-.18,2.10), glassH=Math.max(0,top-(z+h));
+    const top=Math.min(mm(s.room.ceiling)-.18,2.10),glassH=Math.max(0,top-(z+h));
     if(glassH>.1){
       const glass=meshBox(w,glassH,.012,mats.glass,0,z+h+glassH/2,0,false);g.add(glass);
-      const cap=meshBox(w,.018,.025,mats.brass,0,z+h+glassH+.009,0,false);g.add(cap);
+      const cap=meshBox(w,.018,.025,mats.dark,0,z+h+glassH+.009,0,false);g.add(cap);
+    }
+
+    // Mixer controls are hosted by the stud itself, never by the shower tray.
+    const ctl=(s.wallFixtures||[]).find(f=>f.type==="controls"&&f.hostItemId===i.id);
+    if(ctl){
+      const along=THREE.MathUtils.clamp(mm(Number(ctl.along||0)-Number(i.x||0))-w/2,-w*.42,w*.42);
+      const cy=mm(ctl.bottom||950)+.10;
+      const face=d/2+.012; // shower-facing side for current horizontal stud
+      const plate=meshBox(.15,.20,.018,mats.dark,along,cy,face,false);g.add(plate);
+      const k1=cylinder(.021,.03,mats.dark,"z",20);k1.position.set(along,cy+.055,face+.022);g.add(k1);
+      const k2=cylinder(.021,.03,mats.dark,"z",20);k2.position.set(along,cy-.055,face+.022);g.add(k2);
     }
     return setItemId(g,i.id);
   }
@@ -745,35 +704,31 @@ if (!api || !legacy) {
   }
 
   function buildMirror(i,s) {
-    const g=groupForItem(i),w=mm(i.w),d=Math.max(.025,mm(i.h)),h=mm(i.height||800),z=mm(i.z||1150);
-    const prod=(s.products||[]).find(p=>p.id===i.productId);
-    const style=prod?.style || "mirrorRectangle";
-    const brassFrame=new THREE.MeshStandardMaterial({color:0xb88943,roughness:.28,metalness:.70});
+    const faceW=mm(i.w||500),faceH=mm(i.height||500),proj=Math.max(.012,mm(i.h||25));
+    const bottom=mm(i.z||1200),along=mm(i.mountAlong||1185),wall=i.mountWall||"left";
+    const prod=(s.products||[]).find(p=>p.id===i.productId),style=prod?.style||"mirrorRound";
+    const g=new THREE.Group();g.userData.itemId=i.id;
+    const W=mm(s.room.width),D=mm(s.room.depth),inset=.014;
 
+    if(wall==="left"){g.position.set(inset,bottom+faceH/2,along);g.rotation.y=Math.PI/2;}
+    else if(wall==="right"){g.position.set(W-inset,bottom+faceH/2,along);g.rotation.y=-Math.PI/2;}
+    else if(wall==="window"){g.position.set(along,bottom+faceH/2,inset);g.rotation.y=0;}
+    else{g.position.set(along,bottom+faceH/2,D-inset);g.rotation.y=Math.PI;}
+
+    const edge=new THREE.MeshStandardMaterial({color:0xbfc4c2,roughness:.30,metalness:.55});
     if(style==="mirrorRound"){
-      const r=Math.min(w,h)/2;
-      const frame=new THREE.Mesh(new THREE.TorusGeometry(r,.015,14,64),brassFrame);
-      frame.rotation.x=Math.PI/2;
-      frame.position.set(0,z+h/2,0);g.add(frame);
-
-      const face=new THREE.Mesh(new THREE.CircleGeometry(Math.max(.04,r-.022),64),mats.mirror);
-      face.rotation.x=Math.PI/2;
-      face.position.set(0,z+h/2,.004);g.add(face);
+      const r=Math.min(faceW,faceH)/2;
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(r,r,proj,56),edge);
+      body.rotation.x=Math.PI/2;body.position.z=proj/2;body.castShadow=true;g.add(body);
+      const face=new THREE.Mesh(new THREE.CircleGeometry(Math.max(.03,r-.012),64),mats.mirror);
+      face.position.z=proj+.003;g.add(face);
+      // soft LED halo
+      const halo=new THREE.Mesh(new THREE.TorusGeometry(r*.98,.012,14,64),new THREE.MeshBasicMaterial({color:0xf6f1df,transparent:true,opacity:.72}));
+      halo.position.z=proj+.006;g.add(halo);
     }else{
-      const frameT=.018;
-      const top=meshBox(w,frameT,d,brassFrame,0,z+h-frameT/2,0,false);g.add(top);
-      const bot=meshBox(w,frameT,d,brassFrame,0,z+frameT/2,0,false);g.add(bot);
-      const l=meshBox(frameT,h,d,brassFrame,-w/2+frameT/2,z+h/2,0,false);g.add(l);
-      const rgt=meshBox(frameT,h,d,brassFrame,w/2-frameT/2,z+h/2,0,false);g.add(rgt);
-      const face=meshBox(Math.max(.04,w-frameT*2),Math.max(.04,h-frameT*2),.008,mats.mirror,0,z+h/2,.008,false);g.add(face);
-
-      if(style==="mirrorArch"){
-        const arch=new THREE.Mesh(new THREE.TorusGeometry(w*.36,.014,12,48,Math.PI),brassFrame);
-        arch.rotation.x=Math.PI/2;arch.rotation.z=Math.PI;
-        arch.position.set(0,z+h-.02,.008);g.add(arch);
-      }
+      const body=meshBox(faceW,faceH,proj,edge,0,0,proj/2);g.add(body);
+      const face=meshBox(Math.max(.04,faceW-.025),Math.max(.04,faceH-.025),.006,mats.mirror,0,0,proj+.004,false);g.add(face);
     }
-
     return setItemId(g,i.id);
   }
 
@@ -815,13 +770,14 @@ if (!api || !legacy) {
       items:s.items,
       products:(s.products||[]).map(p=>({id:p.id,finish:p.finish,style:p.style,width:p.width,depth:p.depth,height:p.height})),
       tileProducts:(s.tileProducts||[]).map(t=>({id:t.id,w:t.width,h:t.height,finish:t.finish,dp:t.defaultPattern,imgKey:(t.image||"").length+":"+(t.image||"").slice(0,64),pKey:(t.patternImage||"").length+":"+(t.patternImage||"").slice(0,64)})),
-      surfaceZones:(s.surfaceZones||[]).map(z=>({id:z.id,name:z.name,surface:z.surface,full:z.full,x1:z.x1,x2:z.x2,y1:z.y1,y2:z.y2,start:z.start,end:z.end,bottom:z.bottom,top:z.top,tileId:z.tileId,pattern:z.pattern,orientation:z.orientation,enabled:z.enabled,grout:z.grout,groutColor:z.groutColor,waste:z.waste}))
+      surfaceZones:(s.surfaceZones||[]).map(z=>({id:z.id,name:z.name,surface:z.surface,full:z.full,x1:z.x1,x2:z.x2,y1:z.y1,y2:z.y2,start:z.start,end:z.end,bottom:z.bottom,top:z.top,tileId:z.tileId,pattern:z.pattern,orientation:z.orientation,enabled:z.enabled,grout:z.grout,groutColor:z.groutColor,waste:z.waste})),
+      wallFixtures:s.wallFixtures||[]
     });
     if(!force && sig===signature) return;
     signature=sig; room=s.room;
     clearGroup(root);clearGroup(wallRoot);clearGroup(surfaceRoot);clearGroup(itemRoot);clearGroup(fixedRoot);
     itemMeshes=[];
-    buildFloor(s);buildWalls(s);buildSurfaceZones(s);
+    buildFloor(s);buildWalls(s);buildRoomWallShowerHardware(s);buildSurfaceZones(s);
     (s.items||[]).forEach(i=>{
       const g=buildItem(i,s);
       itemRoot.add(g);

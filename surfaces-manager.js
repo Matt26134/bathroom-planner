@@ -30,7 +30,7 @@
   }
   function tileById(id){ return (state().tileProducts||[]).find(t=>t.id===id); }
   function zoneById(id){ return (state().surfaceZones||[]).find(z=>z.id===id); }
-  function surfaceLabel(v){ return ({floor:"Floor",window:"Window wall",opposite:"Back wall",left:"Left wall",right:"Door wall"})[v] || v; }
+  function surfaceLabel(v){ return ({floor:"Floor",window:"Window wall",opposite:"Far wall / opposite window",left:"Vanity wall / opposite door",right:"Door wall"})[v] || v; }
   function patternLabel(v){ return v==="brick" ? "Brick bond" : v==="herringbone" ? "Herringbone" : "Stack"; }
   function surfaceAlong(surface){ const r = state().room; return (surface==="window"||surface==="opposite") ? Number(r.width||0) : Number(r.depth||0); }
   function itemDims(i){ return ((Number(i?.rotation)||0)%180!==0) ? {w:Number(i.h||0), h:Number(i.w||0)} : {w:Number(i.w||0), h:Number(i.h||0)}; }
@@ -351,8 +351,8 @@
     const s = state(), r = s.room, defaults = [
       {id:"zone-floor",name:"Main floor",surface:"floor",full:true,x1:0,x2:Number(r.width||0),y1:0,y2:Number(r.depth||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
       {id:"zone-window-wall",name:"Window wall",surface:"window",full:true,start:0,end:Number(r.width||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-      {id:"zone-back-wall",name:"Back wall",surface:"opposite",full:true,start:0,end:Number(r.width||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
-      {id:"zone-left-wall",name:"Left wall",surface:"left",full:true,start:0,end:Number(r.depth||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+      {id:"zone-back-wall",name:"Far wall / opposite window",surface:"opposite",full:true,start:0,end:Number(r.width||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
+      {id:"zone-left-wall",name:"Vanity wall / opposite door",surface:"left",full:true,start:0,end:Number(r.depth||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
       {id:"zone-door-wall",name:"Door wall",surface:"right",full:true,start:0,end:Number(r.depth||0),bottom:0,top:Number(r.ceiling||0),tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true}
     ];
     const vanity = (s.items||[]).find(i=>i.type==="vanity");

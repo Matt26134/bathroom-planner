@@ -67,7 +67,7 @@ if (!api || !legacy) {
     oak:new THREE.MeshStandardMaterial({color:0xa7835e,roughness:.72,map:oakTex}),autumnOak:new THREE.MeshStandardMaterial({color:0xa87e52,roughness:.68,map:oakTex}),oakDark:new THREE.MeshStandardMaterial({color:0x80613f,roughness:.78,map:oakTex}),timber:new THREE.MeshStandardMaterial({color:0xb39875,roughness:.8}),joist:new THREE.MeshStandardMaterial({color:0x9b7857,roughness:.9}),
     heating:new THREE.MeshStandardMaterial({color:0xb95037,roughness:.7,transparent:true,opacity:.62,side:THREE.DoubleSide}),brass:new THREE.MeshStandardMaterial({color:0xb88943,roughness:.28,metalness:.7}),brushedBrass:new THREE.MeshStandardMaterial({color:0xc09a59,roughness:.34,metalness:.72}),metal:new THREE.MeshStandardMaterial({color:0xc8c8c3,roughness:.34,metalness:.68}),chrome:new THREE.MeshPhysicalMaterial({color:0xe7e8e7,roughness:.12,metalness:.96,clearcoat:.55}),
     dark:new THREE.MeshStandardMaterial({color:0x080808,roughness:.76,metalness:.12}),mattBlack:new THREE.MeshStandardMaterial({color:0x111211,roughness:.58,metalness:.35}),graphiteSlate:new THREE.MeshStandardMaterial({color:0x363735,roughness:.84,map:slateTex,bumpMap:slateTex,bumpScale:.007}),niche:new THREE.MeshStandardMaterial({color:0xb8aa96,roughness:.88}),
-    glass:new THREE.MeshPhysicalMaterial({color:0xc5e0e2,transmission:.84,transparent:true,opacity:.22,roughness:.06,thickness:.012,side:THREE.DoubleSide,depthWrite:false}),flutedGlass:new THREE.MeshPhysicalMaterial({color:0xd5e5e6,transmission:.72,transparent:true,opacity:.30,roughness:.16,thickness:.016,side:THREE.DoubleSide,depthWrite:false}),flutedRib:new THREE.MeshPhysicalMaterial({color:0xdce9ea,transmission:.66,transparent:true,opacity:.20,roughness:.22,thickness:.010,side:THREE.DoubleSide,depthWrite:false}),mirror:new THREE.MeshPhysicalMaterial({color:0xdce5e7,metalness:.72,roughness:.08,transparent:true,opacity:.94,side:THREE.DoubleSide}),windowGlass:new THREE.MeshPhysicalMaterial({color:0xc7e2e7,transmission:.80,transparent:true,opacity:.21,roughness:.04,thickness:.01,side:THREE.DoubleSide,depthWrite:false})
+    glass:new THREE.MeshPhysicalMaterial({color:0xf5fbfc,transmission:.97,transparent:true,opacity:.10,roughness:.045,ior:1.46,thickness:.004,side:THREE.DoubleSide,depthWrite:false}),flutedGlass:new THREE.MeshPhysicalMaterial({color:0xf8fcfd,transmission:.95,transparent:true,opacity:.13,roughness:.13,ior:1.46,thickness:.005,side:THREE.DoubleSide,depthWrite:false}),flutedRib:new THREE.MeshBasicMaterial({color:0xeaf7fa,transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false}),mirror:new THREE.MeshPhysicalMaterial({color:0xdce5e7,metalness:.72,roughness:.08,transparent:true,opacity:.94,side:THREE.DoubleSide}),windowGlass:new THREE.MeshPhysicalMaterial({color:0xc7e2e7,transmission:.80,transparent:true,opacity:.21,roughness:.04,thickness:.01,side:THREE.DoubleSide,depthWrite:false})
   };
 
 
@@ -115,10 +115,21 @@ if (!api || !legacy) {
     if(!sh)return 1;const sd=itemDims(sh),dx=sh.x+sd.w/2-cx,dz=sh.y+sd.d/2-cz,r=((Number(i.rotation)||0)%360+360)%360*Math.PI/180,c=Math.cos(r),sn=Math.sin(r),localZ=-dx*sn+dz*c;return localZ>=0?-1:1;
   }
   function buildGlassPanel(width,height,style="plain",fluteFace=1){
-    const g=new THREE.Group(),th=.012,base=meshBox(width,height,th,style==="fluted"?mats.flutedGlass:mats.glass,0,0,0,false);g.add(base);
+    // Keep the physical screen thin and clear.  The old 2.3.2 renderer used
+    // dozens of solid cylindrical ribs; under warm room lighting those stacked
+    // into an opaque beige-looking slab.  Real reeded shower glass still reads
+    // as glass, so the flute is now a shallow visual layer on ONE face only.
+    const g=new THREE.Group(),th=.010;
+    const base=meshBox(width,height,th,style==="fluted"?mats.flutedGlass:mats.glass,0,0,0,false);
+    base.renderOrder=3;g.add(base);
     if(style==="fluted"){
-      const spacing=.020,radius=.0038,count=Math.max(2,Math.floor((width-.012)/spacing)),start=-(count-1)*spacing/2;
-      for(let n=0;n<count;n++){const rib=cylinder(radius,height,mats.flutedRib,"y",12);rib.position.set(start+n*spacing,0,fluteFace*(th/2+radius));g.add(rib)}
+      const spacing=.018,stripW=.0055,count=Math.max(2,Math.floor((width-.010)/spacing)),start=-(count-1)*spacing/2;
+      for(let n=0;n<count;n++){
+        // Very shallow translucent strips give the vertical reeded highlight
+        // without turning the whole screen into a solid object.
+        const rib=meshBox(stripW,height*.985,.0012,mats.flutedRib,start+n*spacing,0,fluteFace*(th/2+.0009),false);
+        rib.renderOrder=4;g.add(rib);
+      }
     }
     return g;
   }
@@ -431,7 +442,7 @@ if (!api || !legacy) {
     g.add(meshBox(w,h,d,mats.wallSide,0,z+h/2,0));
     const style=i.glassStyle||"fluted",top=Math.min(mm(s.room.ceiling)-.18,2.10),glassH=Math.max(0,top-(z+h));
     if(style!=="none"&&glassH>.1){
-      const face=nearestShowerSideForStud(i,s),glass=buildGlassPanel(w,glassH,style,face);glass.position.set(0,z+h+glassH/2,0);g.add(glass);
+      const showerFace=nearestShowerSideForStud(i,s),fluteFace=-showerFace,glass=buildGlassPanel(w,glassH,style,fluteFace);glass.position.set(0,z+h+glassH/2,0);g.add(glass);
       const trim=trimFinishMaterial(i);
       g.add(meshBox(w,.018,.025,trim,0,z+h+glassH+.009,0,false));
       g.add(meshBox(.018,glassH,.025,trim,-w/2+.009,z+h+glassH/2,0,false));

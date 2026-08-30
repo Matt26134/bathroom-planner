@@ -1,4 +1,4 @@
-# Bathroom Planner V2.3.2
+# Bathroom Planner V2.3.3
 
 Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` project data is migrated in place.
 
@@ -21,3 +21,10 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Stud item settings now allow Fluted / Plain clear / No glass.
 - Glass trim can be Matt black / Silver-chrome / Brushed brass.
 - Reverted the accidental V2.3.1 change to the Milan vanity front; "fluting" in that hotfix was based on a misunderstanding.
+
+
+## V2.3.3 refined shower glass
+- Rebuilt the fluted shower-screen material after the V2.3.2 regression that made it look like a beige solid panel.
+- Screen is again a thin, high-transmission glass panel with subtle vertical reeded highlights rather than solid cylindrical ribs.
+- Fluting is placed on the outside face; the shower-facing side remains the visually smooth/easy-clean face.
+- Existing Plain / Fluted / No glass and black / chrome / brushed-brass trim controls are retained.

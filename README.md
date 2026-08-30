@@ -1,15 +1,28 @@
-# Bathroom Planner V2.3.1
+# Bathroom Planner V2.2.2
+## Fixed in V2.2.2
+- Glass panels now honour **0 mm above floor** in 3D. Previously, JavaScript treated `0` as false and silently substituted the 1100 mm default.
+- The same explicit-zero fix is applied to other wall-mounted 3D objects with non-zero defaults (rain head, handset, shower controls, niche and mirror).
+- Existing saved layouts are preserved; no re-adding of glass is required.
 
-Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` project data is migrated in place.
 
-## V2.3 highlights
-- Correct door leaf geometry: the leaf is centred inside the surveyed `door incl. frame` width. Example: 861mm frame + 760mm leaf = 50.5mm allowance at each jamb, and both 2D/3D hinge from that inset point.
-- Product-aware 3D profiles recognised by SKU: Metro METCC WC, Imperia GR1208CW graphite slate tray, Milan MILF800WHAOBB fluted autumn-oak vanity, Merton 51120 curved corner bath and Arezzo ARZIM10MB black LED mirror.
-- New material system: graphite slate texture, autumn oak grain, gloss ceramic/acrylic, chrome, brushed brass and matt black.
-- Better model geometry: rounded Metro WC/cistern and wrap-over seat, square Imperia chrome grate, physical Milan fluting + brass handles, curved-corner Merton shell, black framed Arezzo LED mirror.
-- Walkthrough mode in 3D: eye-level view, drag to look, on-screen phone arrows and WASD/arrow-key desktop movement.
-- Product editor now includes a 3D fidelity profile and finish override. Automatic recognises the known SKUs.
-- Existing 3D move, Under floor, joists, floor build-up, surfaces and `.bathplan` portability remain.
+Representative 3D fixtures + explicit shower tray update.
 
-- Restored finish selector for independent shower fittings (matt black / silver-chrome / brushed brass).
-- Strengthened Milan vanity fluting so the fluted front reads clearly again in 3D.
+## New in V2.2.2
+- **Shower tray** is now an explicit Add-to-plan object (rather than the generic “Shower” label)
+- new shower trays default to **1200 × 800 × 40mm** and remain fully resizable/rotatable
+- existing shower-floor objects migrate in place and are relabelled **Shower tray** without changing their position or footprint
+- tray finish can be changed per object: **White**, **Slate grey**, or **Black slate**
+- 2D plan colour follows the selected tray finish
+- 3D tray is now a low-profile rounded slab with a recessed deck and visible waste instead of a plain rectangular block
+- slate finishes use a rougher stone-like material and subtle surface lines so the tray reads separately from the tiled floor
+- shower glass remains completely detached: add **Plain glass panel** or **Fluted glass panel** separately
+- shower rain head, handset and controls retain independent **Black / Silver** finish controls
+- retains all V2.2.0 representative Gable bath geometry improvements and the same stable browser storage key
+
+## Update
+1. Extract the ZIP.
+2. Upload all files to the repo root, replacing the existing files.
+3. Commit and allow GitHub Pages to publish.
+4. Open Bathroom Planner and tap **Reload latest**.
+
+The update preserves the current locally saved project. Export a `.bathplan` backup first if you want an additional recovery copy.

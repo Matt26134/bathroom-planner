@@ -40,7 +40,7 @@ svg{width:100%;height:100%;display:block;background:#fffefa;touch-action:none}
 .window{stroke:#789ca4;stroke-width:7;vector-effect:non-scaling-stroke;cursor:pointer}.door{stroke:#686b64;stroke-width:1.8;fill:none;vector-effect:non-scaling-stroke;cursor:pointer}
 .doorZone{fill:rgba(173,135,83,.07);stroke:#c6ad88;stroke-width:1;stroke-dasharray:6 6;vector-effect:non-scaling-stroke;pointer-events:none}
 .fixture{stroke:#5d605a;stroke-width:2;vector-effect:non-scaling-stroke;cursor:grab}.fixture.selected{stroke:#4f7780;stroke-width:3.5}.fixture.overlap{stroke:#a8564c}.fixture.tolerance{stroke:#b5843c}
-.bath{fill:#f3efe8}.wc{fill:#f4f1eb}.vanity{fill:#e2d5c2}.shower{fill:#edf4f3}.stud{fill:#dbd6ca}.glassPanel{fill:rgba(198,222,226,.22);stroke:#7fa7ae;stroke-width:2;vector-effect:non-scaling-stroke}.storage{fill:#d8c9b6}.radiator{fill:#efe8dd}.niche{fill:#f5eee4}.rainHead{fill:#e6eceb}.handset{fill:#e6eceb}.showerControls{fill:#e7e4df}.custom{fill:#eeeae2}
+.bath{fill:#f3efe8}.wc{fill:#f4f1eb}.vanity{fill:#e2d5c2}.shower{fill:#edf4f3}.stud{fill:#dbd6ca}.storage{fill:#d8c9b6}.radiator{fill:#efe8dd}.niche{fill:#f5eee4}.rainHead{fill:#e6eceb}.handset{fill:#e6eceb}.showerControls{fill:#e7e4df}.custom{fill:#eeeae2}
 .archLine{fill:none;stroke:#bbb7af;stroke-width:1.6;vector-effect:non-scaling-stroke}.glass{stroke:#80a2aa;stroke-width:3;vector-effect:non-scaling-stroke}
 .label{font-size:40px;font-weight:850;fill:#2e302c;text-anchor:middle;dominant-baseline:middle;pointer-events:none}.subLabel{font-size:28px;font-weight:700;fill:#777a73;text-anchor:middle;dominant-baseline:middle;pointer-events:none}.outsideLabel{font-size:28px;font-weight:750;fill:#656861}
 .service{cursor:grab}.service circle{stroke-width:2;vector-effect:non-scaling-stroke}.service text{font-size:28px;font-weight:850;fill:#4e514b;pointer-events:none}
@@ -85,6 +85,10 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 .view3dTop .spacer{flex:1}.view3dTop select{width:auto;min-height:36px}.view3dTop button{min-height:36px;font-size:.82rem}
 #threeDCanvas{display:block;width:100%;height:min(66vh,680px);min-height:440px;background:linear-gradient(#fbfaf7,#f2efe8);touch-action:none}.legacy3d-hidden{display:none!important}.threeWebgl{display:block;width:100%;height:min(66vh,680px);min-height:440px;background:linear-gradient(#faf8f3,#eee9df);touch-action:none}.threeStatus{position:absolute;left:10px;bottom:10px;z-index:4;background:rgba(255,253,249,.88);backdrop-filter:blur(7px);border:1px solid rgba(205,199,187,.85);border-radius:999px;padding:6px 9px;font-size:.72rem;font-weight:800;color:#5d6058;pointer-events:none}.view3dShell{position:relative}
 .threeDHint{font-size:.79rem;color:var(--muted);padding:8px 10px;border-top:1px solid #ece8df}
+.view3dTop button.active3d{background:#6f7565;color:#fff;border-color:#6f7565}
+.walkControls{position:absolute;right:10px;bottom:52px;z-index:6;display:grid;grid-template-columns:44px 44px 44px;grid-template-rows:44px 44px;gap:5px;padding:7px;border:1px solid rgba(205,199,187,.9);border-radius:14px;background:rgba(255,253,249,.9);backdrop-filter:blur(7px)}
+.walkControls button{min-width:44px;min-height:44px;padding:0;font-size:1.05rem;font-weight:900;background:#fffdf9}.walkControls .walkForward{grid-column:2}.walkControls .walkLeft{grid-column:1;grid-row:2}.walkControls .walkBack{grid-column:2;grid-row:2}.walkControls .walkRight{grid-column:3;grid-row:2}
+.walkControls.hidden{display:none!important}
 .elevationWrap{display:none;background:#fffefa}.elevationWrap.show{display:block}
 .elevationSvg{display:block;width:100%;height:min(66vh,680px);min-height:440px;background:#fffefa}
 .eWall{fill:#fbfaf7;stroke:#555850;stroke-width:2}.eGrid{stroke:#eeeae3;stroke-width:1}
@@ -144,7 +148,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.2.2 · representative 3D + glass height fix</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.3.2 · restored fluted shower glass</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -216,18 +220,22 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       <button id="viewWindow">Window view</button>
       <button id="viewTop">Top</button>
       <button id="viewReset">Reset</button>
+      <button id="walkthroughBtn" type="button" aria-pressed="false">Walkthrough</button>
       <span class="spacer"></span>
       <input id="floorXrayToggle" type="checkbox" hidden>
       <button id="floorXrayBtn" type="button" aria-pressed="false">Under floor</button>
       <button id="done3DMoveBtn" type="button" class="hidden">Done moving</button>
-      <label style="display:flex;align-items:center;gap:5px;white-space:nowrap">Shower metal
-        <select id="showerFinishSelect" style="width:auto;min-height:36px;padding:5px 8px"><option value="black">Black</option><option value="silver">Silver</option></select>
-      </label>
       <label style="display:flex;align-items:center;gap:5px"><input id="wallsToggle" type="checkbox" checked style="width:18px">Walls</label>
     </div>
     <canvas id="threeDCanvas"></canvas>
+    <div id="walkControls" class="walkControls hidden" aria-label="Walkthrough movement controls">
+      <button type="button" class="walkForward" data-walk="forward" aria-label="Walk forward">↑</button>
+      <button type="button" class="walkLeft" data-walk="left" aria-label="Step left">←</button>
+      <button type="button" class="walkBack" data-walk="back" aria-label="Walk backward">↓</button>
+      <button type="button" class="walkRight" data-walk="right" aria-label="Step right">→</button>
+    </div>
     <div id="elevationWrap" class="elevationWrap"><svg id="elevationSvg" class="elevationSvg"></svg></div>
-    <div class="threeDHint">3D: drag to orbit · pinch to zoom · tap an item to edit it. Choose <strong>Move in 3D</strong> in its panel to drag its plan position directly in 3D.</div>
+    <div class="threeDHint">Orbit: drag to orbit · pinch to zoom · tap an item to edit. <strong>Walkthrough</strong>: eye-level view, drag to look, use the arrows on phone or WASD/arrow keys on desktop. Choose <strong>Move in 3D</strong> in an item panel to reposition it.</div>
   </div>
 </section>
 
@@ -375,7 +383,8 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       <label>After door<input id="doorAfter" type="number"></label>
     </div>
     <div id="doorCheck" class="check"></div>
-    <div class="heightNote" style="margin-top:7px">Door incl. frame sets the wall opening. Door leaf / swing is the actual moving door width and controls the 2D swing radius and 3D leaf.</div>
+    <div id="doorFrameAllowance" class="heightNote" style="margin-top:7px"></div>
+    <div class="heightNote" style="margin-top:4px">Door incl. frame is the surveyed framed width. The actual leaf is centred inside it, so the hinge/swing is automatically inset by half of the difference.</div>
     <div class="grid" style="margin-top:9px"><label>Door height (mm)<input id="doorHeight" type="number"></label><div class="heightNote">Starter door height is generic and editable.</div></div>
     <div class="section">Project</div>
     <div class="grid">
@@ -434,7 +443,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Name<input id="itemName"></label>
         <label>Type<select id="itemType">
           <option value="bath">Bath</option><option value="wc">WC</option><option value="vanity">Vanity</option>
-          <option value="shower">Shower tray</option><option value="stud">Stud wall</option><option value="glassPanel">Glass panel</option><option value="storage">Storage</option>
+          <option value="shower">Shower</option><option value="stud">Stud wall</option><option value="storage">Storage</option>
           <option value="radiator">Radiator</option><option value="mirror">Mirror</option><option value="niche">Niche</option>
           <option value="rainHead">Rain shower head</option><option value="handset">Hand shower</option><option value="showerControls">Shower controls</option><option value="custom">Custom</option>
         </select></label>
@@ -445,9 +454,6 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Bottom above floor (mm)<input id="itemZ" type="number"></label>
         <label>Height (mm)<input id="itemHeight" type="number"></label>
         <label id="itemShowerMountWrap" class="hidden">Shower mount side<select id="itemShowerMount"><option value="left">Fixed shower layout</option><option value="right">Fixed shower layout</option></select></label>
-        <label id="itemHardwareFinishWrap" class="hidden">Shower metal finish<select id="itemHardwareFinish"><option value="black">Black</option><option value="silver">Silver</option></select></label>
-        <label id="itemTrayFinishWrap" class="hidden">Shower tray finish<select id="itemTrayFinish"><option value="white">White</option><option value="slate">Slate grey</option><option value="black">Black slate</option></select></label>
-        <label id="itemGlassStyleWrap" class="hidden">Glass style<select id="itemGlassStyle"><option value="plain">Plain / clear</option><option value="fluted">Fluted / reeded</option></select></label>
         <label id="itemMirrorWallWrap" class="hidden">Mounted wall<select id="itemMirrorWall">
           <option value="left">Vanity wall / opposite door</option>
           <option value="right">Door-side wall</option>
@@ -455,6 +461,21 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
           <option value="opposite">Wall opposite window</option>
         </select></label>
         <label id="itemMirrorAlongWrap" class="hidden">Position along wall (mm)<input id="itemMirrorAlong" type="number"></label>
+        <label id="itemFixtureFinishWrap" class="hidden">Finish<select id="itemFixtureFinish">
+          <option value="matt-black">Matt black</option>
+          <option value="chrome">Silver / chrome</option>
+          <option value="brushed-brass">Brushed brass</option>
+        </select></label>
+        <label id="itemStudGlassStyleWrap" class="hidden">Glass above stud<select id="itemStudGlassStyle">
+          <option value="fluted">Fluted / reeded</option>
+          <option value="plain">Plain clear</option>
+          <option value="none">No glass</option>
+        </select></label>
+        <label id="itemStudGlassTrimWrap" class="hidden">Glass trim finish<select id="itemStudGlassTrim">
+          <option value="matt-black">Matt black</option>
+          <option value="chrome">Silver / chrome</option>
+          <option value="brushed-brass">Brushed brass</option>
+        </select></label>
       </div>
     </div>
 
@@ -475,6 +496,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Hinge side<select id="doorHinge"><option value="bottom">Bottom end</option><option value="top">Top end</option></select></label>
         <label>Open angle °<input id="doorAngle" type="number" min="0" max="120"></label>
       </div>
+      <div id="doorFrameAllowanceSheet" class="heightNote" style="margin-top:8px"></div>
     </div>
 
     <div id="serviceDetails" class="details hidden">
@@ -529,7 +551,6 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <option value="straightSingleEndedRight">Straight single-ended bath · right</option>
         <option value="straightSingleEndedLeft">Straight single-ended bath · left</option>
         <option value="doubleEndedBath">Straight double-ended bath</option>
-        <option value="backToWallDShapeBath">Back-to-wall D-shape bath · representative</option>
         <option value="freestandingOvalBath">Freestanding oval bath</option>
         <option value="wcCloseCoupledRound">WC · close coupled round</option>
         <option value="wcBackToWallRound">WC · back to wall round</option>
@@ -543,10 +564,27 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <option value="mirrorRectangle">Mirror · rectangle</option>
         <option value="mirrorArch">Mirror · arch</option>
       </select></label>
+      <label>3D fidelity profile<select id="prodProfile">
+        <option value="auto">Automatic · recognise product/SKU</option>
+        <option value="generic">Generic category model</option>
+        <option value="metro-metcc">Metro METCC toilet</option>
+        <option value="imperia-graphite">Imperia graphite slate tray</option>
+        <option value="milan-fluted-oak">Milan fluted autumn oak vanity</option>
+        <option value="merton-curved-left">Merton curved corner bath · left</option>
+        <option value="arezzo-black-led">Arezzo black round LED mirror</option>
+      </select></label>
+      <label>3D finish override<select id="prodRenderFinish">
+        <option value="auto">Automatic from product finish</option>
+        <option value="gloss-white">Gloss white ceramic/acrylic</option>
+        <option value="graphite-slate">Graphite slate</option>
+        <option value="autumn-oak">Autumn oak</option>
+        <option value="matt-black">Matt black</option>
+        <option value="brushed-brass">Brushed brass</option>
+      </select></label>
     </div>
 
     <div id="product3dNote" class="productNote">
-      Product images are saved as references. Representative 3D styles can also use the product geometry recipe below, so curved/tapered products do not have to render as simple boxes.
+      V2.3 recognises known SKUs and uses product-specific geometry/materials. Automatic currently matches Metro METCC, Imperia GR1208CW, Milan MILF800WHAOBB, Merton 51120 and Arezzo ARZIM10MB. Product photos remain references rather than flat images pasted onto the model.
     </div>
     <div class="section">Dimensions</div>
     <div class="grid">
@@ -554,22 +592,6 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       <label>Depth (mm)<input id="prodDepth" type="number"></label>
       <label>Height (mm)<input id="prodHeight" type="number"></label>
       <label>Default bottom above floor (mm)<input id="prodZ" type="number"></label>
-    </div>
-
-    <div id="prodBathGeometryWrap" class="hidden">
-      <div class="section">Representative bath geometry</div>
-      <div class="productNote">Used by the 3D renderer for the representative back-to-wall D-shape model. Leave a field blank to use a sensible proportion from the overall dimensions.</div>
-      <div class="grid" style="margin-top:9px">
-        <label>Top inner length (mm)<input id="prodBathInnerTopLength" type="number"></label>
-        <label>Top inner width (mm)<input id="prodBathInnerTopWidth" type="number"></label>
-        <label>Base inner length (mm)<input id="prodBathInnerBaseLength" type="number"></label>
-        <label>Base inner width (mm)<input id="prodBathInnerBaseWidth" type="number"></label>
-        <label>Internal depth (mm)<input id="prodBathInnerDepth" type="number"></label>
-        <label>Rear tap deck (mm)<input id="prodBathRearDeck" type="number"></label>
-        <label>Front corner radius (mm)<input id="prodBathCornerRadius" type="number"></label>
-        <label>Base outer length (mm)<input id="prodBathBaseOuterLength" type="number"></label>
-        <label>Base outer width (mm)<input id="prodBathBaseOuterWidth" type="number"></label>
-      </div>
     </div>
 
     <div class="section">Reference</div>
@@ -703,8 +725,8 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
     <div class="section">Fixtures & construction</div>
     <div class="addgrid">
       <button data-add-item="bath">Bath</button><button data-add-item="wc">WC</button>
-      <button data-add-item="vanity">Floor vanity</button><button data-add-item="shower">Shower tray</button>
-      <button data-add-item="stud">Stud wall</button><button data-add-glass="plain">Plain glass panel</button><button data-add-glass="fluted">Fluted glass panel</button><button data-add-item="storage">Storage</button>
+      <button data-add-item="vanity">Floor vanity</button><button data-add-item="shower">Shower</button>
+      <button data-add-item="stud">Stud wall</button><button data-add-item="storage">Storage</button>
       <button data-add-item="radiator">Radiator</button><button data-add-item="mirror">Mirror</button><button data-add-item="niche">Niche</button>
       <button data-add-item="rainHead">Rain shower head</button><button data-add-item="handset">Hand shower</button>
       <button data-add-item="showerControls">Shower controls</button><button data-add-item="custom">Custom rectangle</button>
@@ -722,25 +744,25 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.2.2", KEY="bathroomPlannerStable";
+const VERSION="2.3.2", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 const starter={
  version:VERSION,
- schemaVersion:3,
+ schemaVersion:4,
  projectId:"bathroom-redesign-main",
  createdAt:"2026-08-26T00:00:00.000Z",
  updatedAt:"2026-08-26T00:00:00.000Z",
  project:{name:"Bathroom Redesign",planName:"Current working layout",notes:"Confirm final survey dimensions after strip-out before ordering fitted items."},
  room:{width:2280,depth:2545,ceiling:2470,tolerance:20,window:{before:660,width:930,after:690,sill:900,height:960},door:{before:835,width:860,leafWidth:762,after:850,height:1981,hinge:"bottom",openAngle:26}},
- ui:{measureMode:"selected",snap:true,planLayer:"layout",showerHardwareFinish:"black"},
+ ui:{measureMode:"selected",snap:true,planLayer:"layout"},
  items:[
   {id:"bath1",type:"bath",name:"Bath",x:0,y:0,w:1600,h:700,rotation:0,locked:false,z:0,height:550},
   {id:"wc1",type:"wc",name:"New WC",x:1830,y:25,w:370,h:640,rotation:0,locked:false,z:0,height:800},
   {id:"vanity1",type:"vanity",name:"Floor-standing vanity",x:0,y:700,w:450,h:970,rotation:0,locked:false,z:0,height:850},
   {id:"stud1",type:"stud",name:"Half-height stud wall",x:0,y:1670,w:900,h:100,rotation:0,locked:false,z:0,height:1100},
-  {id:"shower1",type:"shower",name:"Shower tray",x:0,y:1745,w:1400,h:800,rotation:0,locked:false,z:0,height:40,trayFinish:"slate"},
+  {id:"shower1",type:"shower",name:"Walk-in shower",x:0,y:1745,w:1400,h:800,rotation:0,locked:false,z:0,height:40,showerMountSide:"right"},
   {id:"storage1",type:"storage",name:"Tall storage",x:1460,y:2295,w:300,h:250,rotation:0,locked:false,z:0,height:1800},
   {id:"rad1",type:"radiator",name:"Towel radiator",x:2180,y:1900,w:100,h:520,rotation:0,locked:false,z:650,height:1200},
   {id:"n1",type:"niche",name:"Large shampoo niche",x:120,y:1680,w:380,h:70,rotation:0,locked:false,z:950,height:450},
@@ -758,6 +780,7 @@ const starter={
    mounting:"wall",
    finish:"Antique Oak Woodgrain",
    style:"vanity2drawer",
+   render3d:{profile:"auto",finish:"auto"},
    width:805,
    depth:460,
    height:539,
@@ -810,8 +833,7 @@ state.ui=state.ui||{};
 if(!state.ui.measureMode) state.ui.measureMode="selected";
 if(state.ui.snap==null) state.ui.snap=true;
 if(!state.ui.planLayer) state.ui.planLayer="layout";
-if(!["black","silver"].includes(state.ui.showerHardwareFinish)) state.ui.showerHardwareFinish="black";
-state.schemaVersion=3;
+state.schemaVersion=4;
 if(!state.projectId) state.projectId="project-"+Date.now().toString(36);
 if(!state.createdAt) state.createdAt=new Date().toISOString();
 if(!state.updatedAt) state.updatedAt=new Date().toISOString();
@@ -824,6 +846,12 @@ if(!Array.isArray(state.products))state.products=[];
 if(!state.products.some(p=>p.id==="prod-lille-800")){
  state.products.unshift(clone(starter.products[0]));
 }
+function ensureProduct3D(p){
+ if(!p||typeof p!=="object")return p;
+ p.render3d={profile:"auto",finish:"auto",...(p.render3d||{})};
+ return p;
+}
+state.products.forEach(ensureProduct3D);
 if(!Array.isArray(state.tileProducts)) state.tileProducts=[];
 (starter.tileProducts||[]).forEach(t=>{ const existing=state.tileProducts.find(x=>x.id===t.id); if(existing){ if(existing.builtIn!==false) Object.assign(existing, clone(t), {image: existing.image || t.image}); } else state.tileProducts.push(clone(t)); });
 if(!Array.isArray(state.surfaceZones)) state.surfaceZones=[];
@@ -837,57 +865,24 @@ if(!state.migrations.showerFixturesToItemsV21){
  const controls=oldFixtures.find(f=>f.type==="controls");
  if(rain&&!state.items.some(i=>i.id==="rainHead1"||i.type==="rainHead")){
   const projection=Math.max(120,Number(rain.projection)||320),diameter=300,along=Number(rain.along)||2140;
-  state.items.push({id:"rainHead1",type:"rainHead",name:rain.name||"Rain shower head",x:0,y:Math.max(0,along-diameter/2),w:projection,h:diameter,rotation:0,locked:false,z:Math.max(0,(Number(rain.height)||2080)-135),height:180});
+  state.items.push({id:"rainHead1",type:"rainHead",name:rain.name||"Rain shower head",x:0,y:Math.max(0,along-diameter/2),w:projection,h:diameter,rotation:0,locked:false,z:Math.max(0,(Number(rain.height)||2080)-135),height:180,finish:"matt-black"});
  }
  if(hand&&!state.items.some(i=>i.id==="handset1"||i.type==="handset")){
   const along=Number(hand.along)||2320;
-  state.items.push({id:"handset1",type:"handset",name:hand.name||"Hand shower",x:0,y:Math.max(0,along-45),w:90,h:90,rotation:0,locked:false,z:Math.max(0,Number(hand.bottom)||1050),height:Math.max(180,Number(hand.height)||720)});
+  state.items.push({id:"handset1",type:"handset",name:hand.name||"Hand shower",x:0,y:Math.max(0,along-45),w:90,h:90,rotation:0,locked:false,z:Math.max(0,Number(hand.bottom)||1050),height:Math.max(180,Number(hand.height)||720),finish:"matt-black"});
  }
  if(controls&&!state.items.some(i=>i.id==="showerControls1"||i.type==="showerControls")){
   const stud=state.items.find(i=>i.id===(controls.hostItemId||"stud1"))||state.items.find(i=>i.type==="stud");
   const cx=Number(controls.along)||620,sy=stud?Number(stud.y)+Number(stud.h||100):1700;
-  state.items.push({id:"showerControls1",type:"showerControls",name:controls.name||"Shower controls",x:Math.max(0,cx-75),y:sy-20,w:150,h:40,rotation:0,locked:false,z:Math.max(0,Number(controls.bottom)||950),height:200});
+  state.items.push({id:"showerControls1",type:"showerControls",name:controls.name||"Shower controls",x:Math.max(0,cx-75),y:sy-20,w:150,h:40,rotation:0,locked:false,z:Math.max(0,Number(controls.bottom)||950),height:200,finish:"matt-black"});
  }
  state.wallFixtures=[];
  state.migrations.showerFixturesToItemsV21=true;
 }
 state.wallFixtures=[];
 
-// V2.2 representative geometry and detached glass migration. Existing stud/shower
-// glass was renderer-generated, so there is no hidden glass object to delete.
-if(!state.migrations.representativeGeometryV22){
- state.products.forEach(p=>{
-  const sku=String(p.sku||"").toUpperCase(),name=String(p.name||"").toLowerCase();
-  if(sku==="GAB1500" || (name.includes("gable")&&name.includes("1500")&&p.type==="bath")){
-   p.style="backToWallDShapeBath";
-   p.geometry3d={
-    ...(p.geometry3d||{}),family:"bath",shape:"backToWallD",rearEdge:"flat",frontProfile:"softD",
-    innerTopLengthMm:Number(p.geometry3d?.innerTopLengthMm)||1220,innerTopWidthMm:Number(p.geometry3d?.innerTopWidthMm)||590,
-    innerBaseLengthMm:Number(p.baseInternalLengthMm||p.geometry3d?.innerBaseLengthMm)||920,innerBaseWidthMm:Number(p.baseInternalWidthMm||p.geometry3d?.innerBaseWidthMm)||450,
-    innerDepthMm:Number(p.internalHeightMm||p.bathDepth||p.geometry3d?.innerDepthMm)||450,rearDeckDepthMm:Number(p.geometry3d?.rearDeckDepthMm)||70,
-    frontCornerRadiusMm:Number(p.geometry3d?.frontCornerRadiusMm)||175,baseOuterLengthMm:Number(p.geometry3d?.baseOuterLengthMm)||1220,
-    baseOuterWidthMm:Number(p.geometry3d?.baseOuterWidthMm)||650,rimHeightMm:Number(p.geometry3d?.rimHeightMm)||32
-   };
-  }
- });
- state.items.forEach(i=>{if(["rainHead","handset","showerControls"].includes(i.type)&&!["black","silver"].includes(i.hardwareFinish))i.hardwareFinish=state.ui.showerHardwareFinish||"black";});
- state.migrations.representativeGeometryV22=true;
-}
-
-// V2.2.2 retains the explicit shower tray and fixes wall-object 3D height handling so an entered 0 mm is honoured instead of being replaced by the default height.
-if(!state.migrations.showerTrayV221){
- state.items.forEach(i=>{
-  if(i.type==="shower"){
-   if(!["white","slate","black"].includes(i.trayFinish)) i.trayFinish="slate";
-   if(!i.name || i.name==="Shower" || i.name==="Walk-in shower") i.name="Shower tray";
-   if(!Number(i.height)) i.height=40;
-  }
- });
- state.migrations.showerTrayV221=true;
-}
-
 if(!Array.isArray(state.manualMeasurements)) state.manualMeasurements=[];
-const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],mirror:[1150,800],niche:[1000,400],rainHead:[1945,180],handset:[1050,720],showerControls:[950,200],glassPanel:[1100,900],custom:[0,900]};
+const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],mirror:[1150,800],niche:[1000,400],rainHead:[1945,180],handset:[1050,720],showerControls:[950,200],custom:[0,900]};
 function migrateHeights(){
  if(state.version!==VERSION && Number(state.room.ceiling)===2400) state.room.ceiling=2470;
  if(!state.room.window)state.room.window={before:660,width:930,after:690};
@@ -958,9 +953,9 @@ function itemDims(i){return (i.rotation===90||i.rotation===270)?{w:i.h,h:i.w}:{w
 function box(i){const d=itemDims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}}
 const overlap1D=(a1,a2,b1,b2)=>Math.min(a2,b2)-Math.max(a1,b1)>0;
 const collide=(a,b)=>{const A=box(a),B=box(b);return A.x1<B.x2&&A.x2>B.x1&&A.y1<B.y2&&A.y2>B.y1};
-const floorItems=()=>state.items.filter(i=>!["niche","mirror","rainHead","handset","showerControls","glassPanel"].includes(i.type));
+const floorItems=()=>state.items.filter(i=>!["niche","mirror","rainHead","handset","showerControls"].includes(i.type));
 
-function save(){state.version=VERSION;state.schemaVersion=3;state.updatedAt=new Date().toISOString();localStorage.setItem(KEY,JSON.stringify(state))}
+function save(){state.version=VERSION;state.schemaVersion=4;state.updatedAt=new Date().toISOString();localStorage.setItem(KEY,JSON.stringify(state))}
 function checkpoint(){history.push(clone(state));if(history.length>60)history.shift();future=[];updateUndoRedo()}
 function updateUndoRedo(){$("undoBtn").disabled=!history.length;$("redoBtn").disabled=!future.length}
 function undo(){if(!history.length)return;future.push(clone(state));state=history.pop();selected={kind:null,id:null};save();sync();resetView(false);render();updateUndoRedo()}
@@ -1011,12 +1006,13 @@ function drawGrid(){
 }
 
 function doorGeometry(){
- const r=state.room,y1=r.door.before,y2=y1+r.door.width;
- const leaf=Math.max(100,Math.min(Number(r.door.width)||100,Number(r.door.leafWidth)||Math.min((Number(r.door.width)||860)*.92,800)));
- return{y1,y2,leaf,hx:r.width,hy:(r.door.hinge||"bottom")==="top"?y1:y2,hinge:r.door.hinge||"bottom"};
+ const r=state.room,y1=Number(r.door.before)||0,frame=Math.max(100,Number(r.door.width)||100),y2=y1+frame;
+ const leaf=Math.max(100,Math.min(frame,Number(r.door.leafWidth)||Math.min(frame*.92,800)));
+ const inset=Math.max(0,(frame-leaf)/2),hinge=r.door.hinge||"bottom",hy=hinge==="top"?y1+inset:y2-inset;
+ return{y1,y2,frame,leaf,inset,hx:r.width,hy,hinge,closedY:hinge==="top"?hy+leaf:hy-leaf};
 }
 function doorSwingConflict(item){
- if(["niche","mirror","rainHead","handset","showerControls","glassPanel"].includes(item.type))return false;
+ if(["niche","mirror","rainHead","handset","showerControls"].includes(item.type))return false;
  const b=box(item),g=doorGeometry();
  const qx=Math.min(Math.max(g.hx,b.x1),b.x2);
  const qy=Math.min(Math.max(g.hy,b.y1),b.y2);
@@ -1101,19 +1097,18 @@ function drawOpenings(){
  win.addEventListener("pointerdown",openingDown);svg.appendChild(win);
  const g=doorGeometry();
  svg.appendChild(sEl("line",{x1:r.width,y1:g.y1,x2:r.width,y2:g.y2,stroke:"#fffefa","stroke-width":12,"vector-effect":"non-scaling-stroke"}));
- const closedY=g.hinge==="top"?g.hy+g.leaf:g.hy-g.leaf;
- const sweep=g.hinge==="top"?0:1;
- const zone=sEl("path",{d:`M ${g.hx} ${g.hy} L ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY} Z`,class:"doorZone"});
- svg.appendChild(zone);
- const leaf=sEl("line",{x1:g.hx,y1:g.hy,x2:g.hx-g.leaf,y2:g.hy,class:"door","data-opening":"door"});
- leaf.addEventListener("pointerdown",openingDown);svg.appendChild(leaf);
- const arc=sEl("path",{d:`M ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY}`,class:"door","stroke-dasharray":"9 7","data-opening":"door"});
- arc.addEventListener("pointerdown",openingDown);svg.appendChild(arc);
+ const closedY=g.closedY,sweep=g.hinge==="top"?0:1;
+ [g.y1+g.inset,g.y2-g.inset].forEach(y=>svg.appendChild(sEl("line",{x1:g.hx-18,y1:y,x2:g.hx+5,y2:y,stroke:"#8e8f88","stroke-width":2,"vector-effect":"non-scaling-stroke"})));
+ const zone=sEl("path",{d:`M ${g.hx} ${g.hy} L ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY} Z`,class:"doorZone"});svg.appendChild(zone);
+ const ang=Math.max(0,Math.min(120,Number(state.room.door.openAngle)||0))*Math.PI/180,dir=g.hinge==="top"?1:-1;
+ const leafEndX=g.hx-g.leaf*Math.sin(ang),leafEndY=g.hy+dir*g.leaf*Math.cos(ang);
+ const leaf=sEl("line",{x1:g.hx,y1:g.hy,x2:leafEndX,y2:leafEndY,class:"door","data-opening":"door"});leaf.addEventListener("pointerdown",openingDown);svg.appendChild(leaf);
+ const arc=sEl("path",{d:`M ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY}`,class:"door","stroke-dasharray":"9 7","data-opening":"door"});arc.addEventListener("pointerdown",openingDown);svg.appendChild(arc);
 }
 
 
 function drawOrientationMarker(i,d){
- if(i.type==="niche"||i.type==="stud"||i.type==="radiator"||i.type==="mirror"||i.type==="glassPanel")return;
+ if(i.type==="niche"||i.type==="stud"||i.type==="radiator"||i.type==="mirror")return;
  const a=(Number(i.rotation)||0)%360;
  let x1=i.x+d.w/2,y1=i.y+d.h/2,x2=x1,y2=y1;
  const len=Math.min(55,Math.max(26,Math.min(d.w,d.h)*.16));
@@ -1130,7 +1125,6 @@ function drawOrientationMarker(i,d){
 function drawItem(i){
  const d=itemDims(i),b=box(i),status=itemStatusClass(i);
  const rect=sEl("rect",{x:i.x,y:i.y,width:d.w,height:d.h,rx:i.type==="wc"?65:7,class:`fixture ${i.type}${selected.kind==="item"&&selected.id===i.id?" selected":""}${status}`,"data-id":i.id});
- if(i.type==="shower"){const tf=i.trayFinish||"slate";rect.style.fill=tf==="black"?"#525452":tf==="slate"?"#878a86":"#edf4f3";}
  rect.addEventListener("pointerdown",itemDown);svg.appendChild(rect);
 
  if(i.type==="bath")svg.appendChild(sEl("rect",{x:i.x+40,y:i.y+40,width:Math.max(20,d.w-80),height:Math.max(20,d.h-80),rx:95,class:"archLine"}));
@@ -1140,20 +1134,8 @@ function drawItem(i){
  }
  if(i.type==="vanity")svg.appendChild(sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+Math.min(d.h*.22,160),rx:d.w*.27,ry:Math.min(72,d.h*.1),class:"archLine"}));
  if(i.type==="shower"){
+  svg.appendChild(sEl("line",{x1:i.x+d.w-16,y1:i.y+25,x2:i.x+d.w-16,y2:i.y+d.h-25,class:"glass"}));
   svg.appendChild(sEl("circle",{cx:i.x+d.w*.18,cy:i.y+d.h*.72,r:28,class:"archLine"}));
- }
- if(i.type==="glassPanel"){
-  const longX=d.w>=d.h;
-  const line=sEl("line",longX?{x1:i.x+5,y1:i.y+d.h/2,x2:i.x+d.w-5,y2:i.y+d.h/2,class:"glass"}:{x1:i.x+d.w/2,y1:i.y+5,x2:i.x+d.w/2,y2:i.y+d.h-5,class:"glass"});
-  line.setAttribute("data-id",i.id);line.addEventListener("pointerdown",itemDown);svg.appendChild(line);
-  if(i.glassStyle==="fluted"){
-   const count=Math.max(4,Math.min(18,Math.floor((longX?d.w:d.h)/55)));
-   for(let n=1;n<count;n++){
-    const f=n/count;
-    if(longX)svg.appendChild(sEl("line",{x1:i.x+d.w*f,y1:i.y+d.h/2-10,x2:i.x+d.w*f,y2:i.y+d.h/2+10,stroke:"#7fa7ae","stroke-width":"1.5","vector-effect":"non-scaling-stroke","pointer-events":"none"}));
-    else svg.appendChild(sEl("line",{x1:i.x+d.w/2-10,y1:i.y+d.h*f,x2:i.x+d.w/2+10,y2:i.y+d.h*f,stroke:"#7fa7ae","stroke-width":"1.5","vector-effect":"non-scaling-stroke","pointer-events":"none"}));
-   }
-  }
  }
  if(i.type==="radiator"){for(let y=i.y+22;y<i.y+d.h-18;y+=42)svg.appendChild(sEl("line",{x1:i.x+12,y1:y,x2:i.x+d.w-12,y2:y,class:"archLine"}))}
  if(i.type==="rainHead"){
@@ -1409,7 +1391,7 @@ function facingName(rotation){
 
 function openSelectedSheet(){
  const sheet=$("objectSheet");sheet.classList.remove("hidden");
- $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");$("itemHardwareFinishWrap").classList.add("hidden");$("itemTrayFinishWrap").classList.add("hidden");$("itemGlassStyleWrap").classList.add("hidden");
+ $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");$("itemFixtureFinishWrap").classList.add("hidden");$("itemStudGlassStyleWrap").classList.add("hidden");$("itemStudGlassTrimWrap").classList.add("hidden");
  $("itemQuick").classList.add("hidden");$("itemDetails").classList.add("hidden");$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
  if(selected.kind==="item"){
   const i=state.items.find(x=>x.id===selected.id);if(!i)return;
@@ -1419,15 +1401,12 @@ function openSelectedSheet(){
   $("rotateBtn").classList.toggle("hidden",i.type==="mirror");$("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");$("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
   $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;
   $("itemShowerMountWrap").classList.add("hidden");
-  const isHardware=["rainHead","handset","showerControls"].includes(i.type);
-  $("itemHardwareFinishWrap").classList.toggle("hidden",!isHardware);
-  if(isHardware)$("itemHardwareFinish").value=i.hardwareFinish||state.ui.showerHardwareFinish||"black";
-  $("itemTrayFinishWrap").classList.toggle("hidden",i.type!=="shower");
-  if(i.type==="shower")$("itemTrayFinish").value=i.trayFinish||"slate";
-  $("itemGlassStyleWrap").classList.toggle("hidden",i.type!=="glassPanel");
-  if(i.type==="glassPanel")$("itemGlassStyle").value=i.glassStyle||"plain";
-  $("itemMirrorWallWrap").classList.toggle("hidden",i.type!=="mirror");$("itemMirrorAlongWrap").classList.toggle("hidden",i.type!=="mirror");
+  const fixtureTypes=["rainHead","handset","showerControls"];
+  $("itemMirrorWallWrap").classList.toggle("hidden",i.type!=="mirror");$("itemMirrorAlongWrap").classList.toggle("hidden",i.type!=="mirror");$("itemFixtureFinishWrap").classList.toggle("hidden",!fixtureTypes.includes(i.type));
   if(i.type==="mirror"){$("itemMirrorWall").value=i.mountWall||"left";$("itemMirrorAlong").value=Math.round(Number(i.mountAlong)||0)}
+  if(fixtureTypes.includes(i.type)){$("itemFixtureFinish").value=i.finish||"matt-black";}
+  $("itemStudGlassStyleWrap").classList.toggle("hidden",i.type!=="stud");$("itemStudGlassTrimWrap").classList.toggle("hidden",i.type!=="stud");
+  if(i.type==="stud"){$("itemStudGlassStyle").value=i.glassStyle||"fluted";$("itemStudGlassTrim").value=i.glassTrimFinish||"matt-black";}
   const w=warningInfo(i);if(w.length){$("sheetWarning").classList.remove("hidden");$("sheetWarning").textContent=w.join(" ")}
  }else if(selected.kind==="opening"){
   $("detailsToggle").classList.add("hidden");$("openingDetails").classList.remove("hidden");
@@ -1437,6 +1416,7 @@ function openSelectedSheet(){
   }else{
    $("sheetEyebrow").textContent="Opening";$("sheetTitle").textContent="Door";$("doorFields").classList.remove("hidden");$("windowFields").classList.add("hidden");
    $("doorA").value=state.room.door.before;$("doorW").value=state.room.door.width;$("doorLeafW").value=Math.round(state.room.door.leafWidth||state.room.door.width);$("doorB").value=state.room.door.after;$("doorOpenHeight").value=state.room.door.height;$("doorHinge").value=state.room.door.hinge||"bottom";$("doorAngle").value=state.room.door.openAngle??26;
+   const dg=doorGeometry();if($("doorFrameAllowanceSheet"))$("doorFrameAllowanceSheet").textContent=`Calculated frame/trim allowance: ${dg.inset.toFixed(1)} mm each side · hinge inset ${dg.inset.toFixed(1)} mm from the framed opening.`;
   }
  }else if(selected.kind==="service"){
   const s=state.services.find(x=>x.id===selected.id);if(!s)return;
@@ -1449,28 +1429,21 @@ function closeObjectSheet(){$("objectSheet").classList.add("hidden");$("itemDeta
 
 function addItem(type){
  const p={
-  bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower tray",1200,800],
+  bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower",1400,800],
   stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],mirror:["Mirror",800,40],niche:["Niche",400,70],
-  rainHead:["Rain shower head",320,300],handset:["Hand shower",90,90],showerControls:["Shower controls",150,40],glassPanel:["Glass panel",900,12],custom:["Custom object",400,400]
+  rainHead:["Rain shower head",320,300],handset:["Hand shower",90,90],showerControls:["Shower controls",150,40],custom:["Custom object",400,400]
  }[type];
  checkpoint();const hd=HEIGHT_DEFAULTS[type]||[0,900];const i={id:type+Date.now(),type,name:p[0],x:250,y:850,w:p[1],h:p[2],rotation:0,locked:false,z:hd[0],height:hd[1]};
+ if(type==="stud"){i.glassStyle="fluted";i.glassTrimFinish="matt-black";}
  if(type==="mirror"){
   i.w=500;i.h=25;i.height=500;i.z=1200;i.mountWall="left";
   const vanity=state.items.find(x=>x.type==="vanity"),vd=vanity?itemDims(vanity):null;
   i.mountAlong=vd?vanity.y+vd.h/2:state.room.depth/2;syncMirrorPlanFromMount(i);
  }
- if(type==="rainHead"){i.x=0;i.y=Math.max(0,state.room.depth-555);i.z=1945;i.height=180}
- if(type==="handset"){i.x=0;i.y=Math.max(0,state.room.depth-270);i.z=1050;i.height=720}
- if(type==="showerControls"){const stud=state.items.find(x=>x.type==="stud");i.x=stud?Math.max(0,stud.x+stud.w*.60):550;i.y=stud?Math.max(0,stud.y+stud.h-20):1700;i.z=950;i.height=200}
- if(type==="shower"){i.trayFinish="slate";i.height=40;i.z=0}
- if(["rainHead","handset","showerControls"].includes(type))i.hardwareFinish=state.ui.showerHardwareFinish||"black";
- if(type==="glassPanel"){i.glassStyle="plain";i.z=1100;i.height=900}
+ if(type==="rainHead"){i.x=0;i.y=Math.max(0,state.room.depth-555);i.z=1945;i.height=180;i.finish="matt-black"}
+ if(type==="handset"){i.x=0;i.y=Math.max(0,state.room.depth-270);i.z=1050;i.height=720;i.finish="matt-black"}
+ if(type==="showerControls"){const stud=state.items.find(x=>x.type==="stud");i.x=stud?Math.max(0,stud.x+stud.w*.60):550;i.y=stud?Math.max(0,stud.y+stud.h-20):1700;i.z=950;i.height=200;i.finish="matt-black"}
  state.items.push(i);selected={kind:"item",id:i.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
-}
-function addGlassPanel(style){
- addItem("glassPanel");
- const i=state.items.find(x=>x.id===selected.id);if(!i)return;
- i.name=style==="fluted"?"Fluted glass panel":"Plain glass panel";i.glassStyle=style==="fluted"?"fluted":"plain";save();render();openSelectedSheet();
 }
 function addService(type){
  const names={hot:"Hot entry",cold:"Cold entry",waste:"Waste outlet",soil:"Soil stack",electric:"Electrical point"};
@@ -1489,6 +1462,8 @@ function updateChecks(){
  const r=state.room,ws=r.window.before+r.window.width+r.window.after,ds=r.door.before+r.door.width+r.door.after;
  $("windowCheck").className="check "+(ws===r.width?"ok":"bad");$("windowCheck").textContent=(ws===r.width?"✓ ":"⚠ ")+`Window wall totals ${ws} mm`;
  $("doorCheck").className="check "+(ds===r.depth?"ok":"bad");$("doorCheck").textContent=(ds===r.depth?"✓ ":"⚠ ")+`Door wall totals ${ds} mm`;
+ const dg=doorGeometry(),txt=`Calculated frame/trim allowance: ${dg.inset.toFixed(1)} mm each side · hinge inset ${dg.inset.toFixed(1)} mm from the framed opening.`;
+ if($("doorFrameAllowance"))$("doorFrameAllowance").textContent=txt;if($("doorFrameAllowanceSheet"))$("doorFrameAllowanceSheet").textContent=txt;
 }
 function updateSurveyStatus(){
  const r=state.room,ok=(r.window.before+r.window.width+r.window.after===r.width)&&(r.door.before+r.door.width+r.door.after===r.depth);
@@ -1525,6 +1500,7 @@ function renderProducts(){
     </div>
     <div class="productMeta">${escHtml(p.finish||"")}${p.sku?` · ${escHtml(p.sku)}`:""}</div>
     ${p.builtIn?'<div class="productBadge">Starter product</div>':""}
+    ${p.render3d?.profile&&p.render3d.profile!=="auto"?`<div class="productBadge">3D · ${escHtml(p.render3d.profile)}</div>`:(/^(METCC|GR1208CW|MILF800WHAOBB|51120|ARZIM10MB)$/i.test(p.sku||"")?'<div class="productBadge">3D · product matched</div>':"")}
     <div class="productActions">
       <button data-place="${escHtml(p.id)}" class="primary">Add to plan</button>
       <button data-edit-product="${escHtml(p.id)}">Edit</button>
@@ -1543,33 +1519,13 @@ function openProductEditor(id=null){
  $("productSheetTitle").textContent=p?"Edit product":"Add product";
  $("prodName").value=p?.name||"";$("prodBrand").value=p?.brand||"";$("prodSupplier").value=p?.supplier||"";
  $("prodSku").value=p?.sku||"";$("prodType").value=p?.type||"vanity";$("prodMount").value=p?.mounting||"floor";
- $("prodFinish").value=p?.finish||"";$("prodStyle").value=p?.style||"box";$("prodWidth").value=p?.width||"";
+ $("prodFinish").value=p?.finish||"";$("prodStyle").value=p?.style||"box";$("prodProfile").value=p?.render3d?.profile||"auto";$("prodRenderFinish").value=p?.render3d?.finish||"auto";$("prodWidth").value=p?.width||"";
  $("prodDepth").value=p?.depth||"";$("prodHeight").value=p?.height||"";$("prodZ").value=p?.defaultZ??0;
  $("prodUrl").value=p?.url||"";$("prodNotes").value=p?.notes||"";
- const geo=p?.geometry3d||{};
- $("prodBathInnerTopLength").value=geo.innerTopLengthMm||"";$("prodBathInnerTopWidth").value=geo.innerTopWidthMm||"";
- $("prodBathInnerBaseLength").value=geo.innerBaseLengthMm||p?.baseInternalLengthMm||"";$("prodBathInnerBaseWidth").value=geo.innerBaseWidthMm||p?.baseInternalWidthMm||"";
- $("prodBathInnerDepth").value=geo.innerDepthMm||p?.internalHeightMm||p?.bathDepth||"";$("prodBathRearDeck").value=geo.rearDeckDepthMm||"";
- $("prodBathCornerRadius").value=geo.frontCornerRadiusMm||"";$("prodBathBaseOuterLength").value=geo.baseOuterLengthMm||"";$("prodBathBaseOuterWidth").value=geo.baseOuterWidthMm||"";
- updateBathGeometryEditor();
  const preview=$("productPhotoPreview"),prompt=$("productPhotoPrompt");
  if(p?.image){preview.src=p.image;preview.classList.remove("hidden");prompt.classList.add("hidden")}else{preview.removeAttribute("src");preview.classList.add("hidden");prompt.classList.remove("hidden")}
  $("deleteProductBtn").classList.toggle("hidden",!p||p.builtIn);
  $("productSheet").classList.remove("hidden");
-}
-function updateBathGeometryEditor(){
- const show=$("prodType").value==="bath" && $("prodStyle").value==="backToWallDShapeBath";
- $("prodBathGeometryWrap").classList.toggle("hidden",!show);
-}
-function bathGeometryFromEditor(old){
- const n=id=>{const v=Number($(id).value);return Number.isFinite(v)&&v>0?v:null};
- const existing=old?.geometry3d||{};
- return {
-  ...existing,family:"bath",shape:"backToWallD",rearEdge:"flat",frontProfile:"softD",
-  innerTopLengthMm:n("prodBathInnerTopLength"),innerTopWidthMm:n("prodBathInnerTopWidth"),innerBaseLengthMm:n("prodBathInnerBaseLength"),innerBaseWidthMm:n("prodBathInnerBaseWidth"),
-  innerDepthMm:n("prodBathInnerDepth"),rearDeckDepthMm:n("prodBathRearDeck"),frontCornerRadiusMm:n("prodBathCornerRadius"),baseOuterLengthMm:n("prodBathBaseOuterLength"),baseOuterWidthMm:n("prodBathBaseOuterWidth"),
-  rimHeightMm:Number(existing.rimHeightMm)||32
- };
 }
 function closeProductEditor(){$("productSheet").classList.add("hidden");editingProductId=null;pendingProductImage=null}
 async function compressProductImage(file){
@@ -1593,13 +1549,12 @@ function saveProduct(){
   name:$("prodName").value.trim()||"Untitled product",
   brand:$("prodBrand").value.trim(),supplier:$("prodSupplier").value.trim(),sku:$("prodSku").value.trim(),
   type:$("prodType").value,mounting:$("prodMount").value,finish:$("prodFinish").value.trim(),style:$("prodStyle").value,
+  render3d:{profile:$("prodProfile").value||"auto",finish:$("prodRenderFinish").value||"auto"},
   width:Math.max(1,Number($("prodWidth").value)||1),depth:Math.max(1,Number($("prodDepth").value)||1),
   height:Math.max(1,Number($("prodHeight").value)||1),defaultZ:Math.max(0,Number($("prodZ").value)||0),
   url:$("prodUrl").value.trim(),notes:$("prodNotes").value.trim(),
   image:pendingProductImage||old?.image||"",builtIn:old?.builtIn||false
  };
- if(p.type==="bath"&&p.style==="backToWallDShapeBath")p.geometry3d=bathGeometryFromEditor(old);
- else if(old?.geometry3d)p.geometry3d=old.geometry3d;
  checkpoint();
  if(old){Object.assign(old,p)}else state.products.push(p);
  save();renderProducts();closeProductEditor();
@@ -1627,7 +1582,7 @@ async function importProductFile(file){
  try{
   const data=JSON.parse(await file.text()),p=data.product||data;
   if(!p.name||!p.width||!p.depth||!p.height)throw Error("Product JSON needs name, width, depth and height.");
-  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;state.products.push(p);save();renderProducts();alert("Product imported.");
+  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;ensureProduct3D(p);state.products.push(p);save();renderProducts();alert("Product imported. V2.3 will use a product-specific 3D profile automatically when the SKU is recognised.");
  }catch(err){alert("Could not import product: "+err.message)}
 }
 $("newProductBtn").onclick=()=>openProductEditor();
@@ -1647,7 +1602,6 @@ $("productPhotoInput").onchange=async e=>{
  e.target.value="";
 };
 $("productImportInput").onchange=async e=>{const f=e.target.files?.[0];if(f)await importProductFile(f);e.target.value=""};
-$("prodType").onchange=updateBathGeometryEditor;$("prodStyle").onchange=updateBathGeometryEditor;
 
 // --- V1.5 3D and wall elevations ---
 const c3=$("threeDCanvas"),ctx3=c3.getContext("2d"),eSvg=$("elevationSvg");
@@ -1908,7 +1862,6 @@ $("clearMeasuresBtn").onclick=()=>{if(!state.manualMeasurements.length)return;ch
 $("focusBtn").onclick=toggleFocus;$("exitFocusBtn").onclick=toggleFocus;
 $("addBtn").onclick=()=>$("addSheet").classList.remove("hidden");$("closeAddSheet").onclick=()=>$("addSheet").classList.add("hidden");
 document.querySelectorAll("[data-add-item]").forEach(b=>b.onclick=()=>addItem(b.dataset.addItem));
-document.querySelectorAll("[data-add-glass]").forEach(b=>b.onclick=()=>addGlassPanel(b.dataset.addGlass));
 document.querySelectorAll("[data-add-service]").forEach(b=>b.onclick=()=>addService(b.dataset.addService));
 $("closeObjectSheet").onclick=closeObjectSheet;
 $("detailsToggle").onclick=()=>{const d=$("itemDetails");d.classList.toggle("hidden");$("detailsToggle").textContent=d.classList.contains("hidden")?"Show exact details":"Hide exact details"};
@@ -1935,13 +1888,9 @@ $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)
 $("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.locked=false;if(c.type==="mirror"){c.mountAlong=(Number(c.mountAlong)||0)+80;syncMirrorPlanFromMount(c)}else{c.x+=50;c.y+=50}state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
 
-["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMirrorWall","itemMirrorAlong","itemHardwareFinish","itemTrayFinish","itemGlassStyle"].forEach(id=>$(id).onchange=()=>{
+["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMirrorWall","itemMirrorAlong","itemFixtureFinish","itemStudGlassStyle","itemStudGlassTrim"].forEach(id=>$(id).onchange=()=>{
  const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();
- i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(4,Number($("itemH").value)||10);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);
- if(["rainHead","handset","showerControls"].includes(i.type))i.hardwareFinish=$("itemHardwareFinish").value||state.ui.showerHardwareFinish||"black";
- if(i.type==="shower")i.trayFinish=$("itemTrayFinish").value||"slate";
- if(i.type==="glassPanel")i.glassStyle=$("itemGlassStyle").value||"plain";
- if(i.type==="mirror"){i.mountWall=$("itemMirrorWall").value||"left";i.mountAlong=Math.max(0,Number($("itemMirrorAlong").value)||0);syncMirrorPlanFromMount(i)}
+ i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(10,Number($("itemH").value)||10);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);if(i.type==="mirror"){i.mountWall=$("itemMirrorWall").value||"left";i.mountAlong=Math.max(0,Number($("itemMirrorAlong").value)||0);syncMirrorPlanFromMount(i)} if(["rainHead","handset","showerControls"].includes(i.type)){i.finish=$("itemFixtureFinish").value||"matt-black";} if(i.type==="stud"){i.glassStyle=$("itemStudGlassStyle").value||"fluted";i.glassTrimFinish=$("itemStudGlassTrim").value||"matt-black";}
  save();render();openSelectedSheet();
 });
 ["openA","openW","openB","openSill","openHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);save();sync();render();openSelectedSheet()});
@@ -1949,13 +1898,6 @@ $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!
 ["serviceName","serviceType","serviceX","serviceY","serviceZ"].forEach(id=>$(id).onchange=()=>{
  const s=state.services.find(x=>x.id===selected.id);if(!s)return;checkpoint();s.name=$("serviceName").value.trim()||s.name;s.type=$("serviceType").value;s.x=Number($("serviceX").value)||0;s.y=Number($("serviceY").value)||0;s.z=Math.max(0,Number($("serviceZ").value)||0);save();render();openSelectedSheet();
 });
-
-$("showerFinishSelect").value=state.ui.showerHardwareFinish||"black";
-$("showerFinishSelect").onchange=e=>{
- checkpoint();state.ui.showerHardwareFinish=e.target.value==="silver"?"silver":"black";
- state.items.forEach(i=>{if(["rainHead","handset","showerControls"].includes(i.type))i.hardwareFinish=state.ui.showerHardwareFinish});
- save();render();
-};
 
 const numPaths={
  roomWidth:["room","width"],roomDepth:["room","depth"],ceilingHeight:["room","ceiling"],tolerance:["room","tolerance"],

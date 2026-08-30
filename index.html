@@ -148,7 +148,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.3.0 · immersive product 3D</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.3.1 · shower finish + fluting fix</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -461,6 +461,11 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
           <option value="opposite">Wall opposite window</option>
         </select></label>
         <label id="itemMirrorAlongWrap" class="hidden">Position along wall (mm)<input id="itemMirrorAlong" type="number"></label>
+        <label id="itemFixtureFinishWrap" class="hidden">Finish<select id="itemFixtureFinish">
+          <option value="matt-black">Matt black</option>
+          <option value="chrome">Silver / chrome</option>
+          <option value="brushed-brass">Brushed brass</option>
+        </select></label>
       </div>
     </div>
 
@@ -729,7 +734,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.3.0", KEY="bathroomPlannerStable";
+const VERSION="2.3.1", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -850,16 +855,16 @@ if(!state.migrations.showerFixturesToItemsV21){
  const controls=oldFixtures.find(f=>f.type==="controls");
  if(rain&&!state.items.some(i=>i.id==="rainHead1"||i.type==="rainHead")){
   const projection=Math.max(120,Number(rain.projection)||320),diameter=300,along=Number(rain.along)||2140;
-  state.items.push({id:"rainHead1",type:"rainHead",name:rain.name||"Rain shower head",x:0,y:Math.max(0,along-diameter/2),w:projection,h:diameter,rotation:0,locked:false,z:Math.max(0,(Number(rain.height)||2080)-135),height:180});
+  state.items.push({id:"rainHead1",type:"rainHead",name:rain.name||"Rain shower head",x:0,y:Math.max(0,along-diameter/2),w:projection,h:diameter,rotation:0,locked:false,z:Math.max(0,(Number(rain.height)||2080)-135),height:180,finish:"matt-black"});
  }
  if(hand&&!state.items.some(i=>i.id==="handset1"||i.type==="handset")){
   const along=Number(hand.along)||2320;
-  state.items.push({id:"handset1",type:"handset",name:hand.name||"Hand shower",x:0,y:Math.max(0,along-45),w:90,h:90,rotation:0,locked:false,z:Math.max(0,Number(hand.bottom)||1050),height:Math.max(180,Number(hand.height)||720)});
+  state.items.push({id:"handset1",type:"handset",name:hand.name||"Hand shower",x:0,y:Math.max(0,along-45),w:90,h:90,rotation:0,locked:false,z:Math.max(0,Number(hand.bottom)||1050),height:Math.max(180,Number(hand.height)||720),finish:"matt-black"});
  }
  if(controls&&!state.items.some(i=>i.id==="showerControls1"||i.type==="showerControls")){
   const stud=state.items.find(i=>i.id===(controls.hostItemId||"stud1"))||state.items.find(i=>i.type==="stud");
   const cx=Number(controls.along)||620,sy=stud?Number(stud.y)+Number(stud.h||100):1700;
-  state.items.push({id:"showerControls1",type:"showerControls",name:controls.name||"Shower controls",x:Math.max(0,cx-75),y:sy-20,w:150,h:40,rotation:0,locked:false,z:Math.max(0,Number(controls.bottom)||950),height:200});
+  state.items.push({id:"showerControls1",type:"showerControls",name:controls.name||"Shower controls",x:Math.max(0,cx-75),y:sy-20,w:150,h:40,rotation:0,locked:false,z:Math.max(0,Number(controls.bottom)||950),height:200,finish:"matt-black"});
  }
  state.wallFixtures=[];
  state.migrations.showerFixturesToItemsV21=true;
@@ -1376,7 +1381,7 @@ function facingName(rotation){
 
 function openSelectedSheet(){
  const sheet=$("objectSheet");sheet.classList.remove("hidden");
- $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");
+ $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");$("itemFixtureFinishWrap").classList.add("hidden");
  $("itemQuick").classList.add("hidden");$("itemDetails").classList.add("hidden");$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
  if(selected.kind==="item"){
   const i=state.items.find(x=>x.id===selected.id);if(!i)return;
@@ -1386,8 +1391,10 @@ function openSelectedSheet(){
   $("rotateBtn").classList.toggle("hidden",i.type==="mirror");$("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");$("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
   $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;
   $("itemShowerMountWrap").classList.add("hidden");
-  $("itemMirrorWallWrap").classList.toggle("hidden",i.type!=="mirror");$("itemMirrorAlongWrap").classList.toggle("hidden",i.type!=="mirror");
+  const fixtureTypes=["rainHead","handset","showerControls"];
+  $("itemMirrorWallWrap").classList.toggle("hidden",i.type!=="mirror");$("itemMirrorAlongWrap").classList.toggle("hidden",i.type!=="mirror");$("itemFixtureFinishWrap").classList.toggle("hidden",!fixtureTypes.includes(i.type));
   if(i.type==="mirror"){$("itemMirrorWall").value=i.mountWall||"left";$("itemMirrorAlong").value=Math.round(Number(i.mountAlong)||0)}
+  if(fixtureTypes.includes(i.type)){$("itemFixtureFinish").value=i.finish||"matt-black";}
   const w=warningInfo(i);if(w.length){$("sheetWarning").classList.remove("hidden");$("sheetWarning").textContent=w.join(" ")}
  }else if(selected.kind==="opening"){
   $("detailsToggle").classList.add("hidden");$("openingDetails").classList.remove("hidden");
@@ -1420,9 +1427,9 @@ function addItem(type){
   const vanity=state.items.find(x=>x.type==="vanity"),vd=vanity?itemDims(vanity):null;
   i.mountAlong=vd?vanity.y+vd.h/2:state.room.depth/2;syncMirrorPlanFromMount(i);
  }
- if(type==="rainHead"){i.x=0;i.y=Math.max(0,state.room.depth-555);i.z=1945;i.height=180}
- if(type==="handset"){i.x=0;i.y=Math.max(0,state.room.depth-270);i.z=1050;i.height=720}
- if(type==="showerControls"){const stud=state.items.find(x=>x.type==="stud");i.x=stud?Math.max(0,stud.x+stud.w*.60):550;i.y=stud?Math.max(0,stud.y+stud.h-20):1700;i.z=950;i.height=200}
+ if(type==="rainHead"){i.x=0;i.y=Math.max(0,state.room.depth-555);i.z=1945;i.height=180;i.finish="matt-black"}
+ if(type==="handset"){i.x=0;i.y=Math.max(0,state.room.depth-270);i.z=1050;i.height=720;i.finish="matt-black"}
+ if(type==="showerControls"){const stud=state.items.find(x=>x.type==="stud");i.x=stud?Math.max(0,stud.x+stud.w*.60):550;i.y=stud?Math.max(0,stud.y+stud.h-20):1700;i.z=950;i.height=200;i.finish="matt-black"}
  state.items.push(i);selected={kind:"item",id:i.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
 }
 function addService(type){
@@ -1868,9 +1875,9 @@ $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)
 $("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.locked=false;if(c.type==="mirror"){c.mountAlong=(Number(c.mountAlong)||0)+80;syncMirrorPlanFromMount(c)}else{c.x+=50;c.y+=50}state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
 
-["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMirrorWall","itemMirrorAlong"].forEach(id=>$(id).onchange=()=>{
+["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMirrorWall","itemMirrorAlong","itemFixtureFinish"].forEach(id=>$(id).onchange=()=>{
  const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();
- i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(10,Number($("itemH").value)||10);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);if(i.type==="mirror"){i.mountWall=$("itemMirrorWall").value||"left";i.mountAlong=Math.max(0,Number($("itemMirrorAlong").value)||0);syncMirrorPlanFromMount(i)}
+ i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(10,Number($("itemH").value)||10);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);if(i.type==="mirror"){i.mountWall=$("itemMirrorWall").value||"left";i.mountAlong=Math.max(0,Number($("itemMirrorAlong").value)||0);syncMirrorPlanFromMount(i)} if(["rainHead","handset","showerControls"].includes(i.type)){i.finish=$("itemFixtureFinish").value||"matt-black";}
  save();render();openSelectedSheet();
 });
 ["openA","openW","openB","openSill","openHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);save();sync();render();openSelectedSheet()});

@@ -1,4 +1,4 @@
-# Bathroom Planner V2.3.0
+# Bathroom Planner V2.3.1
 
 Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` project data is migrated in place.
 
@@ -10,3 +10,6 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Walkthrough mode in 3D: eye-level view, drag to look, on-screen phone arrows and WASD/arrow-key desktop movement.
 - Product editor now includes a 3D fidelity profile and finish override. Automatic recognises the known SKUs.
 - Existing 3D move, Under floor, joists, floor build-up, surfaces and `.bathplan` portability remain.
+
+- Restored finish selector for independent shower fittings (matt black / silver-chrome / brushed brass).
+- Strengthened Milan vanity fluting so the fluted front reads clearly again in 3D.

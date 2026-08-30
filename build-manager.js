@@ -110,7 +110,7 @@
 
   function safeName(v){return String(v||"Bathroom-Project").trim().replace(/[^a-z0-9-_]+/gi,"-").replace(/^-+|-+$/g,"")||"Bathroom-Project"}
   function download(name,contents,type="application/json"){const blob=new Blob([contents],{type}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),800)}
-  function exportBathplan(){const s=clone(state());s.version=api.version||s.version;s.schemaVersion=3;s.updatedAt=new Date().toISOString();const pack={bathplanFormat:1,appVersion:api.version||"2.1.0",exportedAt:new Date().toISOString(),assetsEmbedded:true,project:s};download(`${safeName(s.project?.name)}-${new Date().toISOString().slice(0,10)}.bathplan`,JSON.stringify(pack));}
+  function exportBathplan(){const s=clone(state());s.version=api.version||s.version;s.schemaVersion=3;s.updatedAt=new Date().toISOString();const pack={bathplanFormat:1,appVersion:api.version||"2.2.0",exportedAt:new Date().toISOString(),assetsEmbedded:true,project:s};download(`${safeName(s.project?.name)}-${new Date().toISOString().slice(0,10)}.bathplan`,JSON.stringify(pack));}
   async function importBathplan(file){
     try{
       const parsed=JSON.parse(await file.text()),incoming=parsed?.project||parsed;

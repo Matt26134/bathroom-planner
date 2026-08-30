@@ -71,6 +71,10 @@ if (!api || !legacy) {
     wallSide: new THREE.MeshStandardMaterial({ color: 0xe1ddd3, roughness: 0.94 }),
     ceramic: new THREE.MeshStandardMaterial({ color: 0xf6f5f1, roughness: 0.28 }),
     ceramicInner: new THREE.MeshStandardMaterial({ color: 0xdcdedb, roughness: 0.48 }),
+    traySlate: new THREE.MeshStandardMaterial({ color: 0x777b77, roughness: 0.92, metalness: 0 }),
+    traySlateInner: new THREE.MeshStandardMaterial({ color: 0x686c68, roughness: 0.96, metalness: 0 }),
+    trayBlack: new THREE.MeshStandardMaterial({ color: 0x343634, roughness: 0.94, metalness: 0 }),
+    trayBlackInner: new THREE.MeshStandardMaterial({ color: 0x292b29, roughness: 0.97, metalness: 0 }),
     oak: new THREE.MeshStandardMaterial({ color: 0xa7835e, roughness: 0.78 }),
     oakDark: new THREE.MeshStandardMaterial({ color: 0x866845, roughness: 0.82 }),
     timber: new THREE.MeshStandardMaterial({ color: 0xb39875, roughness: 0.8 }),
@@ -135,6 +139,25 @@ if (!api || !legacy) {
     if (axis === "z") m.rotation.x = Math.PI / 2;
     m.castShadow = true;
     return m;
+  }
+
+  function roundedRectShape(w,d,r){
+    const hw=Math.max(.02,w)/2,hd=Math.max(.02,d)/2,rr=Math.max(.002,Math.min(r,hw-.002,hd-.002));
+    const sh=new THREE.Shape();
+    sh.moveTo(-hw+rr,-hd);
+    sh.lineTo(hw-rr,-hd);sh.quadraticCurveTo(hw,-hd,hw,-hd+rr);
+    sh.lineTo(hw,hd-rr);sh.quadraticCurveTo(hw,hd,hw-rr,hd);
+    sh.lineTo(-hw+rr,hd);sh.quadraticCurveTo(-hw,hd,-hw,hd-rr);
+    sh.lineTo(-hw,-hd+rr);sh.quadraticCurveTo(-hw,-hd,-hw+rr,-hd);
+    return sh;
+  }
+
+  function roundedSlab(w,d,h,r,material,y=0,bevel=true){
+    const sh=roundedRectShape(w,d,r);
+    const b=Math.min(.008,Math.max(.001,h*.18));
+    const geo=new THREE.ExtrudeGeometry(sh,{depth:Math.max(.002,h),steps:1,curveSegments:16,bevelEnabled:bevel,bevelSegments:2,bevelSize:bevel?b:0,bevelThickness:bevel?b*.65:0});
+    geo.rotateX(-Math.PI/2);
+    const m=new THREE.Mesh(geo,material);m.position.y=y;m.castShadow=true;m.receiveShadow=true;return m;
   }
 
   function hardwareMaterial(i){
@@ -634,10 +657,29 @@ if (!api || !legacy) {
 
   function buildShower(i,s) {
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=Math.max(.025,mm(i.height||40)),z=mm(i.z||0);
-    // Tray only. Glass is now a completely separate object that can be plain or fluted.
-    g.add(meshBox(w,h,d,mats.ceramic,0,z+h/2,0));
-    const inset=meshBox(Math.max(.10,w-.07),.008,Math.max(.10,d-.07),mats.ceramicInner,0,z+h+.004,0,false);g.add(inset);
-    const drain=cylinder(.032,.008,mats.metal,"y",28);drain.position.set(-w*.28,z+h+.012,d*.27);g.add(drain);
+    // Explicit low-profile shower tray. Glass remains a completely separate object.
+    const finish=String(i.trayFinish||"slate").toLowerCase();
+    const bodyMat=finish==="black"?mats.trayBlack:finish==="white"?mats.ceramic:mats.traySlate;
+    const topMat=finish==="black"?mats.trayBlackInner:finish==="white"?mats.ceramicInner:mats.traySlateInner;
+    const radius=Math.min(.035,Math.min(w,d)*.045);
+    const body=roundedSlab(w,d,h,radius,bodyMat,z,true);g.add(body);
+
+    // Slightly recessed anti-slip deck: enough visual depth to read as a tray rather than a floor tile.
+    const iw=Math.max(.12,w-.055),id=Math.max(.12,d-.055);
+    const deck=roundedSlab(iw,id,.004,Math.max(.010,radius*.65),topMat,z+h+.001,false);g.add(deck);
+
+    // Subtle fall lines towards the outlet on slate finishes.
+    if(finish!=="white"){
+      const grooveMat=new THREE.MeshStandardMaterial({color:finish==="black"?0x444744:0x858985,roughness:1});
+      const gy=z+h+.008;
+      for(let q=-2;q<=2;q++){
+        const line=meshBox(Math.max(.12,iw*.72),.0015,.002,grooveMat,0,gy,q*id*.11,false);g.add(line);
+      }
+    }
+
+    // Round waste set in from the front-left quadrant; editable dimensions/rotation move it with the tray.
+    const drain=cylinder(.033,.007,mats.metal,"y",32);drain.position.set(-w*.28,z+h+.012,d*.27);g.add(drain);
+    const drainInner=cylinder(.020,.008,mats.dark,"y",28);drainInner.position.set(-w*.28,z+h+.016,d*.27);g.add(drainInner);
     return setItemId(g,i.id);
   }
 
@@ -649,7 +691,7 @@ if (!api || !legacy) {
   }
 
   function buildGlassPanel(i,s){
-    const g=groupForItem(i),w=mm(i.w||900),d=Math.max(.006,mm(i.h||12)),h=mm(i.height||900),z=mm(i.z||1100);
+    const g=groupForItem(i),w=mm(i.w||900),d=Math.max(.006,mm(i.h||12)),h=mm(i.height||900),z=mm(i.z ?? 1100);
     const fluted=(i.glassStyle||"plain")==="fluted";
     const base=meshBox(w,h,d,fluted?mats.glassFluted:mats.glass,0,z+h/2,0,false);base.renderOrder=3;g.add(base);
     if(fluted){
@@ -662,7 +704,7 @@ if (!api || !legacy) {
   }
 
   function buildRainHead(i) {
-    const g=groupForItem(i),w=mm(i.w||320),d=mm(i.h||300),z=mm(i.z||1945),h=mm(i.height||180),hw=hardwareMaterial(i);
+    const g=groupForItem(i),w=mm(i.w||320),d=mm(i.h||300),z=mm(i.z ?? 1945),h=mm(i.height||180),hw=hardwareMaterial(i);
     const y=z+h*.78,baseX=-w/2+.018;
     const rose=cylinder(.014,.045,hw,"x",20);rose.position.set(baseX+.02,y,0);g.add(rose);
     const armLen=Math.max(.10,w-.055);
@@ -675,7 +717,7 @@ if (!api || !legacy) {
   }
 
   function buildHandset(i) {
-    const g=groupForItem(i),w=mm(i.w||90),d=mm(i.h||90),z=mm(i.z||1050),h=mm(i.height||720),hw=hardwareMaterial(i);
+    const g=groupForItem(i),w=mm(i.w||90),d=mm(i.h||90),z=mm(i.z ?? 1050),h=mm(i.height||720),hw=hardwareMaterial(i);
     const rail=cylinder(.009,Math.max(.18,h),hw,"y",18);rail.position.set(-w*.20,z+h/2,0);g.add(rail);
     const handset=cylinder(.017,Math.min(.22,Math.max(.14,h*.26)),hw,"y",18);handset.position.set(w*.18,z+h*.62,0);handset.rotation.z=.34;g.add(handset);
     const outlet=cylinder(.018,.045,hw,"x",18);outlet.position.set(-w*.18,z+.10,0);g.add(outlet);
@@ -684,7 +726,7 @@ if (!api || !legacy) {
   }
 
   function buildShowerControls(i) {
-    const g=groupForItem(i),w=mm(i.w||150),d=mm(i.h||40),z=mm(i.z||950),h=mm(i.height||200),hw=hardwareMaterial(i);
+    const g=groupForItem(i),w=mm(i.w||150),d=mm(i.h||40),z=mm(i.z ?? 950),h=mm(i.height||200),hw=hardwareMaterial(i);
     const faceZ=-d/2+.004;
     const plate=meshBox(Math.max(.10,w),Math.max(.12,h),Math.max(.014,d*.45),hw,0,z+h/2,faceZ,false);g.add(plate);
     const knobLen=Math.max(.025,d*.9);
@@ -743,7 +785,7 @@ if (!api || !legacy) {
 
   function buildNiche(i,s) {
     const g=new THREE.Group();g.userData.itemId=i.id;
-    const z0=mm(i.z||1000),hh=mm(i.height||350);
+    const z0=mm(i.z ?? 1000),hh=mm(i.height||350);
     const d=itemDims(i);
     const stud=(s.items||[]).find(o=>o.type==="stud"&&intersects2D(i,o));
     if(stud){
@@ -770,7 +812,7 @@ if (!api || !legacy) {
 
   function buildMirror(i,s) {
     const faceW=mm(i.w||500),faceH=mm(i.height||500),proj=Math.max(.012,mm(i.h||25));
-    const bottom=mm(i.z||1200),along=mm(i.mountAlong||1185),wall=i.mountWall||"left";
+    const bottom=mm(i.z ?? 1200),along=mm(i.mountAlong||1185),wall=i.mountWall||"left";
     const prod=(s.products||[]).find(p=>p.id===i.productId),style=prod?.style||"mirrorRound";
     const g=new THREE.Group();g.userData.itemId=i.id;
     const W=mm(s.room.width),D=mm(s.room.depth),inset=.014;
@@ -836,7 +878,7 @@ if (!api || !legacy) {
     if(!s) return;
     const sig=JSON.stringify({
       room:s.room,
-      items:s.items,
+      items:s.items.map(i=>({...i,trayFinish:i.trayFinish||null})),
       products:(s.products||[]).map(p=>({id:p.id,finish:p.finish,style:p.style,width:p.width,depth:p.depth,height:p.height,geometry3d:p.geometry3d||null,tapHoleCount:p.tapHoleCount||0})),
       tileProducts:(s.tileProducts||[]).map(t=>({id:t.id,w:t.width,h:t.height,finish:t.finish,dp:t.defaultPattern,imgKey:(t.image||"").length+":"+(t.image||"").slice(0,64),pKey:(t.patternImage||"").length+":"+(t.patternImage||"").slice(0,64)})),
       surfaceZones:(s.surfaceZones||[]).map(z=>({id:z.id,name:z.name,surface:z.surface,full:z.full,x1:z.x1,x2:z.x2,y1:z.y1,y2:z.y2,start:z.start,end:z.end,bottom:z.bottom,top:z.top,tileId:z.tileId,pattern:z.pattern,orientation:z.orientation,enabled:z.enabled,grout:z.grout,groutColor:z.groutColor,waste:z.waste})),

@@ -144,7 +144,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.2.0 · representative 3D + detached glass</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.2.2 · representative 3D + glass height fix</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -434,7 +434,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Name<input id="itemName"></label>
         <label>Type<select id="itemType">
           <option value="bath">Bath</option><option value="wc">WC</option><option value="vanity">Vanity</option>
-          <option value="shower">Shower</option><option value="stud">Stud wall</option><option value="glassPanel">Glass panel</option><option value="storage">Storage</option>
+          <option value="shower">Shower tray</option><option value="stud">Stud wall</option><option value="glassPanel">Glass panel</option><option value="storage">Storage</option>
           <option value="radiator">Radiator</option><option value="mirror">Mirror</option><option value="niche">Niche</option>
           <option value="rainHead">Rain shower head</option><option value="handset">Hand shower</option><option value="showerControls">Shower controls</option><option value="custom">Custom</option>
         </select></label>
@@ -446,6 +446,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Height (mm)<input id="itemHeight" type="number"></label>
         <label id="itemShowerMountWrap" class="hidden">Shower mount side<select id="itemShowerMount"><option value="left">Fixed shower layout</option><option value="right">Fixed shower layout</option></select></label>
         <label id="itemHardwareFinishWrap" class="hidden">Shower metal finish<select id="itemHardwareFinish"><option value="black">Black</option><option value="silver">Silver</option></select></label>
+        <label id="itemTrayFinishWrap" class="hidden">Shower tray finish<select id="itemTrayFinish"><option value="white">White</option><option value="slate">Slate grey</option><option value="black">Black slate</option></select></label>
         <label id="itemGlassStyleWrap" class="hidden">Glass style<select id="itemGlassStyle"><option value="plain">Plain / clear</option><option value="fluted">Fluted / reeded</option></select></label>
         <label id="itemMirrorWallWrap" class="hidden">Mounted wall<select id="itemMirrorWall">
           <option value="left">Vanity wall / opposite door</option>
@@ -702,7 +703,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
     <div class="section">Fixtures & construction</div>
     <div class="addgrid">
       <button data-add-item="bath">Bath</button><button data-add-item="wc">WC</button>
-      <button data-add-item="vanity">Floor vanity</button><button data-add-item="shower">Shower</button>
+      <button data-add-item="vanity">Floor vanity</button><button data-add-item="shower">Shower tray</button>
       <button data-add-item="stud">Stud wall</button><button data-add-glass="plain">Plain glass panel</button><button data-add-glass="fluted">Fluted glass panel</button><button data-add-item="storage">Storage</button>
       <button data-add-item="radiator">Radiator</button><button data-add-item="mirror">Mirror</button><button data-add-item="niche">Niche</button>
       <button data-add-item="rainHead">Rain shower head</button><button data-add-item="handset">Hand shower</button>
@@ -721,7 +722,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.2.0", KEY="bathroomPlannerStable";
+const VERSION="2.2.2", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -739,7 +740,7 @@ const starter={
   {id:"wc1",type:"wc",name:"New WC",x:1830,y:25,w:370,h:640,rotation:0,locked:false,z:0,height:800},
   {id:"vanity1",type:"vanity",name:"Floor-standing vanity",x:0,y:700,w:450,h:970,rotation:0,locked:false,z:0,height:850},
   {id:"stud1",type:"stud",name:"Half-height stud wall",x:0,y:1670,w:900,h:100,rotation:0,locked:false,z:0,height:1100},
-  {id:"shower1",type:"shower",name:"Walk-in shower",x:0,y:1745,w:1400,h:800,rotation:0,locked:false,z:0,height:40,showerMountSide:"right"},
+  {id:"shower1",type:"shower",name:"Shower tray",x:0,y:1745,w:1400,h:800,rotation:0,locked:false,z:0,height:40,trayFinish:"slate"},
   {id:"storage1",type:"storage",name:"Tall storage",x:1460,y:2295,w:300,h:250,rotation:0,locked:false,z:0,height:1800},
   {id:"rad1",type:"radiator",name:"Towel radiator",x:2180,y:1900,w:100,h:520,rotation:0,locked:false,z:650,height:1200},
   {id:"n1",type:"niche",name:"Large shampoo niche",x:120,y:1680,w:380,h:70,rotation:0,locked:false,z:950,height:450},
@@ -871,6 +872,18 @@ if(!state.migrations.representativeGeometryV22){
  });
  state.items.forEach(i=>{if(["rainHead","handset","showerControls"].includes(i.type)&&!["black","silver"].includes(i.hardwareFinish))i.hardwareFinish=state.ui.showerHardwareFinish||"black";});
  state.migrations.representativeGeometryV22=true;
+}
+
+// V2.2.2 retains the explicit shower tray and fixes wall-object 3D height handling so an entered 0 mm is honoured instead of being replaced by the default height.
+if(!state.migrations.showerTrayV221){
+ state.items.forEach(i=>{
+  if(i.type==="shower"){
+   if(!["white","slate","black"].includes(i.trayFinish)) i.trayFinish="slate";
+   if(!i.name || i.name==="Shower" || i.name==="Walk-in shower") i.name="Shower tray";
+   if(!Number(i.height)) i.height=40;
+  }
+ });
+ state.migrations.showerTrayV221=true;
 }
 
 if(!Array.isArray(state.manualMeasurements)) state.manualMeasurements=[];
@@ -1117,6 +1130,7 @@ function drawOrientationMarker(i,d){
 function drawItem(i){
  const d=itemDims(i),b=box(i),status=itemStatusClass(i);
  const rect=sEl("rect",{x:i.x,y:i.y,width:d.w,height:d.h,rx:i.type==="wc"?65:7,class:`fixture ${i.type}${selected.kind==="item"&&selected.id===i.id?" selected":""}${status}`,"data-id":i.id});
+ if(i.type==="shower"){const tf=i.trayFinish||"slate";rect.style.fill=tf==="black"?"#525452":tf==="slate"?"#878a86":"#edf4f3";}
  rect.addEventListener("pointerdown",itemDown);svg.appendChild(rect);
 
  if(i.type==="bath")svg.appendChild(sEl("rect",{x:i.x+40,y:i.y+40,width:Math.max(20,d.w-80),height:Math.max(20,d.h-80),rx:95,class:"archLine"}));
@@ -1395,7 +1409,7 @@ function facingName(rotation){
 
 function openSelectedSheet(){
  const sheet=$("objectSheet");sheet.classList.remove("hidden");
- $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");$("itemHardwareFinishWrap").classList.add("hidden");$("itemGlassStyleWrap").classList.add("hidden");
+ $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");$("itemHardwareFinishWrap").classList.add("hidden");$("itemTrayFinishWrap").classList.add("hidden");$("itemGlassStyleWrap").classList.add("hidden");
  $("itemQuick").classList.add("hidden");$("itemDetails").classList.add("hidden");$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
  if(selected.kind==="item"){
   const i=state.items.find(x=>x.id===selected.id);if(!i)return;
@@ -1408,6 +1422,8 @@ function openSelectedSheet(){
   const isHardware=["rainHead","handset","showerControls"].includes(i.type);
   $("itemHardwareFinishWrap").classList.toggle("hidden",!isHardware);
   if(isHardware)$("itemHardwareFinish").value=i.hardwareFinish||state.ui.showerHardwareFinish||"black";
+  $("itemTrayFinishWrap").classList.toggle("hidden",i.type!=="shower");
+  if(i.type==="shower")$("itemTrayFinish").value=i.trayFinish||"slate";
   $("itemGlassStyleWrap").classList.toggle("hidden",i.type!=="glassPanel");
   if(i.type==="glassPanel")$("itemGlassStyle").value=i.glassStyle||"plain";
   $("itemMirrorWallWrap").classList.toggle("hidden",i.type!=="mirror");$("itemMirrorAlongWrap").classList.toggle("hidden",i.type!=="mirror");
@@ -1433,7 +1449,7 @@ function closeObjectSheet(){$("objectSheet").classList.add("hidden");$("itemDeta
 
 function addItem(type){
  const p={
-  bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower",1400,800],
+  bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower tray",1200,800],
   stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],mirror:["Mirror",800,40],niche:["Niche",400,70],
   rainHead:["Rain shower head",320,300],handset:["Hand shower",90,90],showerControls:["Shower controls",150,40],glassPanel:["Glass panel",900,12],custom:["Custom object",400,400]
  }[type];
@@ -1446,6 +1462,7 @@ function addItem(type){
  if(type==="rainHead"){i.x=0;i.y=Math.max(0,state.room.depth-555);i.z=1945;i.height=180}
  if(type==="handset"){i.x=0;i.y=Math.max(0,state.room.depth-270);i.z=1050;i.height=720}
  if(type==="showerControls"){const stud=state.items.find(x=>x.type==="stud");i.x=stud?Math.max(0,stud.x+stud.w*.60):550;i.y=stud?Math.max(0,stud.y+stud.h-20):1700;i.z=950;i.height=200}
+ if(type==="shower"){i.trayFinish="slate";i.height=40;i.z=0}
  if(["rainHead","handset","showerControls"].includes(type))i.hardwareFinish=state.ui.showerHardwareFinish||"black";
  if(type==="glassPanel"){i.glassStyle="plain";i.z=1100;i.height=900}
  state.items.push(i);selected={kind:"item",id:i.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
@@ -1918,10 +1935,11 @@ $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)
 $("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.locked=false;if(c.type==="mirror"){c.mountAlong=(Number(c.mountAlong)||0)+80;syncMirrorPlanFromMount(c)}else{c.x+=50;c.y+=50}state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
 
-["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMirrorWall","itemMirrorAlong","itemHardwareFinish","itemGlassStyle"].forEach(id=>$(id).onchange=()=>{
+["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMirrorWall","itemMirrorAlong","itemHardwareFinish","itemTrayFinish","itemGlassStyle"].forEach(id=>$(id).onchange=()=>{
  const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();
  i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(4,Number($("itemH").value)||10);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);
  if(["rainHead","handset","showerControls"].includes(i.type))i.hardwareFinish=$("itemHardwareFinish").value||state.ui.showerHardwareFinish||"black";
+ if(i.type==="shower")i.trayFinish=$("itemTrayFinish").value||"slate";
  if(i.type==="glassPanel")i.glassStyle=$("itemGlassStyle").value||"plain";
  if(i.type==="mirror"){i.mountWall=$("itemMirrorWall").value||"left";i.mountAlong=Math.max(0,Number($("itemMirrorAlong").value)||0);syncMirrorPlanFromMount(i)}
  save();render();openSelectedSheet();

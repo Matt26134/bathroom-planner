@@ -40,7 +40,7 @@ svg{width:100%;height:100%;display:block;background:#fffefa;touch-action:none}
 .window{stroke:#789ca4;stroke-width:7;vector-effect:non-scaling-stroke;cursor:pointer}.door{stroke:#686b64;stroke-width:1.8;fill:none;vector-effect:non-scaling-stroke;cursor:pointer}
 .doorZone{fill:rgba(173,135,83,.07);stroke:#c6ad88;stroke-width:1;stroke-dasharray:6 6;vector-effect:non-scaling-stroke;pointer-events:none}
 .fixture{stroke:#5d605a;stroke-width:2;vector-effect:non-scaling-stroke;cursor:grab}.fixture.selected{stroke:#4f7780;stroke-width:3.5}.fixture.overlap{stroke:#a8564c}.fixture.tolerance{stroke:#b5843c}
-.bath{fill:#f3efe8}.wc{fill:#f4f1eb}.vanity{fill:#e2d5c2}.shower{fill:#edf4f3}.stud{fill:#dbd6ca}.storage{fill:#d8c9b6}.radiator{fill:#efe8dd}.niche{fill:#f5eee4}.custom{fill:#eeeae2}
+.bath{fill:#f3efe8}.wc{fill:#f4f1eb}.vanity{fill:#e2d5c2}.shower{fill:#edf4f3}.stud{fill:#dbd6ca}.storage{fill:#d8c9b6}.radiator{fill:#efe8dd}.niche{fill:#f5eee4}.rainHead{fill:#e6eceb}.handset{fill:#e6eceb}.showerControls{fill:#e7e4df}.custom{fill:#eeeae2}
 .archLine{fill:none;stroke:#bbb7af;stroke-width:1.6;vector-effect:non-scaling-stroke}.glass{stroke:#80a2aa;stroke-width:3;vector-effect:non-scaling-stroke}
 .label{font-size:40px;font-weight:850;fill:#2e302c;text-anchor:middle;dominant-baseline:middle;pointer-events:none}.subLabel{font-size:28px;font-weight:700;fill:#777a73;text-anchor:middle;dominant-baseline:middle;pointer-events:none}.outsideLabel{font-size:28px;font-weight:750;fill:#656861}
 .service{cursor:grab}.service circle{stroke-width:2;vector-effect:non-scaling-stroke}.service text{font-size:28px;font-weight:850;fill:#4e514b;pointer-events:none}
@@ -133,12 +133,18 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 .v2badge{background:#e8eee8;border:1px solid #ced9ce;border-radius:999px;padding:5px 9px;font-size:.75rem;font-weight:800}
 @media(max-width:620px){.buildGrid{grid-template-columns:1fr}.layerRow{grid-template-columns:minmax(0,1fr) 90px 42px}.nogginRow{grid-template-columns:1fr 1fr}.nogginRow button{grid-column:2}.portableActions>*{flex:1 1 150px}}
 
+
+#floorXrayBtn.active{background:#2f312f;color:#fff;border-color:#2f312f}
+#floorXrayBtn.active::before{content:"↳ ";font-weight:900}
+#done3DMoveBtn{background:#2f312f;color:#fff;border-color:#2f312f}
+#move3DBtn.active{background:#2f312f;color:#fff;border-color:#2f312f}
+
 @media(max-width:480px){.grid.three{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.canvas{height:64vh;min-height:420px}.toolbar{gap:5px}.toolbar button{padding-inline:9px}.canvasHeader{height:42px}.canvasControls .desktopOnly{display:none}}
 </style>
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.0.0 · build foundation</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.1.0 · flexible fixtures + 3D move</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -211,12 +217,14 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       <button id="viewTop">Top</button>
       <button id="viewReset">Reset</button>
       <span class="spacer"></span>
-      <label style="display:flex;align-items:center;gap:5px"><input id="floorXrayToggle" type="checkbox" style="width:18px">Floor X-ray</label>
+      <input id="floorXrayToggle" type="checkbox" hidden>
+      <button id="floorXrayBtn" type="button" aria-pressed="false">Under floor</button>
+      <button id="done3DMoveBtn" type="button" class="hidden">Done moving</button>
       <label style="display:flex;align-items:center;gap:5px"><input id="wallsToggle" type="checkbox" checked style="width:18px">Walls</label>
     </div>
     <canvas id="threeDCanvas"></canvas>
     <div id="elevationWrap" class="elevationWrap"><svg id="elevationSvg" class="elevationSvg"></svg></div>
-    <div class="threeDHint">3D: drag to orbit · pinch to zoom · tap a fixture to edit it. The nearest wall hides automatically so you can see into the room.</div>
+    <div class="threeDHint">3D: drag to orbit · pinch to zoom · tap an item to edit it. Choose <strong>Move in 3D</strong> in its panel to drag its plan position directly in 3D.</div>
   </div>
 </section>
 
@@ -360,9 +368,11 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
     <div class="grid three">
       <label>Before door<input id="doorBefore" type="number"></label>
       <label>Door incl. frame<input id="doorWidth" type="number"></label>
+      <label>Door leaf / swing<input id="doorLeafWidth" type="number"></label>
       <label>After door<input id="doorAfter" type="number"></label>
     </div>
     <div id="doorCheck" class="check"></div>
+    <div class="heightNote" style="margin-top:7px">Door incl. frame sets the wall opening. Door leaf / swing is the actual moving door width and controls the 2D swing radius and 3D leaf.</div>
     <div class="grid" style="margin-top:9px"><label>Door height (mm)<input id="doorHeight" type="number"></label><div class="heightNote">Starter door height is generic and editable.</div></div>
     <div class="section">Project</div>
     <div class="grid">
@@ -408,6 +418,7 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 
     <div id="itemQuick" class="quickActions">
       <button id="rotateBtn">Rotate 90°</button><button id="centreMirrorBtn" class="hidden">Centre over vanity</button>
+      <button id="move3DBtn">Move in 3D</button>
       <button id="lockBtn">Lock</button>
       <button id="duplicateBtn">Duplicate</button>
       <button id="deleteBtn" class="danger">Delete</button>
@@ -421,7 +432,8 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
         <label>Type<select id="itemType">
           <option value="bath">Bath</option><option value="wc">WC</option><option value="vanity">Vanity</option>
           <option value="shower">Shower</option><option value="stud">Stud wall</option><option value="storage">Storage</option>
-          <option value="radiator">Radiator</option><option value="mirror">Mirror</option><option value="niche">Niche</option><option value="custom">Custom</option>
+          <option value="radiator">Radiator</option><option value="mirror">Mirror</option><option value="niche">Niche</option>
+          <option value="rainHead">Rain shower head</option><option value="handset">Hand shower</option><option value="showerControls">Shower controls</option><option value="custom">Custom</option>
         </select></label>
         <label>From left wall (mm)<input id="itemX" type="number"></label>
         <label>From window wall (mm)<input id="itemY" type="number"></label>
@@ -450,7 +462,8 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       </div>
       <div id="doorFields" class="grid three hidden">
         <label>Before door<input id="doorA" type="number"></label>
-        <label>Door width<input id="doorW" type="number"></label>
+        <label>Door width incl. frame<input id="doorW" type="number"></label>
+        <label>Door leaf / swing<input id="doorLeafW" type="number"></label>
         <label>After door<input id="doorB" type="number"></label>
         <label>Door height<input id="doorOpenHeight" type="number"></label>
         <label>Hinge side<select id="doorHinge"><option value="bottom">Bottom end</option><option value="top">Top end</option></select></label>
@@ -670,7 +683,8 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
       <button data-add-item="vanity">Floor vanity</button><button data-add-item="shower">Shower</button>
       <button data-add-item="stud">Stud wall</button><button data-add-item="storage">Storage</button>
       <button data-add-item="radiator">Radiator</button><button data-add-item="mirror">Mirror</button><button data-add-item="niche">Niche</button>
-      <button data-add-item="custom">Custom rectangle</button>
+      <button data-add-item="rainHead">Rain shower head</button><button data-add-item="handset">Hand shower</button>
+      <button data-add-item="showerControls">Shower controls</button><button data-add-item="custom">Custom rectangle</button>
     </div>
     <div class="section">Service points</div>
     <div class="addgrid">
@@ -685,18 +699,18 @@ label{display:grid;gap:4px;font-size:.77rem;font-weight:750;color:var(--muted)}i
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.0.0", KEY="bathroomPlannerStable";
+const VERSION="2.1.0", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 const starter={
  version:VERSION,
- schemaVersion:2,
+ schemaVersion:3,
  projectId:"bathroom-redesign-main",
  createdAt:"2026-08-26T00:00:00.000Z",
  updatedAt:"2026-08-26T00:00:00.000Z",
  project:{name:"Bathroom Redesign",planName:"Current working layout",notes:"Confirm final survey dimensions after strip-out before ordering fitted items."},
- room:{width:2280,depth:2545,ceiling:2470,tolerance:20,window:{before:660,width:930,after:690,sill:900,height:960},door:{before:835,width:860,after:850,height:1981,hinge:"bottom",openAngle:26}},
+ room:{width:2280,depth:2545,ceiling:2470,tolerance:20,window:{before:660,width:930,after:690,sill:900,height:960},door:{before:835,width:860,leafWidth:762,after:850,height:1981,hinge:"bottom",openAngle:26}},
  ui:{measureMode:"selected",snap:true,planLayer:"layout"},
  items:[
   {id:"bath1",type:"bath",name:"Bath",x:0,y:0,w:1600,h:700,rotation:0,locked:false,z:0,height:550},
@@ -743,11 +757,7 @@ const starter={
   {id:"zone-door-wall",name:"Door wall",surface:"right",full:true,start:0,end:2545,bottom:0,top:2470,tileId:"tile-laurito-3060",pattern:"stack",orientation:"landscape",grout:2,groutColor:"#ece6df",waste:10,enabled:true},
   {id:"zone-vanity-feature",name:"Vanity feature wall",surface:"left",full:false,start:700,end:1670,bottom:900,top:2470,tileId:"tile-granley-pink",pattern:"herringbone",orientation:"landscape",grout:2,groutColor:"#f4efed",waste:12,enabled:true}
  ],
- wallFixtures:[
-  {id:"rain1",type:"rainHead",name:"Rain shower",mountWall:"left",along:2140,height:2080,projection:320,finish:"black"},
-  {id:"handset1",type:"handset",name:"Hand shower",mountWall:"left",along:2320,bottom:1050,height:720,finish:"black"},
-  {id:"controls1",type:"controls",name:"Shower controls",hostItemId:"stud1",along:620,bottom:950,finish:"black"}
- ],
+ wallFixtures:[],
  floorBuild:{layers:[
    {id:"floor-tile",name:"Floor tile",thickness:9,enabled:true},
    {id:"floor-adhesive",name:"Tile adhesive",thickness:5,enabled:true},
@@ -767,6 +777,7 @@ try{
   state=parsed||clone(starter);
 }catch(e){state=clone(starter)}
 state = state && typeof state==="object" ? state : clone(starter);
+const hadDoorLeafWidth=state?.room?.door?.leafWidth!=null;
 state.project = {...clone(starter.project), ...(state.project||{})};
 state.room = {...clone(starter.room), ...(state.room||{})};
 state.room.window = {...clone(starter.room.window), ...(state.room.window||{})};
@@ -776,7 +787,7 @@ state.ui=state.ui||{};
 if(!state.ui.measureMode) state.ui.measureMode="selected";
 if(state.ui.snap==null) state.ui.snap=true;
 if(!state.ui.planLayer) state.ui.planLayer="layout";
-state.schemaVersion=2;
+state.schemaVersion=3;
 if(!state.projectId) state.projectId="project-"+Date.now().toString(36);
 if(!state.createdAt) state.createdAt=new Date().toISOString();
 if(!state.updatedAt) state.updatedAt=new Date().toISOString();
@@ -794,13 +805,32 @@ if(!Array.isArray(state.tileProducts)) state.tileProducts=[];
 if(!Array.isArray(state.surfaceZones)) state.surfaceZones=[];
 if(!state.surfaceZones.length) state.surfaceZones=clone(starter.surfaceZones);
 if(!Array.isArray(state.wallFixtures)) state.wallFixtures=[];
-(starter.wallFixtures||[]).forEach(f=>{
- const existing=state.wallFixtures.find(x=>x.id===f.id);
- if(existing) Object.assign(existing,clone(f)); else state.wallFixtures.push(clone(f));
-});
+state.migrations=state.migrations||{};
+if(!state.migrations.showerFixturesToItemsV21){
+ const oldFixtures=state.wallFixtures.slice();
+ const rain=oldFixtures.find(f=>f.type==="rainHead");
+ const hand=oldFixtures.find(f=>f.type==="handset");
+ const controls=oldFixtures.find(f=>f.type==="controls");
+ if(rain&&!state.items.some(i=>i.id==="rainHead1"||i.type==="rainHead")){
+  const projection=Math.max(120,Number(rain.projection)||320),diameter=300,along=Number(rain.along)||2140;
+  state.items.push({id:"rainHead1",type:"rainHead",name:rain.name||"Rain shower head",x:0,y:Math.max(0,along-diameter/2),w:projection,h:diameter,rotation:0,locked:false,z:Math.max(0,(Number(rain.height)||2080)-135),height:180});
+ }
+ if(hand&&!state.items.some(i=>i.id==="handset1"||i.type==="handset")){
+  const along=Number(hand.along)||2320;
+  state.items.push({id:"handset1",type:"handset",name:hand.name||"Hand shower",x:0,y:Math.max(0,along-45),w:90,h:90,rotation:0,locked:false,z:Math.max(0,Number(hand.bottom)||1050),height:Math.max(180,Number(hand.height)||720)});
+ }
+ if(controls&&!state.items.some(i=>i.id==="showerControls1"||i.type==="showerControls")){
+  const stud=state.items.find(i=>i.id===(controls.hostItemId||"stud1"))||state.items.find(i=>i.type==="stud");
+  const cx=Number(controls.along)||620,sy=stud?Number(stud.y)+Number(stud.h||100):1700;
+  state.items.push({id:"showerControls1",type:"showerControls",name:controls.name||"Shower controls",x:Math.max(0,cx-75),y:sy-20,w:150,h:40,rotation:0,locked:false,z:Math.max(0,Number(controls.bottom)||950),height:200});
+ }
+ state.wallFixtures=[];
+ state.migrations.showerFixturesToItemsV21=true;
+}
+state.wallFixtures=[];
 
 if(!Array.isArray(state.manualMeasurements)) state.manualMeasurements=[];
-const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],mirror:[1150,800],niche:[1000,400],custom:[0,900]};
+const HEIGHT_DEFAULTS={bath:[0,550],wc:[0,800],vanity:[0,850],shower:[0,40],stud:[0,1100],storage:[0,1800],radiator:[650,1200],mirror:[1150,800],niche:[1000,400],rainHead:[1945,180],handset:[1050,720],showerControls:[950,200],custom:[0,900]};
 function migrateHeights(){
  if(state.version!==VERSION && Number(state.room.ceiling)===2400) state.room.ceiling=2470;
  if(!state.room.window)state.room.window={before:660,width:930,after:690};
@@ -810,6 +840,8 @@ function migrateHeights(){
  if(state.room.door.height==null)state.room.door.height=1981;
  if(!state.room.door.hinge) state.room.door.hinge="bottom";
  if(state.room.door.openAngle==null) state.room.door.openAngle=26;
+ if(!hadDoorLeafWidth) state.room.door.leafWidth=Math.min(Math.max(100,Number(state.room.door.width||860)*.92),800);
+ state.room.door.leafWidth=Math.max(100,Math.min(Number(state.room.door.width)||860,Number(state.room.door.leafWidth)||762));
  state.items.forEach(i=>{
    const d=HEIGHT_DEFAULTS[i.type]||[0,900];
    if(i.z==null)i.z=d[0];
@@ -869,9 +901,9 @@ function itemDims(i){return (i.rotation===90||i.rotation===270)?{w:i.h,h:i.w}:{w
 function box(i){const d=itemDims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}}
 const overlap1D=(a1,a2,b1,b2)=>Math.min(a2,b2)-Math.max(a1,b1)>0;
 const collide=(a,b)=>{const A=box(a),B=box(b);return A.x1<B.x2&&A.x2>B.x1&&A.y1<B.y2&&A.y2>B.y1};
-const floorItems=()=>state.items.filter(i=>i.type!=="niche"&&i.type!=="mirror");
+const floorItems=()=>state.items.filter(i=>!["niche","mirror","rainHead","handset","showerControls"].includes(i.type));
 
-function save(){state.version=VERSION;state.schemaVersion=2;state.updatedAt=new Date().toISOString();localStorage.setItem(KEY,JSON.stringify(state))}
+function save(){state.version=VERSION;state.schemaVersion=3;state.updatedAt=new Date().toISOString();localStorage.setItem(KEY,JSON.stringify(state))}
 function checkpoint(){history.push(clone(state));if(history.length>60)history.shift();future=[];updateUndoRedo()}
 function updateUndoRedo(){$("undoBtn").disabled=!history.length;$("redoBtn").disabled=!future.length}
 function undo(){if(!history.length)return;future.push(clone(state));state=history.pop();selected={kind:null,id:null};save();sync();resetView(false);render();updateUndoRedo()}
@@ -922,15 +954,18 @@ function drawGrid(){
 }
 
 function doorGeometry(){
- const r=state.room, y1=r.door.before,y2=y1+r.door.width,leaf=Math.min(r.door.width*.92,800);
- return{y1,y2,leaf,hx:r.width,hy:y2};
+ const r=state.room,y1=r.door.before,y2=y1+r.door.width;
+ const leaf=Math.max(100,Math.min(Number(r.door.width)||100,Number(r.door.leafWidth)||Math.min((Number(r.door.width)||860)*.92,800)));
+ return{y1,y2,leaf,hx:r.width,hy:(r.door.hinge||"bottom")==="top"?y1:y2,hinge:r.door.hinge||"bottom"};
 }
 function doorSwingConflict(item){
- if(item.type==="niche")return false;
+ if(["niche","mirror","rainHead","handset","showerControls"].includes(item.type))return false;
  const b=box(item),g=doorGeometry();
  const qx=Math.min(Math.max(g.hx,b.x1),b.x2);
  const qy=Math.min(Math.max(g.hy,b.y1),b.y2);
- if(qx>g.hx||qy>g.hy)return false;
+ if(qx>g.hx)return false;
+ if(g.hinge==="top"&&qy<g.hy)return false;
+ if(g.hinge!=="top"&&qy>g.hy)return false;
  return Math.hypot(qx-g.hx,qy-g.hy)<g.leaf;
 }
 
@@ -1009,11 +1044,13 @@ function drawOpenings(){
  win.addEventListener("pointerdown",openingDown);svg.appendChild(win);
  const g=doorGeometry();
  svg.appendChild(sEl("line",{x1:r.width,y1:g.y1,x2:r.width,y2:g.y2,stroke:"#fffefa","stroke-width":12,"vector-effect":"non-scaling-stroke"}));
- const zone=sEl("path",{d:`M ${g.hx} ${g.hy} L ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 1 ${g.hx} ${g.hy-g.leaf} Z`,class:"doorZone"});
+ const closedY=g.hinge==="top"?g.hy+g.leaf:g.hy-g.leaf;
+ const sweep=g.hinge==="top"?0:1;
+ const zone=sEl("path",{d:`M ${g.hx} ${g.hy} L ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY} Z`,class:"doorZone"});
  svg.appendChild(zone);
  const leaf=sEl("line",{x1:g.hx,y1:g.hy,x2:g.hx-g.leaf,y2:g.hy,class:"door","data-opening":"door"});
  leaf.addEventListener("pointerdown",openingDown);svg.appendChild(leaf);
- const arc=sEl("path",{d:`M ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 1 ${g.hx} ${g.hy-g.leaf}`,class:"door","stroke-dasharray":"9 7","data-opening":"door"});
+ const arc=sEl("path",{d:`M ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY}`,class:"door","stroke-dasharray":"9 7","data-opening":"door"});
  arc.addEventListener("pointerdown",openingDown);svg.appendChild(arc);
 }
 
@@ -1049,6 +1086,18 @@ function drawItem(i){
   svg.appendChild(sEl("circle",{cx:i.x+d.w*.18,cy:i.y+d.h*.72,r:28,class:"archLine"}));
  }
  if(i.type==="radiator"){for(let y=i.y+22;y<i.y+d.h-18;y+=42)svg.appendChild(sEl("line",{x1:i.x+12,y1:y,x2:i.x+d.w-12,y2:y,class:"archLine"}))}
+ if(i.type==="rainHead"){
+  svg.appendChild(sEl("line",{x1:i.x+10,y1:i.y+d.h/2,x2:i.x+d.w*.72,y2:i.y+d.h/2,class:"archLine"}));
+  svg.appendChild(sEl("circle",{cx:i.x+d.w*.78,cy:i.y+d.h/2,r:Math.max(18,Math.min(d.h*.34,65)),class:"archLine"}));
+ }
+ if(i.type==="handset"){
+  svg.appendChild(sEl("line",{x1:i.x+d.w*.28,y1:i.y+12,x2:i.x+d.w*.28,y2:i.y+d.h-12,class:"archLine"}));
+  svg.appendChild(sEl("line",{x1:i.x+d.w*.45,y1:i.y+d.h*.25,x2:i.x+d.w*.78,y2:i.y+d.h*.70,class:"archLine"}));
+ }
+ if(i.type==="showerControls"){
+  svg.appendChild(sEl("circle",{cx:i.x+d.w*.34,cy:i.y+d.h/2,r:Math.max(7,Math.min(18,d.h*.24)),class:"archLine"}));
+  svg.appendChild(sEl("circle",{cx:i.x+d.w*.66,cy:i.y+d.h/2,r:Math.max(7,Math.min(18,d.h*.24)),class:"archLine"}));
+ }
  if(i.type==="mirror"){
    const hitW=Math.max(d.w,140),hitH=Math.max(d.h,140),hitX=i.x-(hitW-d.w)/2,hitY=i.y-(hitH-d.h)/2;
    const hit=sEl("rect",{x:hitX,y:hitY,width:hitW,height:hitH,fill:"transparent","data-id":i.id,style:"cursor:grab"});
@@ -1290,14 +1339,14 @@ function facingName(rotation){
 
 function openSelectedSheet(){
  const sheet=$("objectSheet");sheet.classList.remove("hidden");
- $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");
+ $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");
  $("itemQuick").classList.add("hidden");$("itemDetails").classList.add("hidden");$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
  if(selected.kind==="item"){
   const i=state.items.find(x=>x.id===selected.id);if(!i)return;
   const prod=productById(i.productId);$("sheetEyebrow").textContent=prod?"Product object":"Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm · ${Number(i.rotation)||0}°`;
   $("itemQuick").classList.remove("hidden");$("detailsToggle").classList.remove("hidden");
   $("lockBtn").textContent=i.locked?"Unlock":"Lock";$("rotateBtn").textContent=`Rotate 90° · ${Number(i.rotation)||0}° · front → ${facingName(i.rotation)}`;
-  $("rotateBtn").classList.toggle("hidden",i.type==="mirror");$("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");
+  $("rotateBtn").classList.toggle("hidden",i.type==="mirror");$("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");$("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
   $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;
   $("itemShowerMountWrap").classList.add("hidden");
   $("itemMirrorWallWrap").classList.toggle("hidden",i.type!=="mirror");$("itemMirrorAlongWrap").classList.toggle("hidden",i.type!=="mirror");
@@ -1310,7 +1359,7 @@ function openSelectedSheet(){
    $("openA").value=state.room.window.before;$("openW").value=state.room.window.width;$("openB").value=state.room.window.after;$("openSill").value=state.room.window.sill;$("openHeight").value=state.room.window.height;
   }else{
    $("sheetEyebrow").textContent="Opening";$("sheetTitle").textContent="Door";$("doorFields").classList.remove("hidden");$("windowFields").classList.add("hidden");
-   $("doorA").value=state.room.door.before;$("doorW").value=state.room.door.width;$("doorB").value=state.room.door.after;$("doorOpenHeight").value=state.room.door.height;$("doorHinge").value=state.room.door.hinge||"bottom";$("doorAngle").value=state.room.door.openAngle??26;
+   $("doorA").value=state.room.door.before;$("doorW").value=state.room.door.width;$("doorLeafW").value=Math.round(state.room.door.leafWidth||state.room.door.width);$("doorB").value=state.room.door.after;$("doorOpenHeight").value=state.room.door.height;$("doorHinge").value=state.room.door.hinge||"bottom";$("doorAngle").value=state.room.door.openAngle??26;
   }
  }else if(selected.kind==="service"){
   const s=state.services.find(x=>x.id===selected.id);if(!s)return;
@@ -1324,7 +1373,8 @@ function closeObjectSheet(){$("objectSheet").classList.add("hidden");$("itemDeta
 function addItem(type){
  const p={
   bath:["Bath",1600,700],wc:["WC",370,640],vanity:["Floor-standing vanity",450,900],shower:["Shower",1400,800],
-  stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],mirror:["Mirror",800,40],niche:["Niche",400,70],custom:["Custom object",400,400]
+  stud:["Stud wall",900,100],storage:["Storage",350,300],radiator:["Radiator",100,600],mirror:["Mirror",800,40],niche:["Niche",400,70],
+  rainHead:["Rain shower head",320,300],handset:["Hand shower",90,90],showerControls:["Shower controls",150,40],custom:["Custom object",400,400]
  }[type];
  checkpoint();const hd=HEIGHT_DEFAULTS[type]||[0,900];const i={id:type+Date.now(),type,name:p[0],x:250,y:850,w:p[1],h:p[2],rotation:0,locked:false,z:hd[0],height:hd[1]};
  if(type==="mirror"){
@@ -1332,6 +1382,9 @@ function addItem(type){
   const vanity=state.items.find(x=>x.type==="vanity"),vd=vanity?itemDims(vanity):null;
   i.mountAlong=vd?vanity.y+vd.h/2:state.room.depth/2;syncMirrorPlanFromMount(i);
  }
+ if(type==="rainHead"){i.x=0;i.y=Math.max(0,state.room.depth-555);i.z=1945;i.height=180}
+ if(type==="handset"){i.x=0;i.y=Math.max(0,state.room.depth-270);i.z=1050;i.height=720}
+ if(type==="showerControls"){const stud=state.items.find(x=>x.type==="stud");i.x=stud?Math.max(0,stud.x+stud.w*.60):550;i.y=stud?Math.max(0,stud.y+stud.h-20):1700;i.z=950;i.height=200}
  state.items.push(i);selected={kind:"item",id:i.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
 }
 function addService(type){
@@ -1343,7 +1396,7 @@ function sync(){
  const r=state.room;
  $("roomWidth").value=r.width;$("roomDepth").value=r.depth;$("ceilingHeight").value=r.ceiling;$("tolerance").value=r.tolerance;
  $("windowBefore").value=r.window.before;$("windowWidth").value=r.window.width;$("windowAfter").value=r.window.after;$("windowSill").value=r.window.sill;$("windowHeight").value=r.window.height;
- $("doorBefore").value=r.door.before;$("doorWidth").value=r.door.width;$("doorAfter").value=r.door.after;$("doorHeight").value=r.door.height;
+ $("doorBefore").value=r.door.before;$("doorWidth").value=r.door.width;$("doorLeafWidth").value=Math.round(r.door.leafWidth||r.door.width);$("doorAfter").value=r.door.after;$("doorHeight").value=r.door.height;
  $("projectName").value=state.project.name||"";$("projectPlanName").value=state.project.planName||"";$("notes").value=state.project.notes||"";
  $("measureMode").value=state.ui.measureMode||"selected";updateChecks();
 }
@@ -1752,6 +1805,12 @@ $("closeObjectSheet").onclick=closeObjectSheet;
 $("detailsToggle").onclick=()=>{const d=$("itemDetails");d.classList.toggle("hidden");$("detailsToggle").textContent=d.classList.contains("hidden")?"Show exact details":"Hide exact details"};
 
 $("centreMirrorBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||i.type!=="mirror")return;const vanity=state.items.find(x=>x.type==="vanity");if(!vanity)return;checkpoint();const vd=itemDims(vanity);i.mountWall="left";i.mountAlong=vanity.y+vd.h/2;syncMirrorPlanFromMount(i);save();render();openSelectedSheet()};
+$("move3DBtn").onclick=()=>{
+ const i=state.items.find(x=>x.id===selected.id);if(!i||i.locked||i.type==="niche")return;
+ const tab=document.querySelector('.tab[data-tab="threeD"]');if(tab)tab.click();
+ $("viewMode").value="3d";$("viewMode").dispatchEvent(new Event("change",{bubbles:true}));closeObjectSheet();
+ setTimeout(()=>{if(window.BP3DView?.startMove)window.BP3DView.startMove(i.id);else alert("3D move is still loading. Try again in a moment.")},100);
+};
 $("rotateBtn").onclick=()=>{
  const i=state.items.find(x=>x.id===selected.id);if(!i||i.type==="mirror")return;
  checkpoint();
@@ -1773,7 +1832,7 @@ $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!
  save();render();openSelectedSheet();
 });
 ["openA","openW","openB","openSill","openHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);save();sync();render();openSelectedSheet()});
-["doorA","doorW","doorB","doorOpenHeight","doorHinge","doorAngle"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.door.before=Math.max(0,Number($("doorA").value)||0);state.room.door.width=Math.max(100,Number($("doorW").value)||100);state.room.door.after=Math.max(0,Number($("doorB").value)||0);state.room.door.height=Math.max(100,Number($("doorOpenHeight").value)||100);state.room.door.hinge=$("doorHinge").value||"bottom";state.room.door.openAngle=Math.max(0,Math.min(120,Number($("doorAngle").value)||0));save();sync();render();openSelectedSheet()});
+["doorA","doorW","doorLeafW","doorB","doorOpenHeight","doorHinge","doorAngle"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.door.before=Math.max(0,Number($("doorA").value)||0);state.room.door.width=Math.max(100,Number($("doorW").value)||100);state.room.door.leafWidth=Math.max(100,Math.min(state.room.door.width,Number($("doorLeafW").value)||state.room.door.width));state.room.door.after=Math.max(0,Number($("doorB").value)||0);state.room.door.height=Math.max(100,Number($("doorOpenHeight").value)||100);state.room.door.hinge=$("doorHinge").value||"bottom";state.room.door.openAngle=Math.max(0,Math.min(120,Number($("doorAngle").value)||0));save();sync();render();openSelectedSheet()});
 ["serviceName","serviceType","serviceX","serviceY","serviceZ"].forEach(id=>$(id).onchange=()=>{
  const s=state.services.find(x=>x.id===selected.id);if(!s)return;checkpoint();s.name=$("serviceName").value.trim()||s.name;s.type=$("serviceType").value;s.x=Number($("serviceX").value)||0;s.y=Number($("serviceY").value)||0;s.z=Math.max(0,Number($("serviceZ").value)||0);save();render();openSelectedSheet();
 });
@@ -1781,10 +1840,11 @@ $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!
 const numPaths={
  roomWidth:["room","width"],roomDepth:["room","depth"],ceilingHeight:["room","ceiling"],tolerance:["room","tolerance"],
  windowBefore:["room","window","before"],windowWidth:["room","window","width"],windowAfter:["room","window","after"],windowSill:["room","window","sill"],windowHeight:["room","window","height"],
- doorBefore:["room","door","before"],doorWidth:["room","door","width"],doorAfter:["room","door","after"],doorHeight:["room","door","height"]
+ doorBefore:["room","door","before"],doorWidth:["room","door","width"],doorLeafWidth:["room","door","leafWidth"],doorAfter:["room","door","after"],doorHeight:["room","door","height"]
 };
 Object.entries(numPaths).forEach(([id,path])=>$(id).onchange=()=>{
  checkpoint();let o=state;for(let i=0;i<path.length-1;i++)o=o[path[i]];o[path[path.length-1]]=Math.max(0,Number($(id).value)||0);
+ if(id==="doorWidth"||id==="doorLeafWidth")state.room.door.leafWidth=Math.max(100,Math.min(Math.max(100,Number(state.room.door.width)||100),Number(state.room.door.leafWidth)||100));
  save();baseView=makeBaseView();view={...baseView};sync();render();
 });
 [["projectName","name"],["projectPlanName","planName"],["notes","notes"]].forEach(([id,key])=>$(id).onchange=()=>{checkpoint();state.project[key]=$(id).value;save();render()});
@@ -1868,6 +1928,8 @@ window.BP3D={
  persist:()=>save(),
  renderProducts:()=>renderProducts(),
  checkpoint:()=>checkpoint(),
+ moveItem3D:(id,x,y)=>{const i=state.items.find(v=>v.id===id);if(!i||i.locked||i.type==="mirror"||i.type==="niche")return null;const d=itemDims(i);i.x=Math.round(Math.max(0,Math.min(state.room.width-d.w,Number(x)||0)));i.y=Math.round(Math.max(0,Math.min(state.room.depth-d.h,Number(y)||0)));return {x:i.x,y:i.y,w:d.w,h:d.h};},
+ moveWallItem3D:(id,along,z)=>{const i=state.items.find(v=>v.id===id);if(!i||i.locked||i.type!=="mirror")return null;const wall=i.mountWall||"left",span=(wall==="left"||wall==="right")?state.room.depth:state.room.width,half=Math.max(20,Number(i.w)||500)/2;i.mountAlong=Math.round(Math.max(half,Math.min(span-half,Number(along)||half)));i.z=Math.round(Math.max(0,Math.min(state.room.ceiling-(Number(i.height)||1),Number(z)||0)));syncMirrorPlanFromMount(i);return {along:i.mountAlong,z:i.z,x:i.x,y:i.y};},
  clone:(v)=>clone(v),
  replaceState:(v)=>{localStorage.setItem(KEY,JSON.stringify(v));location.reload()},
  storageKey:KEY,

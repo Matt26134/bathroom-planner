@@ -9,7 +9,7 @@
 
   function ensure(){
     const s=state();
-    s.schemaVersion=2;
+    s.schemaVersion=3;
     s.ui=s.ui||{};if(!s.ui.planLayer)s.ui.planLayer="layout";
     if(!s.floorBuild||!Array.isArray(s.floorBuild.layers))s.floorBuild={layers:[]};
     s.structure={direction:"window-door",spacing:400,width:47,depth:195,offset:100,deckThickness:18,noggins:[],...(s.structure||{})};
@@ -105,12 +105,12 @@
     const label=h.type==="wet"?"Wet UFH planning zone":"Electrical planning zone";
     $("heatingSummary").innerHTML=`<strong>${label}: ${m.heated.toFixed(2)} m²</strong><br>Gross inside margin: ${m.gross.toFixed(2)} m² · approximate fixture exclusions: ${m.excluded.toFixed(2)} m²${h.type!=="wet"?` · estimated load: ${Math.round(m.watts)} W`:""}.`;
   }
-  function renderMeta(){const s=state(),el=$("portableProjectMeta");if(el)el.innerHTML=`<strong>${s.project?.name||"Bathroom project"}</strong><br>Project ID: ${s.projectId||"—"} · schema v${s.schemaVersion||2} · last saved ${s.updatedAt?new Date(s.updatedAt).toLocaleString():"this session"}.`;}
+  function renderMeta(){const s=state(),el=$("portableProjectMeta");if(el)el.innerHTML=`<strong>${s.project?.name||"Bathroom project"}</strong><br>Project ID: ${s.projectId||"—"} · schema v${s.schemaVersion||3} · last saved ${s.updatedAt?new Date(s.updatedAt).toLocaleString():"this session"}.`;}
   function renderAll(){ensure();renderLayers();renderStructure();renderHeating();renderMeta();if($("planLayerMode"))$("planLayerMode").value=state().ui.planLayer||"layout";}
 
   function safeName(v){return String(v||"Bathroom-Project").trim().replace(/[^a-z0-9-_]+/gi,"-").replace(/^-+|-+$/g,"")||"Bathroom-Project"}
   function download(name,contents,type="application/json"){const blob=new Blob([contents],{type}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),800)}
-  function exportBathplan(){const s=clone(state());s.version=api.version||s.version;s.schemaVersion=2;s.updatedAt=new Date().toISOString();const pack={bathplanFormat:1,appVersion:api.version||"2.0.0",exportedAt:new Date().toISOString(),assetsEmbedded:true,project:s};download(`${safeName(s.project?.name)}-${new Date().toISOString().slice(0,10)}.bathplan`,JSON.stringify(pack));}
+  function exportBathplan(){const s=clone(state());s.version=api.version||s.version;s.schemaVersion=3;s.updatedAt=new Date().toISOString();const pack={bathplanFormat:1,appVersion:api.version||"2.1.0",exportedAt:new Date().toISOString(),assetsEmbedded:true,project:s};download(`${safeName(s.project?.name)}-${new Date().toISOString().slice(0,10)}.bathplan`,JSON.stringify(pack));}
   async function importBathplan(file){
     try{
       const parsed=JSON.parse(await file.text()),incoming=parsed?.project||parsed;
@@ -118,7 +118,7 @@
       const name=incoming.project?.name||"Imported bathroom";const exported=parsed.exportedAt?`\nExported: ${new Date(parsed.exportedAt).toLocaleString()}`:"";
       if(!confirm(`Import '${name}' and replace the current project on this device?${exported}\n\nYour current project will be kept as a one-step recovery copy in this browser.`))return;
       try{localStorage.setItem(api.storageKey+"_recovery",JSON.stringify(state()))}catch(_){}
-      incoming.schemaVersion=2;incoming.projectId=incoming.projectId||("project-"+Date.now().toString(36));incoming.updatedAt=new Date().toISOString();
+      incoming.schemaVersion=3;incoming.projectId=incoming.projectId||("project-"+Date.now().toString(36));incoming.updatedAt=new Date().toISOString();
       api.replaceState(incoming);
     }catch(err){alert("Import failed: "+err.message)}
   }

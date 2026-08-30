@@ -5,6 +5,8 @@ const legacy = document.getElementById("threeDCanvas");
 const viewMode = document.getElementById("viewMode");
 const wallsToggle = document.getElementById("wallsToggle");
 const floorXrayToggle = document.getElementById("floorXrayToggle");
+const floorXrayBtn = document.getElementById("floorXrayBtn");
+const done3DMoveBtn = document.getElementById("done3DMoveBtn");
 const elevationWrap = document.getElementById("elevationWrap");
 
 if (!api || !legacy) {
@@ -101,6 +103,7 @@ if (!api || !legacy) {
   let target = new THREE.Vector3(1.1, 0.9, 1.25);
   let radius = 4.7, theta = 0.72, phi = 1.00;
   let pointers = new Map(), drag = null, pinch = null;
+  let moveMode=null, moveDrag=null;
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
@@ -165,7 +168,7 @@ if (!api || !legacy) {
     addWallBox("opposite", W,H,T, W/2,H/2,D+T/2);
     addWallBox("left", T,H,D, -T/2,H/2,D/2);
 
-    const door=s.room.door, db=mm(door.before), dw=mm(door.width), de=db+dw, dh=mm(door.height);
+    const door=s.room.door, db=mm(door.before), dw=mm(door.width), leafW=mm(Math.max(100,Math.min(Number(door.width)||100,Number(door.leafWidth)||Number(door.width)||100))), de=db+dw, dh=mm(door.height);
     const after=Math.max(0,D-de), over=Math.max(0,H-dh);
     addWallBox("right", T,H,db, W+T/2,H/2,db/2);
     addWallBox("right", T,H,after, W+T/2,H/2,de+after/2);
@@ -188,12 +191,13 @@ if (!api || !legacy) {
     const doorPivot = new THREE.Group();
     doorPivot.position.set(W-.026,0,hinge==="top" ? db : de);
     doorPivot.rotation.y = swing;
-    const leaf = meshBox(leafT,dh-.025,dw-.03,doorLeafMat,-leafT/2,(dh-.025)/2,dir*(dw-.03)/2,false);
+    const leafDepth=Math.max(.08,leafW-.01);
+    const leaf = meshBox(leafT,dh-.025,leafDepth,doorLeafMat,-leafT/2,(dh-.025)/2,dir*leafDepth/2,false);
     doorPivot.add(leaf);
 
     const handleMat=mats.brass;
     const handleY=Math.min(1.02,dh*.52);
-    const handleZ=dir*(dw-.03)*.78;
+    const handleZ=dir*leafDepth*.78;
     const handleStem=cylinder(.010,.045,handleMat,"x",18);
     handleStem.position.set(-.038,handleY,handleZ);
     doorPivot.add(handleStem);
@@ -258,7 +262,9 @@ if (!api || !legacy) {
       const w=Math.max(10,Number(n.w)||300),h=Math.max(10,Number(n.h)||47);
       const m=meshBox(mm(w),depth*.72,mm(h),mats.joist,mm((Number(n.x)||0)+w/2),joistTop-depth*.36,mm((Number(n.y)||0)+h/2));structureRoot.add(m);
     });
-    structureRoot.add(meshBox(mm(s.room.width),deck,mm(s.room.depth),mats.wallSide,mm(s.room.width)/2,-aboveDeck-deck/2,mm(s.room.depth)/2,false));
+    const deckMesh=meshBox(mm(s.room.width),deck,mm(s.room.depth),mats.wallSide,mm(s.room.width)/2,-aboveDeck-deck/2,mm(s.room.depth)/2,false);
+    deckMesh.userData.structureKind="deck";
+    structureRoot.add(deckMesh);
     if(s.heating?.enabled){
       const margin=mm(Math.max(0,Number(s.heating.margin)||0)),W=mm(s.room.width)-margin*2,D=mm(s.room.depth)-margin*2;
       if(W>.05&&D>.05){const heat=meshBox(W,.006,D,mats.heating,mm(s.room.width)/2,-mm(7),mm(s.room.depth)/2,false);structureRoot.add(heat)}
@@ -419,36 +425,6 @@ if (!api || !legacy) {
       });
     });
   }
-  function buildRoomWallShowerHardware(s) {
-    const W=mm(s.room.width),D=mm(s.room.depth);
-    const finish=mats.dark;
-    const fixtures=s.wallFixtures||[];
-    const rain=fixtures.find(f=>f.type==="rainHead");
-    const hand=fixtures.find(f=>f.type==="handset");
-    const g=new THREE.Group();
-
-    // FIXED ROOM ARCHITECTURE: wall opposite the door = LEFT wall (x=0).
-    // This is the same physical wall the vanity sits against. Shower tray rotation
-    // is deliberately ignored; these fittings are room-wall fixtures.
-    if(rain && rain.mountWall==="left"){
-      const zc=mm(rain.along||2140), y=mm(rain.height||2080), proj=mm(rain.projection||320);
-      const x0=.012;
-      const rose=cylinder(.012,.055,finish,"x",20);rose.position.set(x0+.025,y,zc);g.add(rose);
-      const arm=meshBox(proj,.018,.018,finish,x0+proj/2,y,zc,false);g.add(arm);
-      const drop=cylinder(.010,.075,finish,"y",18);drop.position.set(x0+proj-.015,y-.038,zc);g.add(drop);
-      const head=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.018,48),finish);
-      // Cylinder's natural Y axis makes the rain head horizontal as required.
-      head.position.set(x0+proj-.015,y-.082,zc);head.castShadow=true;g.add(head);
-    }
-    if(hand && hand.mountWall==="left"){
-      const zc=mm(hand.along||2320), bottom=mm(hand.bottom||1050), hh=mm(hand.height||720), x0=.014;
-      const rail=cylinder(.009,hh,finish,"y",18);rail.position.set(x0+.012,bottom+hh/2,zc);g.add(rail);
-      const handset=cylinder(.017,.18,finish,"y",18);handset.position.set(x0+.055,bottom+hh*.61,zc);handset.rotation.z=.34;g.add(handset);
-      const wallOutlet=cylinder(.018,.045,finish,"x",18);wallOutlet.position.set(x0+.025,bottom+.11,zc);g.add(wallOutlet);
-    }
-    if(g.children.length){wallRoot.add(g);wallSets.left.push(g);}
-  }
-
   function buildBath(i,s) {
     const g=groupForItem(i), w=mm(i.w), d=mm(i.h), h=mm(i.height || 550), z=mm(i.z||0);
     const prod=(s.products||[]).find(p=>p.id===i.productId);
@@ -652,20 +628,37 @@ if (!api || !legacy) {
       const cap=meshBox(w,.018,.025,mats.dark,0,z+h+glassH+.009,0,false);g.add(cap);
     }
 
-    // Mixer controls are hosted by the stud itself, never by the shower tray.
-    const ctl=(s.wallFixtures||[]).find(f=>f.type==="controls"&&f.hostItemId===i.id);
-    if(ctl){
-      const along=THREE.MathUtils.clamp(mm(Number(ctl.along||0)-Number(i.x||0))-w/2,-w*.42,w*.42);
-      const cy=mm(ctl.bottom||950)+.10;
-      // In this room the shower-facing side is the negative local-Z face of the
-      // half-height stud. V1.9.0 used the opposite face, so the controls appeared
-      // on the vanity side. Keep the plate just proud of the shower face and let
-      // the knobs project further into the shower.
-      const face=-d/2-.012;
-      const plate=meshBox(.15,.20,.018,mats.dark,along,cy,face,false);g.add(plate);
-      const k1=cylinder(.021,.03,mats.dark,"z",20);k1.position.set(along,cy+.055,face-.022);g.add(k1);
-      const k2=cylinder(.021,.03,mats.dark,"z",20);k2.position.set(along,cy-.055,face-.022);g.add(k2);
-    }
+    return setItemId(g,i.id);
+  }
+
+  function buildRainHead(i) {
+    const g=groupForItem(i),w=mm(i.w||320),d=mm(i.h||300),z=mm(i.z||1945),h=mm(i.height||180);
+    const y=z+h*.78,baseX=-w/2+.018;
+    const rose=cylinder(.014,.045,mats.dark,"x",20);rose.position.set(baseX+.02,y,0);g.add(rose);
+    const armLen=Math.max(.10,w-.055);
+    const arm=meshBox(armLen,.018,.018,mats.dark,baseX+armLen/2,y,0,false);g.add(arm);
+    const drop=cylinder(.010,Math.max(.055,h*.26),mats.dark,"y",18);drop.position.set(baseX+armLen-.012,y-h*.13,0);g.add(drop);
+    const radius=Math.max(.07,Math.min(.17,d*.44));
+    const head=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,.018,48),mats.dark);
+    head.position.set(baseX+armLen-.012,y-h*.28,0);head.castShadow=true;g.add(head);
+    return setItemId(g,i.id);
+  }
+
+  function buildHandset(i) {
+    const g=groupForItem(i),w=mm(i.w||90),d=mm(i.h||90),z=mm(i.z||1050),h=mm(i.height||720);
+    const rail=cylinder(.009,Math.max(.18,h),mats.dark,"y",18);rail.position.set(-w*.20,z+h/2,0);g.add(rail);
+    const handset=cylinder(.017,Math.min(.22,Math.max(.14,h*.26)),mats.dark,"y",18);handset.position.set(w*.18,z+h*.62,0);handset.rotation.z=.34;g.add(handset);
+    const outlet=cylinder(.018,.045,mats.dark,"x",18);outlet.position.set(-w*.18,z+.10,0);g.add(outlet);
+    const hose=new THREE.Mesh(new THREE.TorusGeometry(Math.max(.035,d*.35),.006,10,32,Math.PI),mats.dark);hose.rotation.x=Math.PI/2;hose.position.set(w*.02,z+h*.34,0);g.add(hose);
+    return setItemId(g,i.id);
+  }
+
+  function buildShowerControls(i) {
+    const g=groupForItem(i),w=mm(i.w||150),d=mm(i.h||40),z=mm(i.z||950),h=mm(i.height||200);
+    const faceZ=-d/2+.004;
+    const plate=meshBox(Math.max(.10,w),Math.max(.12,h),Math.max(.014,d*.45),mats.dark,0,z+h/2,faceZ,false);g.add(plate);
+    const knobLen=Math.max(.025,d*.9);
+    [-.27,.27].forEach(q=>{const k=cylinder(Math.max(.017,Math.min(.025,w*.13)),knobLen,mats.dark,"z",20);k.position.set(w*q,z+h/2,faceZ-d*.45);g.add(k)});
     return setItemId(g,i.id);
   }
 
@@ -790,6 +783,9 @@ if (!api || !legacy) {
     if(i.type==="storage") return buildStorage(i);
     if(i.type==="radiator") return buildRadiator(i,s);
     if(i.type==="mirror") return buildMirror(i,s);
+    if(i.type==="rainHead") return buildRainHead(i);
+    if(i.type==="handset") return buildHandset(i);
+    if(i.type==="showerControls") return buildShowerControls(i);
     return buildGeneric(i);
   }
 
@@ -813,7 +809,6 @@ if (!api || !legacy) {
       products:(s.products||[]).map(p=>({id:p.id,finish:p.finish,style:p.style,width:p.width,depth:p.depth,height:p.height})),
       tileProducts:(s.tileProducts||[]).map(t=>({id:t.id,w:t.width,h:t.height,finish:t.finish,dp:t.defaultPattern,imgKey:(t.image||"").length+":"+(t.image||"").slice(0,64),pKey:(t.patternImage||"").length+":"+(t.patternImage||"").slice(0,64)})),
       surfaceZones:(s.surfaceZones||[]).map(z=>({id:z.id,name:z.name,surface:z.surface,full:z.full,x1:z.x1,x2:z.x2,y1:z.y1,y2:z.y2,start:z.start,end:z.end,bottom:z.bottom,top:z.top,tileId:z.tileId,pattern:z.pattern,orientation:z.orientation,enabled:z.enabled,grout:z.grout,groutColor:z.groutColor,waste:z.waste})),
-      wallFixtures:s.wallFixtures||[],
       floorBuild:s.floorBuild||{},
       structure:s.structure||{},
       heating:s.heating||{}
@@ -822,7 +817,7 @@ if (!api || !legacy) {
     signature=sig; room=s.room;
     clearGroup(root);clearGroup(wallRoot);clearGroup(surfaceRoot);clearGroup(structureRoot);clearGroup(itemRoot);clearGroup(fixedRoot);
     itemMeshes=[];
-    buildFloor(s);buildWalls(s);buildRoomWallShowerHardware(s);buildSurfaceZones(s);buildStructure(s);
+    buildFloor(s);buildWalls(s);buildSurfaceZones(s);buildStructure(s);
     (s.items||[]).forEach(i=>{
       const g=buildItem(i,s);
       itemRoot.add(g);
@@ -847,9 +842,12 @@ if (!api || !legacy) {
     const W=mm(room.width),D=mm(room.depth),show=wallsToggle?.checked!==false,xray=floorXrayToggle?.checked===true;
     root.visible=!xray;
     structureRoot.visible=xray;
-    Object.values(wallSets).flat().forEach(m=>m.visible=show);
-    Object.entries(surfaceSets).forEach(([side,list])=>list.forEach(m=>m.visible=(side==="floor")?!xray:show));
-    if(!show)return;
+    itemRoot.visible=!xray;
+    fixedRoot.visible=!xray;
+    structureRoot.children.forEach(m=>{ if(m.userData?.structureKind==="deck") m.visible=!xray; });
+    Object.values(wallSets).flat().forEach(m=>m.visible=show&&!xray);
+    Object.entries(surfaceSets).forEach(([side,list])=>list.forEach(m=>m.visible=xray?false:((side==="floor")?true:show)));
+    if(!show||xray)return;
     const margin=.06;
     if(camera.position.x < -margin){ wallSets.left.forEach(m=>m.visible=false); surfaceSets.left.forEach(m=>m.visible=false); }
     if(camera.position.x > W+margin){ wallSets.right.forEach(m=>m.visible=false); surfaceSets.right.forEach(m=>m.visible=false); }
@@ -875,6 +873,9 @@ if (!api || !legacy) {
       setFromPosition(new THREE.Vector3(W*.50,1.55,-2.05),new THREE.Vector3(W*.50,.95,D*.52));
     }else if(name==="top"){
       setFromPosition(new THREE.Vector3(W*.50,5.3,D*.50+.01),new THREE.Vector3(W*.50,0,D*.50));
+    }else if(name==="underfloor"){
+      const depth=mm(Math.max(120,Number(s.structure?.depth)||195));
+      setFromPosition(new THREE.Vector3(W*.50,-Math.max(1.05,depth*3.8),D+1.55),new THREE.Vector3(W*.50,-depth*.45,D*.50));
     }else{
       setFromPosition(new THREE.Vector3(W+1.75,3.05,D+1.85),new THREE.Vector3(W*.48,.90,D*.50));
     }
@@ -889,11 +890,44 @@ if (!api || !legacy) {
     camera.updateProjectionMatrix();
   }
 
-  function selectAt(clientX,clientY) {
+  function rayFromClient(clientX,clientY){
     const r=canvas.getBoundingClientRect();
     mouse.x=((clientX-r.left)/r.width)*2-1;
     mouse.y=-((clientY-r.top)/r.height)*2+1;
     raycaster.setFromCamera(mouse,camera);
+    return raycaster.ray;
+  }
+
+  function itemGroupById(id){return itemRoot.children.find(g=>g.userData?.itemId===id)||null}
+  function replaceItemVisual(id){
+    const state=api.getState(),item=state?.items?.find(i=>i.id===id);if(!item)return;
+    const old=itemGroupById(id);if(old){itemRoot.remove(old);old.traverse?.(n=>n.geometry?.dispose?.())}
+    itemRoot.add(buildItem(item,state));
+  }
+
+  function startMoveMode(id){
+    const item=api.getState()?.items?.find(i=>i.id===id);
+    if(!item||item.locked||item.type==="niche")return;
+    setFloorXray(false,false);
+    moveMode={id};moveDrag=null;api.checkpoint?.();
+    if(done3DMoveBtn)done3DMoveBtn.classList.remove("hidden");
+    status.textContent=item.type==="mirror"
+      ?`Move ${item.name} · drag it along/up the wall · Done moving when finished`
+      :`Move ${item.name} · drag the item across the room · Done moving when finished`;
+  }
+  function stopMoveMode(saveNow=true){
+    if(saveNow)api.persist?.();
+    moveMode=null;moveDrag=null;
+    if(done3DMoveBtn)done3DMoveBtn.classList.add("hidden");
+    status.textContent="Visual 3D · tap a fixture to edit";
+    api.refresh2D?.();rebuildScene(true);
+  }
+  done3DMoveBtn?.addEventListener("click",()=>stopMoveMode(true));
+  window.BP3DView={startMove:startMoveMode,stopMove:()=>stopMoveMode(true)};
+  document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{if(tab.dataset.tab!=="threeD"&&moveMode)stopMoveMode(true)}));
+
+  function selectAt(clientX,clientY) {
+    rayFromClient(clientX,clientY);
     const hits=raycaster.intersectObjects(itemRoot.children,true);
     const hit=hits.find(h=>h.object.userData.itemId);
     if(hit){
@@ -906,6 +940,37 @@ if (!api || !legacy) {
   canvas.addEventListener("pointerdown",e=>{
     e.preventDefault();
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(moveMode&&pointers.size===1){
+      rayFromClient(e.clientX,e.clientY);
+      const hits=raycaster.intersectObjects(itemRoot.children,true);
+      const hit=hits.find(h=>h.object.userData.itemId===moveMode.id);
+      if(hit){
+        const item=api.getState()?.items?.find(i=>i.id===moveMode.id);
+        if(item){
+          if(item.type==="mirror"){
+            const W=mm(api.getState().room.width),D=mm(api.getState().room.depth),wall=item.mountWall||"left";
+            let plane;
+            if(wall==="left")plane=new THREE.Plane(new THREE.Vector3(1,0,0),0);
+            else if(wall==="right")plane=new THREE.Plane(new THREE.Vector3(1,0,0),-W);
+            else if(wall==="window")plane=new THREE.Plane(new THREE.Vector3(0,0,1),0);
+            else plane=new THREE.Plane(new THREE.Vector3(0,0,1),-D);
+            const pt=new THREE.Vector3();
+            if(raycaster.ray.intersectPlane(plane,pt)){
+              const alongNow=Number(item.mountAlong)||0,centerY=mm((Number(item.z)||0)+(Number(item.height)||0)/2);
+              const hitAlong=(wall==="left"||wall==="right")?pt.z*1000:pt.x*1000;
+              moveDrag={pointerId:e.pointerId,kind:"wall",wall,plane,offAlong:alongNow-hitAlong,offY:centerY-pt.y,moved:false};
+            }
+          }else{
+            const forward=target.clone().sub(camera.position);forward.y=0;
+            if(forward.lengthSq()<.0001)forward.set(0,0,-1);forward.normalize();
+            const right=forward.clone().cross(new THREE.Vector3(0,1,0)).normalize();
+            const r=canvas.getBoundingClientRect(),worldPerPixel=(2*Math.max(.8,radius)*Math.tan(THREE.MathUtils.degToRad(camera.fov*.5)))/Math.max(240,r.height);
+            moveDrag={pointerId:e.pointerId,kind:"floor",startClientX:e.clientX,startClientY:e.clientY,startX:Number(item.x)||0,startY:Number(item.y)||0,rightX:right.x,rightZ:right.z,forwardX:forward.x,forwardZ:forward.z,scale:worldPerPixel*1000,moved:false};
+          }
+          if(moveDrag){drag=null;try{canvas.setPointerCapture(e.pointerId)}catch(_){};return}
+        }
+      }
+    }
     if(pointers.size===1){
       drag={id:e.pointerId,x:e.clientX,y:e.clientY,theta,phi,moved:false};
       try{canvas.setPointerCapture(e.pointerId)}catch(_){}
@@ -918,6 +983,26 @@ if (!api || !legacy) {
 
   canvas.addEventListener("pointermove",e=>{
     if(pointers.has(e.pointerId))pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(moveDrag&&moveDrag.pointerId===e.pointerId&&moveMode){
+      e.preventDefault();
+      const item=api.getState()?.items?.find(i=>i.id===moveMode.id);
+      if(item&&moveDrag.kind==="wall"){
+        rayFromClient(e.clientX,e.clientY);const p=new THREE.Vector3();
+        if(raycaster.ray.intersectPlane(moveDrag.plane,p)){
+          const alongHit=(moveDrag.wall==="left"||moveDrag.wall==="right")?p.z*1000:p.x*1000;
+          const centerY=(p.y+moveDrag.offY)*1000;
+          const res=api.moveWallItem3D?.(item.id,alongHit+moveDrag.offAlong,centerY-(Number(item.height)||0)/2);
+          if(res){moveDrag.moved=true;replaceItemVisual(item.id);status.textContent=`Moving ${item.name} · ${res.along} mm along wall · ${res.z} mm above floor`;}
+        }
+      }else if(item&&moveDrag.kind==="floor"){
+        const dx=e.clientX-moveDrag.startClientX,dy=e.clientY-moveDrag.startClientY;
+        const wx=(moveDrag.rightX*dx + moveDrag.forwardX*(-dy))*moveDrag.scale;
+        const wz=(moveDrag.rightZ*dx + moveDrag.forwardZ*(-dy))*moveDrag.scale;
+        const res=api.moveItem3D?.(item.id,moveDrag.startX+wx,moveDrag.startY+wz);
+        if(res){moveDrag.moved=true;const d=itemDims(item),g=itemGroupById(item.id);if(g)g.position.set(mm(res.x+d.w/2),g.position.y,mm(res.y+d.d/2));status.textContent=`Moving ${item.name} · ${res.x} mm from left · ${res.y} mm from window wall`;}
+      }
+      return;
+    }
     if(pointers.size===2&&pinch){
       e.preventDefault();
       const p=[...pointers.values()],d=Math.max(20,Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y));
@@ -929,16 +1014,24 @@ if (!api || !legacy) {
       const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
       if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;
       theta=drag.theta-dx*.008;
-      phi=THREE.MathUtils.clamp(drag.phi-dy*.006,.12,1.52);
+      phi=THREE.MathUtils.clamp(drag.phi-dy*.006,.12,(floorXrayToggle?.checked?3.02:1.52));
       updateCamera();
     }
   },{passive:false});
 
   function endPointer(e){
+    if(moveDrag&&moveDrag.pointerId===e.pointerId){
+      pointers.delete(e.pointerId);
+      if(moveDrag.moved){api.persist?.();api.refresh2D?.();rebuildScene(true)}
+      moveDrag=null;
+      const item=moveMode?api.getState()?.items?.find(i=>i.id===moveMode.id):null;
+      if(item)status.textContent=`Move ${item.name} · drag again or tap Done moving`;
+      return;
+    }
     const was=drag&&drag.id===e.pointerId?drag:null;
     pointers.delete(e.pointerId);
     if(pointers.size<2)pinch=null;
-    if(was&&!was.moved)selectAt(e.clientX,e.clientY);
+    if(was&&!was.moved&&!moveMode)selectAt(e.clientX,e.clientY);
     if(was)drag=null;
   }
   canvas.addEventListener("pointerup",endPointer);
@@ -963,18 +1056,32 @@ if (!api || !legacy) {
   viewMode?.addEventListener("change",()=>setTimeout(syncViewMode,0));
   document.querySelector('.tab[data-tab="threeD"]')?.addEventListener("click",()=>setTimeout(()=>{syncViewMode();resize();rebuildScene(true)},40));
   wallsToggle?.addEventListener("change",updateWallVisibility);
+  function setFloorXray(on, moveCamera=true){
+    if(on&&moveMode)stopMoveMode(true);
+    if(floorXrayToggle) floorXrayToggle.checked=!!on;
+    if(floorXrayBtn){
+      floorXrayBtn.classList.toggle("active",!!on);
+      floorXrayBtn.setAttribute("aria-pressed",on?"true":"false");
+      floorXrayBtn.textContent=on?"Room view":"Under floor";
+    }
+    updateWallVisibility();
+    if(moveCamera) preset(on?"underfloor":"reset");
+    status.textContent=on?"Under-floor view · drag to orbit around joists":"Visual 3D · tap a fixture to edit";
+  }
+  floorXrayBtn?.addEventListener("click",()=>setFloorXray(!(floorXrayToggle?.checked),true));
+  floorXrayToggle?.addEventListener("change",()=>setFloorXray(floorXrayToggle.checked,true));
 
-  document.getElementById("viewDoor")?.addEventListener("click",()=>setTimeout(()=>{if(viewMode.value==="3d")preset("door")},0));
-  document.getElementById("viewWindow")?.addEventListener("click",()=>setTimeout(()=>{if(viewMode.value==="3d")preset("window")},0));
-  document.getElementById("viewTop")?.addEventListener("click",()=>setTimeout(()=>{if(viewMode.value==="3d")preset("top")},0));
-  document.getElementById("viewReset")?.addEventListener("click",()=>setTimeout(()=>{if(viewMode.value==="3d")preset("reset")},0));
+  document.getElementById("viewDoor")?.addEventListener("click",()=>setTimeout(()=>{if(viewMode.value==="3d"){setFloorXray(false,false);preset("door")}},0));
+  document.getElementById("viewWindow")?.addEventListener("click",()=>setTimeout(()=>{if(viewMode.value==="3d"){setFloorXray(false,false);preset("window")}},0));
+  document.getElementById("viewTop")?.addEventListener("click",()=>setTimeout(()=>{if(viewMode.value==="3d"){setFloorXray(false,false);preset("top")}},0));
+  document.getElementById("viewReset")?.addEventListener("click",()=>setTimeout(()=>{if(viewMode.value==="3d"){setFloorXray(false,false);preset("reset")}},0));
 
   window.addEventListener("resize",resize);
 
   // Keep the renderer in sync with edits made in Plan/Product/Project.
   setInterval(()=>{
     if(viewMode?.value==="3d"){
-      rebuildScene(false);
+      if(!moveDrag)rebuildScene(false);
       resize();
     }
   },700);
@@ -989,6 +1096,7 @@ if (!api || !legacy) {
 
   rebuildScene(true);
   preset("reset");
+  setFloorXray(false,false);
   syncViewMode();
   animate();
 }

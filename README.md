@@ -1,56 +1,22 @@
-# Bathroom Planner V2.0.0 — Build Foundation
+# Bathroom Planner V2.1.0
 
-V2 starts the construction-planning phase while preserving the V1 room, fixtures, products, tiles and wall-mounted objects.
+Flexible door + shower fitting + 3D positioning update.
 
-## New in V2.0
-
-### Floor build-up
-- editable stack of floor layers
-- enable/disable each layer
-- editable thicknesses
-- live total finished-floor build-up
-- 0mm remains finished-floor reference, with deck/void shown below it
-
-### Structure
-- generated joist layout
-- direction: window→door or left→right
-- joist width, depth, centres and first offset
-- editable structural deck thickness kept separately from the finish build-up
-- manual noggin / obstruction rectangles
-- Structure plan layer
-- 3D Floor X-ray revealing deck and joists
-
-### Underfloor-heating foundation
-- Electric mat / loose cable / wet UFH planning modes
-- output W/m²
-- perimeter margin
-- fixed-fixture exclusion option
-- thermostat wall
-- approximate heated-area and electrical-load calculations
-- Heating plan layer
-- X-ray heating layer when enabled
-
-### Portable project file
-- Export a `.bathplan` file
-- Import the same file on phone, laptop or another browser
-- uploaded product/tile images already stored in project state are carried with the project
-- import makes a local recovery copy before replacing the current project
-- readable JSON export retained for inspection/debugging
-
-### Schema
-- formal V2 schemaVersion
-- project ID, created date and updated date
-- migrations preserve V1 data
-- Build logic isolated in `build-manager.js` instead of expanding the core renderer further
+## New in V2.1.0
+- door opening width and actual door leaf/swing width are now separate
+- the 2D swing radius and 3D door leaf use the new **Door leaf / swing** value
+- old fixed shower hardware is migrated into normal plan items
+- Rain shower head, Hand shower and Shower controls can be added independently from **+ Add**
+- shower fittings can be moved, rotated, duplicated, deleted and given exact X/Y/height values like other plan items
+- select a movable item in 3D and choose **Move in 3D**
+- drag the selected item across the floor plane in 3D; its X/Y plan position is written back to the shared project state
+- tap **Done moving** to leave 3D move mode
+- returning to Plan shows the same new position
+- existing V2.0.x project data migrates forward; the old fixed shower fixture records are retired after conversion
+- Under floor view remains available
 
 ## Update
 1. Extract the ZIP.
-2. Upload **all files** to the root of the existing GitHub Pages repo.
-3. Commit and wait for Pages to publish.
+2. Upload all files to the repo root, replacing the existing files.
+3. Commit and allow GitHub Pages to publish.
 4. Open Bathroom Planner and tap **Reload latest**.
-5. The app should identify itself as **V2.0.0 · build foundation**.
-
-## Intended next steps
-- V2.1: plumbing nodes, pipes, waste falls, fittings, joist-aware routing and clashes.
-- V2.2: detailed UFH routing and electrical/wet-zone planning.
-- V2.3: materials / shopping schedule.

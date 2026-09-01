@@ -300,7 +300,7 @@ if (!api || !legacy) {
     structureRoot.add(deckMesh);
     if(s.heating?.enabled){
       const margin=mm(Math.max(0,Number(s.heating.margin)||0)),W=mm(s.room.width)-margin*2,D=mm(s.room.depth)-margin*2;
-      if(W>.05&&D>.05){const heatZ=heatingLayerCenterMm(s);const heat=meshBox(W,.006,D,mats.heating,mm(s.room.width)/2,-mm(heatZ),mm(s.room.depth)/2,false);structureRoot.add(heat)}
+      if(W>.05&&D>.05){const heatZ=heatingLayerCenterMm(s);const heat=meshBox(W,.006,D,mats.heating,mm(s.room.width)/2,-mm(heatZ),mm(s.room.depth)/2,false);heat.userData.structureKind="heating";structureRoot.add(heat)}
     }
   }
 
@@ -660,14 +660,19 @@ if (!api || !legacy) {
   function updateWallVisibility() {
     if(!room)return;
     const W=mm(room.width),D=mm(room.depth),show=wallsToggle?.checked!==false,xray=floorXrayToggle?.checked===true;
+    // Floor cutaway: remove only the finished floor/deck. Keep the room and fixtures
+    // in place so the joists can be understood in context beneath the bathroom.
     root.visible=!xray;
     structureRoot.visible=xray;
-    itemRoot.visible=!xray;
-    fixedRoot.visible=!xray;
-    structureRoot.children.forEach(m=>{ if(m.userData?.structureKind==="deck") m.visible=!xray; });
-    Object.values(wallSets).flat().forEach(m=>m.visible=show&&!xray);
-    Object.entries(surfaceSets).forEach(([side,list])=>list.forEach(m=>m.visible=xray?false:((side==="floor")?true:show)));
-    if(!show||xray)return;
+    itemRoot.visible=true;
+    fixedRoot.visible=true;
+    structureRoot.children.forEach(m=>{
+      if(m.userData?.structureKind==="deck"||m.userData?.structureKind==="heating")m.visible=!xray;
+      else m.visible=xray;
+    });
+    Object.values(wallSets).flat().forEach(m=>m.visible=show);
+    Object.entries(surfaceSets).forEach(([side,list])=>list.forEach(m=>m.visible=(side==="floor")?!xray:show));
+    if(!show)return;
     const margin=.06;
     if(camera.position.x < -margin){ wallSets.left.forEach(m=>m.visible=false); surfaceSets.left.forEach(m=>m.visible=false); }
     if(camera.position.x > W+margin){ wallSets.right.forEach(m=>m.visible=false); surfaceSets.right.forEach(m=>m.visible=false); }
@@ -886,11 +891,12 @@ if (!api || !legacy) {
     if(floorXrayBtn){
       floorXrayBtn.classList.toggle("active",!!on);
       floorXrayBtn.setAttribute("aria-pressed",on?"true":"false");
-      floorXrayBtn.textContent=on?"Room view":"Under floor";
+      floorXrayBtn.textContent=on?"Restore floor":"Under floor";
     }
     updateWallVisibility();
-    if(moveCamera) preset(on?"underfloor":"reset");
-    status.textContent=on?"Under-floor view · drag to orbit around joists":"Visual 3D · tap a fixture to edit";
+    // Deliberately keep the current camera. This is a cutaway of the same room,
+    // not a separate 'beams-only' scene.
+    status.textContent=on?"Floor removed · fixtures stay visible · joists exposed":"Visual 3D · tap a fixture to edit";
   }
   floorXrayBtn?.addEventListener("click",()=>setFloorXray(!(floorXrayToggle?.checked),true));
   floorXrayToggle?.addEventListener("change",()=>setFloorXray(floorXrayToggle.checked,true));

@@ -1,4 +1,4 @@
-# Bathroom Planner V2.4.0
+# Bathroom Planner V2.4.1
 
 Complete replacement build for the Bathroom Planner GitHub Pages PWA. Upload every file from this folder over the repository root. Existing `bathroomPlannerStable` data is migrated forward in place.
 
@@ -39,3 +39,11 @@ V2.4 automatically converts older projects:
 3. Commit the replacement.
 4. Wait for GitHub Pages to deploy.
 5. Open the installed planner and use **Reload latest**.
+
+
+## V2.4.1 focused fixes
+- Glass-panel editing no longer repositions the panel just because you change its style, trim, privacy, height or other non-position fields.
+- X/Y edits on a mounted glass panel now translate back into its position along the host, so you can move it back instead of it snapping to the previous mount point.
+- 2D drag and 3D Move continue to update the same mounted position.
+- Under floor is now a floor cutaway: it removes the finished floor and structural deck but keeps the bathroom fixtures and walls visible while exposing the joists underneath.
+- Under floor no longer jumps to a separate beams-only camera view. Tap Restore floor to return to the normal room.

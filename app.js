@@ -1,7 +1,7 @@
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.4.0", KEY="bathroomPlannerStable";
+const VERSION="2.4.1", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -207,6 +207,17 @@ function nearestShowerFaceSign2D(stud){
  if(!sh)return 1;const sd=itemDims(sh),cx=stud.x+itemDims(stud).w/2,cy=stud.y+itemDims(stud).h/2,dx=sh.x+sd.w/2-cx,dy=sh.y+sd.h/2-cy,a=-((Number(stud.rotation)||0)*Math.PI/180),sn=Math.sin(a),cs=Math.cos(a),localY=-dx*sn+dy*cs;return localY>=0?1:-1;
 }
 function mountPlanSpan(i){if(i.type==="mirror")return Math.max(40,Number(i.w)||500);if(i.type==="rainHead")return Math.max(60,Number(i.h)||300);if(i.type==="showerControls")return Math.max(60,Number(i.w)||150);return Math.max(50,Number(i.w)||90)}
+function mountAlongFromPlan(i,x=i.x,y=i.y){
+ if(!i)return Number(i?.mountAlong)||0;
+ const host=i.mountHost||i.mountWall||"left",d=itemDims(i),cx=Number(x)+d.w/2,cy=Number(y)+d.h/2;
+ if(isStudHost(host)){
+  const stud=hostStud(host);if(!stud)return Number(i.mountAlong)||0;
+  const sd=itemDims(stud),scx=Number(stud.x)+sd.w/2,scy=Number(stud.y)+sd.h/2,a=(Number(stud.rotation)||0)*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),px=cx-scx,py=cy-scy,localX=px*cs-py*sn,span=Math.max(20,Number(stud.w)||900),half=Math.min(span/2,mountPlanSpan(i)/2);
+  return Math.max(half,Math.min(span-half,localX+span/2));
+ }
+ const span=(host==="left"||host==="right")?state.room.depth:state.room.width,half=Math.min(span/2,mountPlanSpan(i)/2),along=(host==="left"||host==="right")?cy:cx;
+ return Math.max(half,Math.min(span-half,along));
+}
 function syncMountedItemPlan(i){
  if(!i)return;
  const host=i.mountHost||i.mountWall||"left";i.mountHost=host;if(i.type==="mirror"&&!isStudHost(host)&&host!=="free")i.mountWall=host;
@@ -1206,10 +1217,24 @@ $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!
 
 ["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMountHost","itemMountAlong","itemMountFace","itemFixtureFinish","itemStudGlassStyle","itemStudGlassTrim","itemGlassPrivacy","itemGlassThickness"].forEach(id=>$(id).onchange=()=>{
  const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();
+ const wasMounted=(WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free")),oldHost=i.mountHost||i.mountWall||"left",oldAlong=Number(i.mountAlong)||0;
  i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(6,Number($("itemH").value)||10);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);
- if(WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel"){i.mountHost=$("itemMountHost").value||(i.type==="glassPanel"?"free":"left");i.mountAlong=Math.max(0,Number($("itemMountAlong").value)||0);i.mountFace=$("itemMountFace").value||"shower";if(i.type==="mirror"&&!isStudHost(i.mountHost))i.mountWall=i.mountHost;if(i.mountHost!=="free")syncMountedItemPlan(i)}
  if(["rainHead","handset","showerControls"].includes(i.type)){i.finish=$("itemFixtureFinish").value||"matt-black";}
- if(i.type==="glassPanel"){i.glassStyle=$("itemStudGlassStyle").value||"fluted";i.glassTrimFinish=$("itemStudGlassTrim").value||"matt-black";i.glassPrivacy=$("itemGlassPrivacy").value||"light";i.glassThickness=Math.max(6,Math.min(15,Number($("itemGlassThickness").value)||10));i.h=i.glassThickness;if(i.mountHost!=="free")syncMountedItemPlan(i)}
+ if(i.type==="glassPanel"){i.glassStyle=$("itemStudGlassStyle").value||"fluted";i.glassTrimFinish=$("itemStudGlassTrim").value||"matt-black";i.glassPrivacy=$("itemGlassPrivacy").value||"light";i.glassThickness=Math.max(6,Math.min(15,Number($("itemGlassThickness").value)||10));i.h=i.glassThickness;}
+ if(WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel"){
+  const nextHost=$("itemMountHost").value||(i.type==="glassPanel"?"free":"left"),hostChanged=id==="itemMountHost",alongChanged=id==="itemMountAlong",xyChanged=id==="itemX"||id==="itemY";
+  i.mountHost=nextHost;i.mountFace=$("itemMountFace").value||"shower";if(i.type==="mirror"&&!isStudHost(i.mountHost)&&i.mountHost!=="free")i.mountWall=i.mountHost;
+  if(i.mountHost!=="free"){
+   if(hostChanged){i.mountAlong=Math.max(0,Number($("itemMountAlong").value)||oldAlong);}
+   else if(alongChanged){i.mountAlong=Math.max(0,Number($("itemMountAlong").value)||0);}
+   else if(xyChanged){i.mountAlong=mountAlongFromPlan(i,i.x,i.y);}
+   else {i.mountAlong=oldHost===i.mountHost?oldAlong:mountAlongFromPlan(i,i.x,i.y);}
+   syncMountedItemPlan(i);
+  }else if(wasMounted&&oldHost!=="free"){
+   // Detaching a glass panel keeps it exactly where it was in plan.
+   i.mountAlong=oldAlong;
+  }
+ }
  save();render();openSelectedSheet();
 });
 ["openA","openW","openB","openSill","openHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);save();sync();render();openSelectedSheet()});

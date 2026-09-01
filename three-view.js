@@ -73,7 +73,7 @@ if (!api || !legacy) {
     oak:new THREE.MeshStandardMaterial({color:0xa7835e,roughness:.72,map:oakTex}),autumnOak:new THREE.MeshStandardMaterial({color:0xa87e52,roughness:.68,map:oakTex}),oakDark:new THREE.MeshStandardMaterial({color:0x80613f,roughness:.78,map:oakTex}),timber:new THREE.MeshStandardMaterial({color:0xb39875,roughness:.8}),joist:new THREE.MeshStandardMaterial({color:0x9b7857,roughness:.9}),
     heating:new THREE.MeshStandardMaterial({color:0xb95037,roughness:.7,transparent:true,opacity:.62,side:THREE.DoubleSide}),brass:new THREE.MeshStandardMaterial({color:0xb88943,roughness:.28,metalness:.7}),brushedBrass:new THREE.MeshStandardMaterial({color:0xc09a59,roughness:.34,metalness:.72}),metal:new THREE.MeshStandardMaterial({color:0xc8c8c3,roughness:.34,metalness:.68}),chrome:new THREE.MeshPhysicalMaterial({color:0xe7e8e7,roughness:.12,metalness:.96,clearcoat:.55}),
     dark:new THREE.MeshStandardMaterial({color:0x080808,roughness:.76,metalness:.12}),mattBlack:new THREE.MeshStandardMaterial({color:0x111211,roughness:.58,metalness:.35}),graphiteSlate:new THREE.MeshStandardMaterial({color:0x363735,roughness:.84,map:slateTex,bumpMap:slateTex,bumpScale:.007}),niche:new THREE.MeshStandardMaterial({color:0xb8aa96,roughness:.88}),
-    glass:new THREE.MeshPhysicalMaterial({color:0xf6fbfc,transmission:.96,transparent:true,opacity:.24,roughness:.055,ior:1.46,thickness:.008,side:THREE.DoubleSide,depthWrite:false}),flutedGlass:new THREE.MeshPhysicalMaterial({color:0xf7fbfc,transmission:.94,transparent:true,opacity:.28,roughness:.10,ior:1.46,thickness:.010,side:THREE.DoubleSide,depthWrite:false}),mirror:new THREE.MeshPhysicalMaterial({color:0xdce5e7,metalness:.72,roughness:.08,transparent:true,opacity:.94,side:THREE.DoubleSide}),windowGlass:new THREE.MeshPhysicalMaterial({color:0xc7e2e7,transmission:.80,transparent:true,opacity:.21,roughness:.04,thickness:.01,side:THREE.DoubleSide,depthWrite:false})
+    glass:new THREE.MeshPhysicalMaterial({color:0xbfdce0,transmission:.74,transparent:true,opacity:.30,roughness:.08,ior:1.46,thickness:.012,side:THREE.DoubleSide,depthWrite:false}),flutedGlass:new THREE.MeshPhysicalMaterial({color:0xc8dde0,transmission:.55,transparent:true,opacity:.36,roughness:.34,ior:1.46,thickness:.014,side:THREE.DoubleSide,depthWrite:false}),mirror:new THREE.MeshPhysicalMaterial({color:0xdce5e7,metalness:.72,roughness:.08,transparent:true,opacity:.94,side:THREE.DoubleSide}),windowGlass:new THREE.MeshPhysicalMaterial({color:0xc7e2e7,transmission:.80,transparent:true,opacity:.21,roughness:.04,thickness:.01,side:THREE.DoubleSide,depthWrite:false})
   };
   const sharedMaterials=new Set(Object.values(mats));
 
@@ -480,13 +480,24 @@ if (!api || !legacy) {
   }
 
   function buildGlassItem(i,s){
-    const attached=i.mountHost&&i.mountHost!=="free",g=attached?mountedGroup(i,s):groupForItem(i),w=mm(i.w||900),h=mm(i.height||1000),z=mm(i.z||1100),th=mm(i.glassThickness||i.h||10),style=i.glassStyle||"fluted",privacy=i.glassPrivacy||"light";let fluteFace=1;if(String(i.mountHost||"").startsWith("stud:")){const stud=(s.items||[]).find(x=>x.id===String(i.mountHost).slice(5)&&x.type==="stud");if(stud)fluteFace=-studShowerFaceSign(stud,s)}
+    // V2.4.3 deliberately restores the successful V2.2 visual model: a thin free panel
+    // with visible, restrained ribs on one face only. No host transform can move the panel.
+    const g=groupForItem(i),w=mm(i.w||900),d=Math.max(.006,mm(i.glassThickness||i.h||10)),h=mm(i.height||1000),z=mm(i.z??1100),style=i.glassStyle||"fluted",privacy=i.glassPrivacy||"light";
     if(style==="none")return setItemId(g,i.id);
-    const glass=buildGlassPanel(w,h,style,fluteFace,privacy,th);glass.position.set(0,z+h/2,0);g.add(glass);
-    const trim=trimFinishMaterial(i),edge=Math.min(.012,Math.max(.006,th*.9));
-    g.add(meshBox(w,edge,Math.max(th,.012),trim,0,z+h+edge/2,0,false));
-    g.add(meshBox(edge,h,Math.max(th,.012),trim,-w/2+edge/2,z+h/2,0,false));
-    g.add(meshBox(edge,h,Math.max(th,.012),trim,w/2-edge/2,z+h/2,0,false));
+    let baseMat=(style==="fluted"?mats.flutedGlass:mats.glass).clone();baseMat.userData.bpOwned=true;
+    if(style==="frosted"){baseMat=mats.glass.clone();baseMat.userData.bpOwned=true;baseMat.transmission=.54;baseMat.opacity=privacy==="medium"?.52:.44;baseMat.roughness=.48}
+    else if(privacy==="clear"){baseMat.opacity=style==="fluted"?.30:.24}
+    else if(privacy==="medium"){baseMat.opacity=style==="fluted"?.44:.38;baseMat.roughness=Math.max(baseMat.roughness,.30)}
+    const base=meshBox(w,h,d,baseMat,0,z+h/2,0,false);base.renderOrder=3;g.add(base);
+    if(style==="fluted"){
+      const spacing=.030,count=Math.max(4,Math.min(42,Math.floor(w/spacing))),actual=w/count;
+      const ribMat=new THREE.MeshPhysicalMaterial({color:0xc1d8dc,transmission:.40,transparent:true,opacity:privacy==="medium"?.43:.34,roughness:.46,metalness:0,side:THREE.DoubleSide,depthWrite:false});ribMat.userData.bpOwned=true;
+      for(let n=1;n<count;n++){const x=-w/2+n*actual;const rib=meshBox(Math.min(.009,actual*.28),h*.985,.004,ribMat,x,z+h/2,d/2+.002,false);rib.renderOrder=4;g.add(rib)}
+    }
+    const trim=trimFinishMaterial(i),edge=.006,trimDepth=Math.max(d,.008);
+    g.add(meshBox(w,edge,trimDepth,trim,0,z+h-edge/2,0,false));
+    g.add(meshBox(edge,h,trimDepth,trim,-w/2+edge/2,z+h/2,0,false));
+    g.add(meshBox(edge,h,trimDepth,trim,w/2-edge/2,z+h/2,0,false));
     return setItemId(g,i.id);
   }
 
@@ -743,7 +754,7 @@ if (!api || !legacy) {
     itemRoot.add(buildItem(item,state));
   }
 
-  function isWallMountedMove(item){return !!item&&(item.type==="mirror"||item.type==="rainHead"||item.type==="handset"||item.type==="showerControls"||(item.type==="glassPanel"&&item.mountHost&&item.mountHost!=="free"))}
+  function isWallMountedMove(item){return !!item&&(item.type==="mirror"||item.type==="rainHead"||item.type==="handset"||item.type==="showerControls")}
   function mountPlaneInfo(item,s){
     const host=item.mountHost||item.mountWall||"left",W=mm(s.room.width),D=mm(s.room.depth);
     if(String(host).startsWith("stud:")){

@@ -1,7 +1,7 @@
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.4.2", KEY="bathroomPlannerStable";
+const VERSION="2.4.3", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -19,7 +19,7 @@ const starter={
   {id:"wc1",type:"wc",name:"New WC",x:1830,y:25,w:370,h:640,rotation:0,locked:false,z:0,height:800},
   {id:"vanity1",type:"vanity",name:"Floor-standing vanity",x:0,y:700,w:450,h:970,rotation:0,locked:false,z:0,height:850},
   {id:"stud1",type:"stud",name:"Half-height stud wall",x:0,y:1670,w:900,h:100,rotation:0,locked:false,z:0,height:1100},
-  {id:"glass1",type:"glassPanel",name:"Fluted shower glass",x:0,y:1765,w:900,h:10,rotation:0,locked:false,z:1100,height:1000,mountHost:"stud:stud1",mountAlong:450,mountFace:"shower",glassStyle:"fluted",glassTrimFinish:"matt-black",glassPrivacy:"light",glassThickness:10},
+  {id:"glass1",type:"glassPanel",name:"Fluted shower glass",x:0,y:1715,w:900,h:10,rotation:0,locked:false,z:1100,height:1000,mountHost:"free",glassStyle:"fluted",glassTrimFinish:"matt-black",glassPrivacy:"light",glassThickness:10},
   {id:"shower1",type:"shower",name:"Walk-in shower",x:0,y:1745,w:1400,h:800,rotation:0,locked:false,z:0,height:40,showerMountSide:"right"},
   {id:"storage1",type:"storage",name:"Tall storage",x:1460,y:2295,w:300,h:250,rotation:0,locked:false,z:0,height:1800},
   {id:"rad1",type:"radiator",name:"Towel radiator",x:2180,y:1900,w:100,h:520,rotation:0,locked:false,z:650,height:1200},
@@ -165,7 +165,7 @@ if(!state.migrations.independentGlassV24){
   const stud=state.items.find(i=>i.type==="stud");
   if(stud&&(stud.glassStyle||"fluted")!=="none"){
    const z=(Number(stud.z)||0)+(Number(stud.height)||1100),glassH=Math.max(300,Math.min(1000,(Number(state.room.ceiling)||2470)-z-80));
-   state.items.push({id:"glass-"+stud.id,type:"glassPanel",name:(stud.glassStyle||"fluted")==="plain"?"Clear shower glass":"Fluted shower glass",x:Number(stud.x)||0,y:(Number(stud.y)||0)+(Number(stud.h)||100),w:Math.max(200,Number(stud.w)||900),h:10,rotation:Number(stud.rotation)||0,locked:false,z,height:glassH,mountHost:"stud:"+stud.id,mountAlong:(Number(stud.w)||900)/2,mountFace:"shower",glassStyle:stud.glassStyle||"fluted",glassTrimFinish:stud.glassTrimFinish||"matt-black",glassPrivacy:"light",glassThickness:10});
+   const glass={id:"glass-"+stud.id,type:"glassPanel",name:(stud.glassStyle||"fluted")==="plain"?"Clear shower glass":"Fluted shower glass",x:Number(stud.x)||0,y:Number(stud.y)||0,w:Math.max(200,Number(stud.w)||900),h:10,rotation:Number(stud.rotation)||0,locked:false,z,height:glassH,mountHost:"free",glassStyle:stud.glassStyle||"fluted",glassTrimFinish:stud.glassTrimFinish||"matt-black",glassPrivacy:"light",glassThickness:10};placeGlassAboveStud(glass,stud);state.items.push(glass);
   }
  }
  state.items.filter(i=>i.type==="stud").forEach(i=>{delete i.glassStyle;delete i.glassTrimFinish});
@@ -235,7 +235,32 @@ function syncMountedItemPlan(i){
  else {i.rotation=180;const d=itemDims(i);i.y=Math.round(state.room.depth-d.h);i.x=Math.round(along-d.w/2)}
 }
 function syncMirrorPlanFromMount(i){if(i&&i.type==="mirror"){i.mountHost=i.mountHost||i.mountWall||"left";syncMountedItemPlan(i)}}
-state.items.forEach(i=>{if(WALL_MOUNT_TYPES.has(i.type)){if(!i.mountHost)i.mountHost=i.type==="mirror"?(i.mountWall||"left"):"left";syncMountedItemPlan(i)}else if(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free")syncMountedItemPlan(i)});
+function placeGlassAboveStud(i,stud=null){
+ if(!i||i.type!=="glassPanel")return i;
+ stud=stud||state.items.find(x=>x.type==="stud");if(!stud)return i;
+ i.mountHost="free";delete i.mountAlong;delete i.mountFace;
+ i.rotation=Number(stud.rotation)||0;
+ i.w=Math.max(100,Number(i.w)||Number(stud.w)||900);
+ i.h=Math.max(6,Number(i.glassThickness)||Number(i.h)||10);
+ i.glassThickness=i.h;
+ i.z=(Number(stud.z)||0)+(Number(stud.height)||1100);
+ const sd=itemDims(stud),gd=itemDims(i),cx=Number(stud.x)+sd.w/2,cy=Number(stud.y)+sd.h/2;
+ i.x=Math.round(cx-gd.w/2);i.y=Math.round(cy-gd.h/2);
+ return i;
+}
+state.items.forEach(i=>{if(WALL_MOUNT_TYPES.has(i.type)){if(!i.mountHost)i.mountHost=i.type==="mirror"?(i.mountWall||"left"):"left";syncMountedItemPlan(i)}});
+// V2.4.3: recover the simpler V2.2 glass behaviour. Glass is a free, directly draggable plan object.
+if(!state.migrations.glassRecoveryV243){
+ state.items.filter(i=>i.type==="glassPanel").forEach(i=>{
+  if(i.mountHost&&i.mountHost!=="free"){
+   const stud=hostStud(i.mountHost);if(stud){syncMountedItemPlan(i);i.rotation=Number(stud.rotation)||i.rotation||0;}
+  }
+  i.mountHost="free";delete i.mountAlong;delete i.mountFace;
+  i.glassStyle=i.glassStyle||"fluted";i.glassTrimFinish=i.glassTrimFinish||"matt-black";i.glassPrivacy=i.glassPrivacy||"light";i.glassThickness=Math.max(6,Number(i.glassThickness)||Number(i.h)||10);i.h=i.glassThickness;
+ });
+ state.migrations.glassRecoveryV243=true;
+}
+
 
 
 
@@ -246,6 +271,7 @@ let activePointers=new Map();
 let baseView=null,view=null;
 let snapFeedback=null;
 let manualMode=false,manualFirst=null;
+let exactDetailsPinned=true;
 
 const sEl=(tag,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e};
 function itemDims(i){return (i.rotation===90||i.rotation===270)?{w:i.h,h:i.w}:{w:i.w,h:i.h}}
@@ -650,7 +676,7 @@ function moveItem(e){
   if(!drag.checkpointed){checkpoint();drag.checkpointed=true}drag.moved=true;
  }
  snapFeedback=null;
- if((WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free"))&&i.mountHost){
+ if(WALL_MOUNT_TYPES.has(i.type)&&i.mountHost){
   const host=i.mountHost,snap=55/currentZoom(),vanity=state.items.find(o=>o.type==="vanity");
   if(isStudHost(host)){
    const stud=hostStud(host);if(stud){const sd=itemDims(stud),cx=stud.x+sd.w/2,cy=stud.y+sd.h/2,a=(Number(stud.rotation)||0)*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a),px=x+d.w/2-cx,py=y+d.h/2-cy,localX=px*cs-py*sn;i.mountAlong=Math.round(Math.max(0,Math.min(Number(stud.w)||900,localX+(Number(stud.w)||900)/2)));syncMountedItemPlan(i);render();return true;}
@@ -715,20 +741,21 @@ function refreshMountHostOptions(i){
 
 function openSelectedSheet(){
  const sheet=$("objectSheet");sheet.classList.remove("hidden");
- $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");$("itemMountHostWrap").classList.add("hidden");$("itemMountAlongWrap").classList.add("hidden");$("itemMountFaceWrap").classList.add("hidden");$("itemFixtureFinishWrap").classList.add("hidden");$("itemStudGlassStyleWrap").classList.add("hidden");$("itemStudGlassTrimWrap").classList.add("hidden");$("itemGlassPrivacyWrap").classList.add("hidden");$("itemGlassThicknessWrap").classList.add("hidden");
- $("itemQuick").classList.add("hidden");$("itemDetails").classList.add("hidden");$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
+ $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("alignGlassBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");$("itemMountHostWrap").classList.add("hidden");$("itemMountAlongWrap").classList.add("hidden");$("itemMountFaceWrap").classList.add("hidden");$("itemFixtureFinishWrap").classList.add("hidden");$("itemStudGlassStyleWrap").classList.add("hidden");$("itemStudGlassTrimWrap").classList.add("hidden");$("itemGlassPrivacyWrap").classList.add("hidden");$("itemGlassThicknessWrap").classList.add("hidden");
+ $("itemQuick").classList.add("hidden");$("itemDetails").classList.toggle("hidden",!(selected.kind==="item"&&exactDetailsPinned));$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
+ $("detailsToggle").textContent=exactDetailsPinned?"Hide exact details":"Show exact details";
  if(selected.kind==="item"){
   const i=state.items.find(x=>x.id===selected.id);if(!i)return;
   const prod=productById(i.productId);$("sheetEyebrow").textContent=prod?"Product object":"Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm · ${Number(i.rotation)||0}°`;
   $("itemQuick").classList.remove("hidden");$("detailsToggle").classList.remove("hidden");
   $("lockBtn").textContent=i.locked?"Unlock":"Lock";$("rotateBtn").textContent=`Rotate 90° · ${Number(i.rotation)||0}° · front → ${facingName(i.rotation)}`;
-  $("rotateBtn").classList.toggle("hidden",WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free"));$("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");$("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
+  $("rotateBtn").classList.toggle("hidden",WALL_MOUNT_TYPES.has(i.type));$("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");$("alignGlassBtn").classList.toggle("hidden",i.type!=="glassPanel");$("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
   $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;
   $("itemShowerMountWrap").classList.add("hidden");
-  const fixtureTypes=["rainHead","handset","showerControls"],mounted=WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free");
+  const fixtureTypes=["rainHead","handset","showerControls"],mounted=WALL_MOUNT_TYPES.has(i.type);
   $("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");
-  $("itemMountHostWrap").classList.toggle("hidden",!(WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel"));$("itemMountAlongWrap").classList.toggle("hidden",!mounted);$("itemMountFaceWrap").classList.toggle("hidden",!mounted||!isStudHost(i.mountHost)||i.type==="glassPanel");
-  if(WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel"){refreshMountHostOptions(i);$("itemMountAlong").value=Math.round(Number(i.mountAlong)||0);$("itemMountFace").value=i.mountFace||"shower";}
+  $("itemMountHostWrap").classList.toggle("hidden",!WALL_MOUNT_TYPES.has(i.type));$("itemMountAlongWrap").classList.toggle("hidden",!mounted);$("itemMountFaceWrap").classList.toggle("hidden",!mounted||!isStudHost(i.mountHost));
+  if(WALL_MOUNT_TYPES.has(i.type)){refreshMountHostOptions(i);$("itemMountAlong").value=Math.round(Number(i.mountAlong)||0);$("itemMountFace").value=i.mountFace||"shower";}
   $("itemFixtureFinishWrap").classList.toggle("hidden",!fixtureTypes.includes(i.type));if(fixtureTypes.includes(i.type)){$("itemFixtureFinish").value=i.finish||"matt-black";}
   const isGlass=i.type==="glassPanel";$("itemStudGlassStyleWrap").classList.toggle("hidden",!isGlass);$("itemStudGlassTrimWrap").classList.toggle("hidden",!isGlass);$("itemGlassPrivacyWrap").classList.toggle("hidden",!isGlass);$("itemGlassThicknessWrap").classList.toggle("hidden",!isGlass);
   if(isGlass){$("itemStudGlassStyle").value=i.glassStyle||"fluted";$("itemStudGlassTrim").value=i.glassTrimFinish||"matt-black";$("itemGlassPrivacy").value=i.glassPrivacy||"light";$("itemGlassThickness").value=Number(i.glassThickness)||10;}
@@ -767,10 +794,13 @@ function addItem(type){
  if(type==="handset"){i.z=1050;i.height=720;i.finish="matt-black";i.mountHost="left";i.mountAlong=Math.max(50,state.room.depth-225);i.mountFace="shower";syncMountedItemPlan(i)}
  if(type==="showerControls"){const stud=state.items.find(x=>x.type==="stud");i.z=950;i.height=200;i.finish="matt-black";i.mountHost=stud?"stud:"+stud.id:"left";i.mountAlong=stud?(Number(stud.w)||900)*.65:state.room.depth*.65;i.mountFace="shower";syncMountedItemPlan(i)}
  if(type==="glassPanel"){
-  const stud=state.items.find(x=>x.type==="stud");i.glassStyle="fluted";i.glassTrimFinish="matt-black";i.glassPrivacy="light";i.glassThickness=10;i.h=10;
-  if(stud){i.mountHost="stud:"+stud.id;i.mountAlong=(Number(stud.w)||900)/2;i.mountFace="shower";i.z=(Number(stud.z)||0)+(Number(stud.height)||1100);i.height=Math.max(300,Math.min(1000,state.room.ceiling-i.z-80));syncMountedItemPlan(i)}else{i.mountHost="free"}
+  const stud=state.items.find(x=>x.type==="stud");i.glassStyle="fluted";i.glassTrimFinish="matt-black";i.glassPrivacy="light";i.glassThickness=10;i.h=10;i.mountHost="free";
+  if(stud){i.w=Math.max(200,Number(stud.w)||900);i.height=Math.max(300,Math.min(1000,state.room.ceiling-((Number(stud.z)||0)+(Number(stud.height)||1100))-80));placeGlassAboveStud(i,stud)}
  }
  state.items.push(i);selected={kind:"item",id:i.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
+}
+function addGlassPanel(style="fluted"){
+ addItem("glassPanel");const i=state.items.find(x=>x.id===selected.id);if(!i)return;i.glassStyle=style==="plain"?"plain":"fluted";i.name=i.glassStyle==="fluted"?"Fluted glass panel":"Plain glass panel";save();render();openSelectedSheet();
 }
 function addService(type){
  const names={hot:"Hot entry",cold:"Cold entry",waste:"Waste outlet",soil:"Soil stack",electric:"Electrical point"};
@@ -1189,11 +1219,13 @@ $("clearMeasuresBtn").onclick=()=>{if(!state.manualMeasurements.length)return;ch
 $("focusBtn").onclick=toggleFocus;$("exitFocusBtn").onclick=toggleFocus;
 $("addBtn").onclick=()=>$("addSheet").classList.remove("hidden");$("closeAddSheet").onclick=()=>$("addSheet").classList.add("hidden");
 document.querySelectorAll("[data-add-item]").forEach(b=>b.onclick=()=>addItem(b.dataset.addItem));
+document.querySelectorAll("[data-add-glass]").forEach(b=>b.onclick=()=>addGlassPanel(b.dataset.addGlass));
 document.querySelectorAll("[data-add-service]").forEach(b=>b.onclick=()=>addService(b.dataset.addService));
 $("closeObjectSheet").onclick=closeObjectSheet;
-$("detailsToggle").onclick=()=>{const d=$("itemDetails");d.classList.toggle("hidden");$("detailsToggle").textContent=d.classList.contains("hidden")?"Show exact details":"Hide exact details"};
+$("detailsToggle").onclick=()=>{exactDetailsPinned=!exactDetailsPinned;const d=$("itemDetails");d.classList.toggle("hidden",!exactDetailsPinned);$("detailsToggle").textContent=exactDetailsPinned?"Hide exact details":"Show exact details"};
 
 $("centreMirrorBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||i.type!=="mirror")return;const vanity=state.items.find(x=>x.type==="vanity");if(!vanity)return;checkpoint();const vd=itemDims(vanity);i.mountHost="left";i.mountWall="left";i.mountAlong=vanity.y+vd.h/2;syncMountedItemPlan(i);save();render();openSelectedSheet()};
+$("alignGlassBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||i.type!=="glassPanel")return;const stud=state.items.find(x=>x.type==="stud");if(!stud)return alert("Add a stud wall first.");checkpoint();placeGlassAboveStud(i,stud);save();render();openSelectedSheet()};
 $("move3DBtn").onclick=()=>{
  const i=state.items.find(x=>x.id===selected.id);if(!i||i.locked||i.type==="niche")return;
  const tab=document.querySelector('.tab[data-tab="threeD"]');if(tab)tab.click();
@@ -1201,7 +1233,7 @@ $("move3DBtn").onclick=()=>{
  setTimeout(()=>{if(window.BP3DView?.startMove)window.BP3DView.startMove(i.id);else alert("3D move is still loading. Try again in a moment.")},100);
 };
 $("rotateBtn").onclick=()=>{
- const i=state.items.find(x=>x.id===selected.id);if(!i||WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free"))return;
+ const i=state.items.find(x=>x.id===selected.id);if(!i||WALL_MOUNT_TYPES.has(i.type))return;
  checkpoint();
  const before=itemDims(i);
  const cx=i.x+before.w/2,cy=i.y+before.h/2;
@@ -1212,7 +1244,7 @@ $("rotateBtn").onclick=()=>{
  save();render();openSelectedSheet();
 };
 $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();i.locked=!i.locked;save();render();openSelectedSheet()};
-$("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.locked=false;if(WALL_MOUNT_TYPES.has(c.type)||(c.type==="glassPanel"&&c.mountHost&&c.mountHost!=="free")){c.mountAlong=(Number(c.mountAlong)||0)+80;syncMountedItemPlan(c)}else{c.x+=50;c.y+=50}state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
+$("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.locked=false;if(WALL_MOUNT_TYPES.has(c.type)){c.mountAlong=(Number(c.mountAlong)||0)+80;syncMountedItemPlan(c)}else{c.x+=50;c.y+=50}state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
 
 const ITEM_DETAIL_CONTROL_IDS=["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMountHost","itemMountAlong","itemMountFace","itemFixtureFinish","itemStudGlassStyle","itemStudGlassTrim","itemGlassPrivacy","itemGlassThickness"];
@@ -1225,20 +1257,21 @@ function detailNumber(id,current,min=null,max=null){
 }
 function refreshItemDetailChrome(i,changedId){
  if(!i)return;
- const prod=productById(i.productId),fixtureTypes=["rainHead","handset","showerControls"],mounted=WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free"),isGlass=i.type==="glassPanel";
+ const prod=productById(i.productId),fixtureTypes=["rainHead","handset","showerControls"],mounted=WALL_MOUNT_TYPES.has(i.type),isGlass=i.type==="glassPanel";
  $("sheetEyebrow").textContent=prod?"Product object":"Selected item";
  $("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm · ${Number(i.rotation)||0}°`;
- $("rotateBtn").classList.toggle("hidden",WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free"));
+ $("rotateBtn").classList.toggle("hidden",WALL_MOUNT_TYPES.has(i.type));
  $("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");
+ $("alignGlassBtn").classList.toggle("hidden",i.type!=="glassPanel");
  $("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
- $("itemMountHostWrap").classList.toggle("hidden",!(WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel"));
+ $("itemMountHostWrap").classList.toggle("hidden",!WALL_MOUNT_TYPES.has(i.type));
  $("itemMountAlongWrap").classList.toggle("hidden",!mounted);
- $("itemMountFaceWrap").classList.toggle("hidden",!mounted||!isStudHost(i.mountHost)||isGlass);
+ $("itemMountFaceWrap").classList.toggle("hidden",!mounted||!isStudHost(i.mountHost));
  $("itemFixtureFinishWrap").classList.toggle("hidden",!fixtureTypes.includes(i.type));
  $("itemStudGlassStyleWrap").classList.toggle("hidden",!isGlass);$("itemStudGlassTrimWrap").classList.toggle("hidden",!isGlass);$("itemGlassPrivacyWrap").classList.toggle("hidden",!isGlass);$("itemGlassThicknessWrap").classList.toggle("hidden",!isGlass);
- if(changedId==="itemType"||changedId==="itemMountHost"){
+ if((changedId==="itemType"||changedId==="itemMountHost")&&WALL_MOUNT_TYPES.has(i.type)){
   refreshMountHostOptions(i);
-  if($("itemMountHost"))$("itemMountHost").value=i.mountHost||i.mountWall||(i.type==="glassPanel"?"free":"left");
+  if($("itemMountHost"))$("itemMountHost").value=i.mountHost||i.mountWall||"left";
  }
  $("sheetWarning").classList.add("hidden");const warnings=warningInfo(i);if(warnings.length){$("sheetWarning").classList.remove("hidden");$("sheetWarning").textContent=warnings.join(" ")}
 }
@@ -1247,6 +1280,7 @@ function syncPassiveItemDetailFields(i){
  Object.entries(values).forEach(([id,value])=>{const el=$(id);if(el&&document.activeElement!==el)el.value=value;});
 }
 function refreshLiveItemViews(i,changedId){
+ exactDetailsPinned=true;$("itemDetails").classList.remove("hidden");$("detailsToggle").textContent="Hide exact details";
  render();
  refreshItemDetailChrome(i,changedId);syncPassiveItemDetailFields(i);
  if(window.BP3DView?.refresh)window.BP3DView.refresh();
@@ -1254,17 +1288,18 @@ function refreshLiveItemViews(i,changedId){
 }
 function applyItemDetailsLive(changedId){
  const i=state.items.find(x=>x.id===selected.id);if(!i)return;
- const oldType=i.type,wasMounted=(WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free")),oldHost=i.mountHost||i.mountWall||"left",oldAlong=Number(i.mountAlong)||0;
+ const oldType=i.type,wasMounted=WALL_MOUNT_TYPES.has(i.type),oldHost=i.mountHost||i.mountWall||"left",oldAlong=Number(i.mountAlong)||0;
  const name=$("itemName").value.trim();if(name)i.name=name;
  i.type=$("itemType").value||i.type;
  i.x=detailNumber("itemX",i.x);i.y=detailNumber("itemY",i.y);i.w=detailNumber("itemW",i.w,20);i.h=detailNumber("itemH",i.h,6);i.z=detailNumber("itemZ",i.z||0,0);i.height=detailNumber("itemHeight",i.height||1,1);
  if(["rainHead","handset","showerControls"].includes(i.type))i.finish=$("itemFixtureFinish").value||i.finish||"matt-black";
  if(i.type==="glassPanel"){
-  i.glassStyle=$("itemStudGlassStyle").value||i.glassStyle||"fluted";i.glassTrimFinish=$("itemStudGlassTrim").value||i.glassTrimFinish||"matt-black";i.glassPrivacy=$("itemGlassPrivacy").value||i.glassPrivacy||"light";i.glassThickness=detailNumber("itemGlassThickness",i.glassThickness||10,6,15);i.h=i.glassThickness;
+  i.mountHost="free";delete i.mountAlong;delete i.mountFace;i.glassStyle=$("itemStudGlassStyle").value||i.glassStyle||"fluted";i.glassTrimFinish=$("itemStudGlassTrim").value||i.glassTrimFinish||"matt-black";i.glassPrivacy=$("itemGlassPrivacy").value||i.glassPrivacy||"light";
+  i.glassThickness=changedId==="itemH"?Math.max(6,Math.min(15,Number(i.h)||10)):detailNumber("itemGlassThickness",i.glassThickness||10,6,15);i.h=i.glassThickness;
  }
- if(WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel"){
-  if(oldType!==i.type&&!i.mountHost)i.mountHost=i.type==="glassPanel"?"free":"left";
-  const nextHost=(changedId==="itemType"?i.mountHost:$("itemMountHost").value)||i.mountHost||(i.type==="glassPanel"?"free":"left"),hostChanged=changedId==="itemMountHost",alongChanged=changedId==="itemMountAlong",xyChanged=changedId==="itemX"||changedId==="itemY";
+ if(WALL_MOUNT_TYPES.has(i.type)){
+  if(oldType!==i.type&&!i.mountHost)i.mountHost="left";
+  const nextHost=(changedId==="itemType"?i.mountHost:$("itemMountHost").value)||i.mountHost||"left",hostChanged=changedId==="itemMountHost",alongChanged=changedId==="itemMountAlong",xyChanged=changedId==="itemX"||changedId==="itemY";
   i.mountHost=nextHost;i.mountFace=$("itemMountFace").value||i.mountFace||"shower";if(i.type==="mirror"&&!isStudHost(i.mountHost)&&i.mountHost!=="free")i.mountWall=i.mountHost;
   if(i.mountHost!=="free"){
    if(hostChanged)i.mountAlong=detailNumber("itemMountAlong",oldAlong,0);
@@ -1380,8 +1415,8 @@ window.BP3D={
  persist:()=>save(),
  renderProducts:()=>renderProducts(),
  checkpoint:()=>checkpoint(),
- moveItem3D:(id,x,y)=>{const i=state.items.find(v=>v.id===id);if(!i||i.locked||i.type==="niche"||WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free"))return null;const d=itemDims(i);i.x=Math.round(Math.max(0,Math.min(state.room.width-d.w,Number(x)||0)));i.y=Math.round(Math.max(0,Math.min(state.room.depth-d.h,Number(y)||0)));return {x:i.x,y:i.y,w:d.w,h:d.h};},
- moveWallItem3D:(id,along,z)=>{const i=state.items.find(v=>v.id===id);if(!i||i.locked||(!(WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free"))))return null;const host=i.mountHost||i.mountWall||"left",stud=hostStud(host),span=stud?Math.max(20,Number(stud.w)||900):((host==="left"||host==="right")?state.room.depth:state.room.width),half=Math.min(span/2,mountPlanSpan(i)/2);i.mountAlong=Math.round(Math.max(half,Math.min(span-half,Number(along)||half)));i.z=Math.round(Math.max(0,Math.min(state.room.ceiling-(Number(i.height)||1),Number(z)||0)));syncMountedItemPlan(i);return {along:i.mountAlong,z:i.z,x:i.x,y:i.y,host};},
+ moveItem3D:(id,x,y)=>{const i=state.items.find(v=>v.id===id);if(!i||i.locked||i.type==="niche"||WALL_MOUNT_TYPES.has(i.type))return null;const d=itemDims(i);i.x=Math.round(Math.max(0,Math.min(state.room.width-d.w,Number(x)||0)));i.y=Math.round(Math.max(0,Math.min(state.room.depth-d.h,Number(y)||0)));return {x:i.x,y:i.y,w:d.w,h:d.h};},
+ moveWallItem3D:(id,along,z)=>{const i=state.items.find(v=>v.id===id);if(!i||i.locked||!WALL_MOUNT_TYPES.has(i.type))return null;const host=i.mountHost||i.mountWall||"left",stud=hostStud(host),span=stud?Math.max(20,Number(stud.w)||900):((host==="left"||host==="right")?state.room.depth:state.room.width),half=Math.min(span/2,mountPlanSpan(i)/2);i.mountAlong=Math.round(Math.max(half,Math.min(span-half,Number(along)||half)));i.z=Math.round(Math.max(0,Math.min(state.room.ceiling-(Number(i.height)||1),Number(z)||0)));syncMountedItemPlan(i);return {along:i.mountAlong,z:i.z,x:i.x,y:i.y,host};},
  clone:(v)=>clone(v),
  replaceState:(v)=>{localStorage.setItem(KEY,JSON.stringify(v));location.reload()},
  storageKey:KEY,

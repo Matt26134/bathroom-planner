@@ -1,4 +1,4 @@
-# Bathroom Planner V2.4.2
+# Bathroom Planner V2.4.3
 
 Complete replacement build for the Bathroom Planner GitHub Pages PWA. Upload every file from this folder over the repository root. Existing `bathroomPlannerStable` data is migrated forward in place.
 
@@ -55,3 +55,14 @@ V2.4 automatically converts older projects:
 - 2D drag and 3D Move continue to update the same mounted position.
 - Under floor is now a floor cutaway: it removes the finished floor and structural deck but keeps the bathroom fixtures and walls visible while exposing the joists underneath.
 - Under floor no longer jumps to a separate beams-only camera view. Tap Restore floor to return to the normal room.
+
+
+## V2.4.3 — V2.2 glass recovery + persistent exact editor
+- Recovered the actual V2.2.2 shower-glass approach: glass panels are independent, free-positioned objects again rather than being constrained by the newer host/mount system.
+- Fluted glass uses the V2.2-style translucent base plus restrained physical ribs on one face, so the reeding is visibly present in 3D.
+- Add menu now has explicit **Fluted glass panel** and **Plain glass panel** actions.
+- New glass initially aligns over the first stud wall for convenience, but is immediately free to drag, rotate and edit by X/Y like a normal object.
+- Existing V2.4 mounted glass is detached once on migration at its current plan position, so later edits cannot unexpectedly snap it elsewhere.
+- **Place above stud** is available as an optional one-tap reset/alignment action; it never locks the glass to the stud.
+- Exact Details is now persistent and opens by default for item editing. Live numeric edits redraw the plan/3D in the background without reopening or collapsing the editor.
+- V2.4.1 floor cutaway/joist view and all V2.4 project, door, product and wall-fixture improvements remain.

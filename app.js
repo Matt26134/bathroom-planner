@@ -1,7 +1,7 @@
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.4.1", KEY="bathroomPlannerStable";
+const VERSION="2.4.2", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -1215,27 +1215,73 @@ $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)
 $("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.locked=false;if(WALL_MOUNT_TYPES.has(c.type)||(c.type==="glassPanel"&&c.mountHost&&c.mountHost!=="free")){c.mountAlong=(Number(c.mountAlong)||0)+80;syncMountedItemPlan(c)}else{c.x+=50;c.y+=50}state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
 
-["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMountHost","itemMountAlong","itemMountFace","itemFixtureFinish","itemStudGlassStyle","itemStudGlassTrim","itemGlassPrivacy","itemGlassThickness"].forEach(id=>$(id).onchange=()=>{
- const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();
- const wasMounted=(WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free")),oldHost=i.mountHost||i.mountWall||"left",oldAlong=Number(i.mountAlong)||0;
- i.name=$("itemName").value.trim()||i.name;i.type=$("itemType").value;i.x=Number($("itemX").value)||0;i.y=Number($("itemY").value)||0;i.w=Math.max(20,Number($("itemW").value)||20);i.h=Math.max(6,Number($("itemH").value)||10);i.z=Math.max(0,Number($("itemZ").value)||0);i.height=Math.max(1,Number($("itemHeight").value)||1);
- if(["rainHead","handset","showerControls"].includes(i.type)){i.finish=$("itemFixtureFinish").value||"matt-black";}
- if(i.type==="glassPanel"){i.glassStyle=$("itemStudGlassStyle").value||"fluted";i.glassTrimFinish=$("itemStudGlassTrim").value||"matt-black";i.glassPrivacy=$("itemGlassPrivacy").value||"light";i.glassThickness=Math.max(6,Math.min(15,Number($("itemGlassThickness").value)||10));i.h=i.glassThickness;}
- if(WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel"){
-  const nextHost=$("itemMountHost").value||(i.type==="glassPanel"?"free":"left"),hostChanged=id==="itemMountHost",alongChanged=id==="itemMountAlong",xyChanged=id==="itemX"||id==="itemY";
-  i.mountHost=nextHost;i.mountFace=$("itemMountFace").value||"shower";if(i.type==="mirror"&&!isStudHost(i.mountHost)&&i.mountHost!=="free")i.mountWall=i.mountHost;
-  if(i.mountHost!=="free"){
-   if(hostChanged){i.mountAlong=Math.max(0,Number($("itemMountAlong").value)||oldAlong);}
-   else if(alongChanged){i.mountAlong=Math.max(0,Number($("itemMountAlong").value)||0);}
-   else if(xyChanged){i.mountAlong=mountAlongFromPlan(i,i.x,i.y);}
-   else {i.mountAlong=oldHost===i.mountHost?oldAlong:mountAlongFromPlan(i,i.x,i.y);}
-   syncMountedItemPlan(i);
-  }else if(wasMounted&&oldHost!=="free"){
-   // Detaching a glass panel keeps it exactly where it was in plan.
-   i.mountAlong=oldAlong;
-  }
+const ITEM_DETAIL_CONTROL_IDS=["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMountHost","itemMountAlong","itemMountFace","itemFixtureFinish","itemStudGlassStyle","itemStudGlassTrim","itemGlassPrivacy","itemGlassThickness"];
+let detailSaveTimer=null;
+function detailNumber(id,current,min=null,max=null){
+ const raw=$(id).value;
+ if(raw===""||raw==="-"||raw==="."||raw==="-.")return current;
+ const n=Number(raw);if(!Number.isFinite(n))return current;
+ let v=n;if(min!=null)v=Math.max(min,v);if(max!=null)v=Math.min(max,v);return v;
+}
+function refreshItemDetailChrome(i,changedId){
+ if(!i)return;
+ const prod=productById(i.productId),fixtureTypes=["rainHead","handset","showerControls"],mounted=WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free"),isGlass=i.type==="glassPanel";
+ $("sheetEyebrow").textContent=prod?"Product object":"Selected item";
+ $("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm · ${Number(i.rotation)||0}°`;
+ $("rotateBtn").classList.toggle("hidden",WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free"));
+ $("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");
+ $("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
+ $("itemMountHostWrap").classList.toggle("hidden",!(WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel"));
+ $("itemMountAlongWrap").classList.toggle("hidden",!mounted);
+ $("itemMountFaceWrap").classList.toggle("hidden",!mounted||!isStudHost(i.mountHost)||isGlass);
+ $("itemFixtureFinishWrap").classList.toggle("hidden",!fixtureTypes.includes(i.type));
+ $("itemStudGlassStyleWrap").classList.toggle("hidden",!isGlass);$("itemStudGlassTrimWrap").classList.toggle("hidden",!isGlass);$("itemGlassPrivacyWrap").classList.toggle("hidden",!isGlass);$("itemGlassThicknessWrap").classList.toggle("hidden",!isGlass);
+ if(changedId==="itemType"||changedId==="itemMountHost"){
+  refreshMountHostOptions(i);
+  if($("itemMountHost"))$("itemMountHost").value=i.mountHost||i.mountWall||(i.type==="glassPanel"?"free":"left");
  }
- save();render();openSelectedSheet();
+ $("sheetWarning").classList.add("hidden");const warnings=warningInfo(i);if(warnings.length){$("sheetWarning").classList.remove("hidden");$("sheetWarning").textContent=warnings.join(" ")}
+}
+function syncPassiveItemDetailFields(i){
+ const values={itemName:i.name,itemType:i.type,itemX:Math.round(Number(i.x)||0),itemY:Math.round(Number(i.y)||0),itemW:Math.round(Number(i.w)||0),itemH:Math.round(Number(i.h)||0),itemZ:Math.round(Number(i.z)||0),itemHeight:Math.round(Number(i.height)||0),itemMountAlong:Math.round(Number(i.mountAlong)||0),itemFixtureFinish:i.finish||"matt-black",itemStudGlassStyle:i.glassStyle||"fluted",itemStudGlassTrim:i.glassTrimFinish||"matt-black",itemGlassPrivacy:i.glassPrivacy||"light",itemGlassThickness:Number(i.glassThickness)||10};
+ Object.entries(values).forEach(([id,value])=>{const el=$(id);if(el&&document.activeElement!==el)el.value=value;});
+}
+function refreshLiveItemViews(i,changedId){
+ render();
+ refreshItemDetailChrome(i,changedId);syncPassiveItemDetailFields(i);
+ if(window.BP3DView?.refresh)window.BP3DView.refresh();
+ clearTimeout(detailSaveTimer);detailSaveTimer=setTimeout(()=>save(),350);
+}
+function applyItemDetailsLive(changedId){
+ const i=state.items.find(x=>x.id===selected.id);if(!i)return;
+ const oldType=i.type,wasMounted=(WALL_MOUNT_TYPES.has(i.type)||(i.type==="glassPanel"&&i.mountHost&&i.mountHost!=="free")),oldHost=i.mountHost||i.mountWall||"left",oldAlong=Number(i.mountAlong)||0;
+ const name=$("itemName").value.trim();if(name)i.name=name;
+ i.type=$("itemType").value||i.type;
+ i.x=detailNumber("itemX",i.x);i.y=detailNumber("itemY",i.y);i.w=detailNumber("itemW",i.w,20);i.h=detailNumber("itemH",i.h,6);i.z=detailNumber("itemZ",i.z||0,0);i.height=detailNumber("itemHeight",i.height||1,1);
+ if(["rainHead","handset","showerControls"].includes(i.type))i.finish=$("itemFixtureFinish").value||i.finish||"matt-black";
+ if(i.type==="glassPanel"){
+  i.glassStyle=$("itemStudGlassStyle").value||i.glassStyle||"fluted";i.glassTrimFinish=$("itemStudGlassTrim").value||i.glassTrimFinish||"matt-black";i.glassPrivacy=$("itemGlassPrivacy").value||i.glassPrivacy||"light";i.glassThickness=detailNumber("itemGlassThickness",i.glassThickness||10,6,15);i.h=i.glassThickness;
+ }
+ if(WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel"){
+  if(oldType!==i.type&&!i.mountHost)i.mountHost=i.type==="glassPanel"?"free":"left";
+  const nextHost=(changedId==="itemType"?i.mountHost:$("itemMountHost").value)||i.mountHost||(i.type==="glassPanel"?"free":"left"),hostChanged=changedId==="itemMountHost",alongChanged=changedId==="itemMountAlong",xyChanged=changedId==="itemX"||changedId==="itemY";
+  i.mountHost=nextHost;i.mountFace=$("itemMountFace").value||i.mountFace||"shower";if(i.type==="mirror"&&!isStudHost(i.mountHost)&&i.mountHost!=="free")i.mountWall=i.mountHost;
+  if(i.mountHost!=="free"){
+   if(hostChanged)i.mountAlong=detailNumber("itemMountAlong",oldAlong,0);
+   else if(alongChanged)i.mountAlong=detailNumber("itemMountAlong",i.mountAlong||0,0);
+   else if(xyChanged)i.mountAlong=mountAlongFromPlan(i,i.x,i.y);
+   else i.mountAlong=oldHost===i.mountHost?oldAlong:mountAlongFromPlan(i,i.x,i.y);
+   syncMountedItemPlan(i);
+  }else if(wasMounted&&oldHost!=="free")i.mountAlong=oldAlong;
+ }
+ refreshLiveItemViews(i,changedId);
+}
+ITEM_DETAIL_CONTROL_IDS.forEach(id=>{
+ const el=$(id);if(!el)return;
+ el.addEventListener("focus",()=>{if(selected.kind!=="item")return;if(el.dataset.undoArmed==="1")return;checkpoint();el.dataset.undoArmed="1";});
+ el.addEventListener("input",()=>applyItemDetailsLive(id));
+ el.addEventListener("change",()=>{applyItemDetailsLive(id);save();delete el.dataset.undoArmed;});
+ el.addEventListener("blur",()=>{save();delete el.dataset.undoArmed;});
 });
 ["openA","openW","openB","openSill","openHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);save();sync();render();openSelectedSheet()});
 ["doorA","doorW","doorLeafW","doorB","doorOpenHeight","doorHinge","doorAngle"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.door.before=Math.max(0,Number($("doorA").value)||0);state.room.door.width=Math.max(100,Number($("doorW").value)||100);state.room.door.leafWidth=Math.max(100,Math.min(state.room.door.width,Number($("doorLeafW").value)||state.room.door.width));state.room.door.after=Math.max(0,Number($("doorB").value)||0);state.room.door.height=Math.max(100,Number($("doorOpenHeight").value)||100);state.room.door.hinge=$("doorHinge").value||"bottom";state.room.door.openAngle=Math.max(0,Math.min(120,Number($("doorAngle").value)||0));save();sync();render();openSelectedSheet()});

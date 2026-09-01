@@ -1,6 +1,14 @@
-# Bathroom Planner V2.4.1
+# Bathroom Planner V2.4.2
 
 Complete replacement build for the Bathroom Planner GitHub Pages PWA. Upload every file from this folder over the repository root. Existing `bathroomPlannerStable` data is migrated forward in place.
+
+## V2.4.2 — live exact-detail editing
+
+- Exact Details now stays open while you edit an item instead of collapsing after every field change.
+- Number/text fields update the selected item live as you type, so the plan moves/resizes in the background without interrupting the edit.
+- When editing from the 3D view, the Three.js scene also refreshes live behind the details panel.
+- Select controls such as mounting host, finish and glass style update without closing the panel.
+- Changes are autosaved with a short debounce, while undo checkpoints are taken when you start editing a field rather than on every keystroke.
 
 ## V2.4 — quality, geometry and 3D reliability
 

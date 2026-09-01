@@ -776,7 +776,7 @@ if (!api || !legacy) {
     api.refresh2D?.();rebuildScene(true);
   }
   done3DMoveBtn?.addEventListener("click",()=>stopMoveMode(true));
-  window.BP3DView={startMove:startMoveMode,stopMove:()=>stopMoveMode(true)};
+  window.BP3DView={startMove:startMoveMode,stopMove:()=>stopMoveMode(true),refresh:()=>rebuildScene(true)};
   document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{if(tab.dataset.tab!=="threeD"&&moveMode)stopMoveMode(true);if(tab.dataset.tab!=="threeD"&&walkMode)setWalkMode(false,false)}));
 
   function selectAt(clientX,clientY) {

@@ -92,7 +92,7 @@ if (!api || !legacy) {
   const mouse = new THREE.Vector2();
 
   const mm = v => (Number(v) || 0) / 1000;
-  const itemDims = i => (i.rotation === 90 || i.rotation === 270) ? { w: i.h, d: i.w } : { w: i.w, d: i.h };
+  const itemDims = i => {const w=Number(i.w)||0,d=Number(i.h)||0,a=(((Number(i.rotation)||0)%360)+360)%360*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a));return{w:w*c+d*s,d:w*s+d*c};};
 
   function setItemId(obj, id) {
     obj.traverse?.(n => { n.userData.itemId = id; });
@@ -215,7 +215,7 @@ if (!api || !legacy) {
     const hinge=(door.hinge||"bottom");
     const angle=THREE.MathUtils.degToRad(Math.max(0, Math.min(120, Number(door.openAngle ?? 26))));
     const dir=hinge==="top" ? 1 : -1;
-    const swing=hinge==="top" ? -angle : angle;
+    const swing=(hinge==="top" ? -angle : angle)*(door.swingDirection==="out"?-1:1);
     const doorPivot = new THREE.Group();
     doorPivot.position.set(W-.026,0,hinge==="top" ? db+leafInset : de-leafInset);
     doorPivot.rotation.y = swing;

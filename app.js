@@ -1,18 +1,18 @@
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.4.3", KEY="bathroomPlannerStable";
+const VERSION="2.5.0", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 const starter={
  version:VERSION,
- schemaVersion:5,
+ schemaVersion:6,
  projectId:"bathroom-redesign-main",
  createdAt:"2026-08-26T00:00:00.000Z",
  updatedAt:"2026-08-26T00:00:00.000Z",
  project:{name:"Bathroom Redesign",planName:"Current working layout",notes:"Confirm final survey dimensions after strip-out before ordering fitted items."},
- room:{width:2280,depth:2545,ceiling:2470,tolerance:20,window:{before:660,width:930,after:690,sill:900,height:960},door:{before:835,width:860,leafWidth:762,after:850,height:1981,hinge:"bottom",openAngle:26}},
+ room:{width:2280,depth:2545,ceiling:2470,tolerance:20,window:{before:660,width:930,after:690,sill:900,height:960},door:{before:835,width:860,leafWidth:762,after:850,height:1981,hinge:"bottom",swingDirection:"in",openAngle:26}},
  ui:{measureMode:"selected",snap:true,planLayer:"layout"},
  items:[
   {id:"bath1",type:"bath",name:"Bath",x:0,y:0,w:1600,h:700,rotation:0,locked:false,z:0,height:550},
@@ -86,12 +86,13 @@ state.project = {...clone(starter.project), ...(state.project||{})};
 state.room = {...clone(starter.room), ...(state.room||{})};
 state.room.window = {...clone(starter.room.window), ...(state.room.window||{})};
 state.room.door = {...clone(starter.room.door), ...(state.room.door||{})};
+if(!["in","out"].includes(state.room.door.swingDirection)) state.room.door.swingDirection="in";
 if(!Array.isArray(state.items)) state.items=[];
 state.ui=state.ui||{};
 if(!state.ui.measureMode) state.ui.measureMode="selected";
 if(state.ui.snap==null) state.ui.snap=true;
 if(!state.ui.planLayer) state.ui.planLayer="layout";
-state.schemaVersion=5;
+state.schemaVersion=6;
 if(!state.projectId) state.projectId="project-"+Date.now().toString(36);
 if(!state.createdAt) state.createdAt=new Date().toISOString();
 if(!state.updatedAt) state.updatedAt=new Date().toISOString();
@@ -196,7 +197,7 @@ migrateHeights();
 
 state.items.forEach(i=>{
  const r=((Number(i.rotation)||0)%360+360)%360;
- i.rotation=[0,90,180,270].includes(r)?r:Math.round(r/90)*90%360;
+ i.rotation=Math.round(r*10)/10;
 });
 
 const WALL_MOUNT_TYPES=new Set(["mirror","rainHead","handset","showerControls"]);
@@ -274,21 +275,44 @@ let manualMode=false,manualFirst=null;
 let exactDetailsPinned=true;
 
 const sEl=(tag,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",tag);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e};
-function itemDims(i){return (i.rotation===90||i.rotation===270)?{w:i.h,h:i.w}:{w:i.w,h:i.h}}
+function itemDims(i){
+ const w=Math.max(0,Number(i.w)||0),h=Math.max(0,Number(i.h)||0),a=(((Number(i.rotation)||0)%360)+360)%360*Math.PI/180;
+ const c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a));
+ return{w:w*c+h*s,h:w*s+h*c};
+}
+function rawItemDims(i){return{w:Math.max(0,Number(i.w)||0),h:Math.max(0,Number(i.h)||0)}}
 function box(i){const d=itemDims(i);return{x1:i.x,y1:i.y,x2:i.x+d.w,y2:i.y+d.h,w:d.w,h:d.h}}
 const overlap1D=(a1,a2,b1,b2)=>Math.min(a2,b2)-Math.max(a1,b1)>0;
 const collide=(a,b)=>{const A=box(a),B=box(b);return A.x1<B.x2&&A.x2>B.x1&&A.y1<B.y2&&A.y2>B.y1};
 const floorItems=()=>state.items.filter(i=>!["niche","mirror","rainHead","handset","showerControls","glassPanel"].includes(i.type));
 
-function save(){state.version=VERSION;state.schemaVersion=5;state.updatedAt=new Date().toISOString();localStorage.setItem(KEY,JSON.stringify(state))}
+function ensurePlanVariants(){
+ if(!Array.isArray(state.planVariants)||!state.planVariants.length){
+  const id="plan-"+Date.now().toString(36);
+  state.planVariants=[{id,name:state.project?.planName||"Current working layout",items:clone(state.items||[]),services:clone(state.services||[]),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}];
+  state.activePlanId=id;
+ }
+ if(!state.activePlanId||!state.planVariants.some(v=>v.id===state.activePlanId))state.activePlanId=state.planVariants[0].id;
+ state.planVariants.forEach(v=>{if(!Array.isArray(v.items))v.items=[];if(!Array.isArray(v.services))v.services=[];if(!v.name)v.name="Plan";});
+}
+function activePlanVariant(){ensurePlanVariants();return state.planVariants.find(v=>v.id===state.activePlanId)||state.planVariants[0]}
+function syncWorkingToActivePlan(){const v=activePlanVariant();if(!v)return;v.name=state.project?.planName||v.name||"Plan";v.items=clone(state.items||[]);v.services=clone(state.services||[]);v.updatedAt=new Date().toISOString();}
+function loadPlanVariant(id){
+ syncWorkingToActivePlan();const v=state.planVariants.find(x=>x.id===id);if(!v)return;
+ state.activePlanId=v.id;state.items=clone(v.items||[]);state.services=clone(v.services||[]);state.project.planName=v.name||"Plan";
+ selected={kind:null,id:null};closeObjectSheet();history=[];future=[];save();sync();resetView(false);render();renderPlanVariants();
+ if(window.BP3DView?.refresh)window.BP3DView.refresh();
+}
+ensurePlanVariants();
+function save(){syncWorkingToActivePlan();state.version=VERSION;state.schemaVersion=6;state.updatedAt=new Date().toISOString();localStorage.setItem(KEY,JSON.stringify(state))}
 function checkpoint(){history.push(clone(state));if(history.length>60)history.shift();future=[];updateUndoRedo()}
 function updateUndoRedo(){$("undoBtn").disabled=!history.length;$("redoBtn").disabled=!future.length}
 function undo(){if(!history.length)return;future.push(clone(state));state=history.pop();selected={kind:null,id:null};save();sync();resetView(false);render();updateUndoRedo()}
 function redo(){if(!future.length)return;history.push(clone(state));state=future.pop();selected={kind:null,id:null};save();sync();resetView(false);render();updateUndoRedo()}
 
 function makeBaseView(){
- const r=state.room;
- return{x:-330,y:-280,w:Math.max(2920,r.width+700),h:Math.max(3180,r.depth+620)};
+ const r=state.room,outExtra=r.door?.swingDirection==="out"?Math.max(0,Number(r.door.leafWidth)||0)+180:0;
+ return{x:-330,y:-280,w:Math.max(2920+outExtra,r.width+700+outExtra),h:Math.max(3180,r.depth+620)};
 }
 function ensureView(){if(!baseView)baseView=makeBaseView();if(!view)view={...baseView}}
 function currentZoom(){ensureView();return baseView.w/view.w}
@@ -333,10 +357,11 @@ function drawGrid(){
 function doorGeometry(){
  const r=state.room,y1=Number(r.door.before)||0,frame=Math.max(100,Number(r.door.width)||100),y2=y1+frame;
  const leaf=Math.max(100,Math.min(frame,Number(r.door.leafWidth)||Math.min(frame*.92,800)));
- const inset=Math.max(0,(frame-leaf)/2),hinge=r.door.hinge||"bottom",hy=hinge==="top"?y1+inset:y2-inset;
- return{y1,y2,frame,leaf,inset,hx:r.width,hy,hinge,closedY:hinge==="top"?hy+leaf:hy-leaf};
+ const inset=Math.max(0,(frame-leaf)/2),hinge=r.door.hinge||"bottom",hy=hinge==="top"?y1+inset:y2-inset,swingDirection=r.door.swingDirection==="out"?"out":"in";
+ return{y1,y2,frame,leaf,inset,hx:r.width,hy,hinge,swingDirection,side:swingDirection==="out"?1:-1,closedY:hinge==="top"?hy+leaf:hy-leaf};
 }
 function doorSwingConflict(item){
+ if(state.room.door.swingDirection==="out")return false;
  if(["niche","mirror","rainHead","handset","showerControls","glassPanel"].includes(item.type))return false;
  const b=box(item),g=doorGeometry();
  const qx=Math.min(Math.max(g.hx,b.x1),b.x2);
@@ -416,6 +441,7 @@ function render(){
  if(manualFirst)drawMeasureFirstPoint();
  updateSurveyStatus();
  $("planName").textContent=state.project.planName||"Plan";
+ if($("selectionDetailsBtn"))$("selectionDetailsBtn").classList.toggle("hidden",!selected.kind);
 }
 
 function drawOpenings(){
@@ -424,90 +450,72 @@ function drawOpenings(){
  win.addEventListener("pointerdown",openingDown);svg.appendChild(win);
  const g=doorGeometry();
  svg.appendChild(sEl("line",{x1:r.width,y1:g.y1,x2:r.width,y2:g.y2,stroke:"#fffefa","stroke-width":12,"vector-effect":"non-scaling-stroke"}));
- const closedY=g.closedY,sweep=g.hinge==="top"?0:1;
+ const closedY=g.closedY,baseSweep=g.hinge==="top"?0:1,sweep=g.side>0?(baseSweep?0:1):baseSweep,openX=g.hx+g.side*g.leaf;
  if(g.inset>0){svg.appendChild(sEl("rect",{x:g.hx-14,y:g.y1,width:14,height:g.inset,class:"doorFrame"}));svg.appendChild(sEl("rect",{x:g.hx-14,y:g.y2-g.inset,width:14,height:g.inset,class:"doorFrame"}));}
  [g.y1+g.inset,g.y2-g.inset].forEach(y=>svg.appendChild(sEl("line",{x1:g.hx-22,y1:y,x2:g.hx+5,y2:y,stroke:"#686b64","stroke-width":3,"vector-effect":"non-scaling-stroke"})));
- const zone=sEl("path",{d:`M ${g.hx} ${g.hy} L ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY} Z`,class:"doorZone"});svg.appendChild(zone);
+ const zone=sEl("path",{d:`M ${g.hx} ${g.hy} L ${openX} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY} Z`,class:"doorZone"});svg.appendChild(zone);
  const ang=Math.max(0,Math.min(120,Number(state.room.door.openAngle)||0))*Math.PI/180,dir=g.hinge==="top"?1:-1;
- const leafEndX=g.hx-g.leaf*Math.sin(ang),leafEndY=g.hy+dir*g.leaf*Math.cos(ang);
+ const leafEndX=g.hx+g.side*g.leaf*Math.sin(ang),leafEndY=g.hy+dir*g.leaf*Math.cos(ang);
  const leaf=sEl("line",{x1:g.hx,y1:g.hy,x2:leafEndX,y2:leafEndY,class:"door","data-opening":"door"});leaf.addEventListener("pointerdown",openingDown);svg.appendChild(leaf);
- const arc=sEl("path",{d:`M ${g.hx-g.leaf} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY}`,class:"door","stroke-dasharray":"9 7","data-opening":"door"});arc.addEventListener("pointerdown",openingDown);svg.appendChild(arc);
+ const arc=sEl("path",{d:`M ${openX} ${g.hy} A ${g.leaf} ${g.leaf} 0 0 ${sweep} ${g.hx} ${closedY}`,class:"door","stroke-dasharray":"9 7","data-opening":"door"});arc.addEventListener("pointerdown",openingDown);svg.appendChild(arc);
 }
 
 
-function drawOrientationMarker(i,d){
+function itemVisualFrame(i){
+ const d=itemDims(i),raw=rawItemDims(i),cx=Number(i.x)+d.w/2,cy=Number(i.y)+d.h/2;
+ return{d,raw,cx,cy,x:cx-raw.w/2,y:cy-raw.h/2,angle:((Number(i.rotation)||0)%360+360)%360};
+}
+function drawOrientationMarker(i,raw,parent,x,y){
  if(i.type==="niche"||i.type==="stud"||i.type==="radiator"||WALL_MOUNT_TYPES.has(i.type)||i.type==="glassPanel")return;
- const a=(Number(i.rotation)||0)%360;
- let x1=i.x+d.w/2,y1=i.y+d.h/2,x2=x1,y2=y1;
- const len=Math.min(55,Math.max(26,Math.min(d.w,d.h)*.16));
- if(a===0)y2=i.y+d.h-12;
- else if(a===90)x2=i.x+12;
- else if(a===180)y2=i.y+12;
- else if(a===270)x2=i.x+d.w-12;
- const line=sEl("line",{x1,y1,x2,y2,stroke:"#55777f","stroke-width":"3","vector-effect":"non-scaling-stroke","pointer-events":"none"});
- svg.appendChild(line);
- const dot=sEl("circle",{cx:x2,cy:y2,r:8,fill:"#55777f","pointer-events":"none"});
- svg.appendChild(dot);
+ const x1=x+raw.w/2,y1=y+raw.h/2,len=Math.min(55,Math.max(26,Math.min(raw.w,raw.h)*.16)),x2=x1,y2=Math.min(y+raw.h-12,y1+len);
+ parent.appendChild(sEl("line",{x1,y1,x2,y2,stroke:"#55777f","stroke-width":"3","vector-effect":"non-scaling-stroke","pointer-events":"none"}));
+ parent.appendChild(sEl("circle",{cx:x2,cy:y2,r:8,fill:"#55777f","pointer-events":"none"}));
 }
 
 function drawItem(i){
- const d=itemDims(i),b=box(i),status=itemStatusClass(i);
- const rect=sEl("rect",{x:i.x,y:i.y,width:d.w,height:d.h,rx:i.type==="wc"?65:7,class:`fixture ${i.type}${selected.kind==="item"&&selected.id===i.id?" selected":""}${status}`,"data-id":i.id});
- rect.addEventListener("pointerdown",itemDown);svg.appendChild(rect);
+ const f=itemVisualFrame(i),d=f.d,raw=f.raw,b=box(i),status=itemStatusClass(i),g=sEl("g",{transform:`rotate(${f.angle} ${f.cx} ${f.cy})`});
+ const rect=sEl("rect",{x:f.x,y:f.y,width:raw.w,height:raw.h,rx:i.type==="wc"?Math.min(65,raw.w*.18):7,class:`fixture ${i.type}${selected.kind==="item"&&selected.id===i.id?" selected":""}${status}`,"data-id":i.id});
+ rect.addEventListener("pointerdown",itemDown);g.appendChild(rect);
 
- if(i.type==="bath")svg.appendChild(sEl("rect",{x:i.x+40,y:i.y+40,width:Math.max(20,d.w-80),height:Math.max(20,d.h-80),rx:95,class:"archLine"}));
+ if(i.type==="bath")g.appendChild(sEl("rect",{x:f.x+40,y:f.y+40,width:Math.max(20,raw.w-80),height:Math.max(20,raw.h-80),rx:95,class:"archLine"}));
  if(i.type==="wc"){
-  svg.appendChild(sEl("rect",{x:i.x+d.w*.24,y:i.y+28,width:d.w*.52,height:d.h*.28,rx:12,class:"archLine"}));
-  svg.appendChild(sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+d.h*.62,rx:d.w*.32,ry:d.h*.24,class:"archLine"}));
+  g.appendChild(sEl("rect",{x:f.x+raw.w*.24,y:f.y+28,width:raw.w*.52,height:raw.h*.28,rx:12,class:"archLine"}));
+  g.appendChild(sEl("ellipse",{cx:f.x+raw.w/2,cy:f.y+raw.h*.62,rx:raw.w*.32,ry:raw.h*.24,class:"archLine"}));
  }
- if(i.type==="vanity")svg.appendChild(sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+Math.min(d.h*.22,160),rx:d.w*.27,ry:Math.min(72,d.h*.1),class:"archLine"}));
- if(i.type==="shower"){
-  svg.appendChild(sEl("circle",{cx:i.x+d.w*.18,cy:i.y+d.h*.72,r:28,class:"archLine"}));
- }
+ if(i.type==="vanity")g.appendChild(sEl("ellipse",{cx:f.x+raw.w/2,cy:f.y+Math.min(raw.h*.22,160),rx:raw.w*.27,ry:Math.min(72,raw.h*.1),class:"archLine"}));
+ if(i.type==="shower")g.appendChild(sEl("circle",{cx:f.x+raw.w*.18,cy:f.y+raw.h*.72,r:28,class:"archLine"}));
  if(i.type==="glassPanel"){
-  const horizontal=d.w>=d.h,cx=i.x+d.w/2,cy=i.y+d.h/2;
-  const hit=sEl("rect",{x:horizontal?i.x:i.x-35,y:horizontal?i.y-35:i.y,width:horizontal?d.w:d.w+70,height:horizontal?d.h+70:d.h,fill:"transparent","data-id":i.id,style:"cursor:grab"});hit.addEventListener("pointerdown",itemDown);svg.appendChild(hit);
-  svg.appendChild(sEl("line",{x1:horizontal?i.x:cx,y1:horizontal?cy:i.y,x2:horizontal?i.x+d.w:cx,y2:horizontal?cy:i.y+d.h,class:"glass"}));
+  const cy=f.y+raw.h/2,hit=sEl("rect",{x:f.x,y:f.y-35,width:raw.w,height:raw.h+70,fill:"transparent","data-id":i.id,style:"cursor:grab"});hit.addEventListener("pointerdown",itemDown);g.appendChild(hit);
+  g.appendChild(sEl("line",{x1:f.x,y1:cy,x2:f.x+raw.w,y2:cy,class:"glass"}));
   if((i.glassStyle||"fluted")==="fluted"){
-   const count=Math.min(24,Math.max(4,Math.floor((horizontal?d.w:d.h)/45)));
-   for(let n=1;n<count;n++){const t=n/count;if(horizontal)svg.appendChild(sEl("line",{x1:i.x+d.w*t,y1:cy-11,x2:i.x+d.w*t,y2:cy+11,class:"glassReed"}));else svg.appendChild(sEl("line",{x1:cx-11,y1:i.y+d.h*t,x2:cx+11,y2:i.y+d.h*t,class:"glassReed"}))}
+   const count=Math.min(30,Math.max(4,Math.floor(raw.w/35)));
+   for(let n=1;n<count;n++){const xx=f.x+raw.w*n/count;g.appendChild(sEl("line",{x1:xx,y1:cy-12,x2:xx,y2:cy+12,class:"glassReed"}))}
   }
  }
- if(i.type==="radiator"){for(let y=i.y+22;y<i.y+d.h-18;y+=42)svg.appendChild(sEl("line",{x1:i.x+12,y1:y,x2:i.x+d.w-12,y2:y,class:"archLine"}))}
+ if(i.type==="radiator"){for(let yy=f.y+22;yy<f.y+raw.h-18;yy+=42)g.appendChild(sEl("line",{x1:f.x+12,y1:yy,x2:f.x+raw.w-12,y2:yy,class:"archLine"}))}
  if(i.type==="rainHead"){
-  svg.appendChild(sEl("line",{x1:i.x+10,y1:i.y+d.h/2,x2:i.x+d.w*.72,y2:i.y+d.h/2,class:"archLine"}));
-  svg.appendChild(sEl("circle",{cx:i.x+d.w*.78,cy:i.y+d.h/2,r:Math.max(18,Math.min(d.h*.34,65)),class:"archLine"}));
+  g.appendChild(sEl("line",{x1:f.x+10,y1:f.y+raw.h/2,x2:f.x+raw.w*.72,y2:f.y+raw.h/2,class:"archLine"}));
+  g.appendChild(sEl("circle",{cx:f.x+raw.w*.78,cy:f.y+raw.h/2,r:Math.max(18,Math.min(raw.h*.34,65)),class:"archLine"}));
  }
  if(i.type==="handset"){
-  svg.appendChild(sEl("line",{x1:i.x+d.w*.28,y1:i.y+12,x2:i.x+d.w*.28,y2:i.y+d.h-12,class:"archLine"}));
-  svg.appendChild(sEl("line",{x1:i.x+d.w*.45,y1:i.y+d.h*.25,x2:i.x+d.w*.78,y2:i.y+d.h*.70,class:"archLine"}));
+  g.appendChild(sEl("line",{x1:f.x+raw.w*.28,y1:f.y+12,x2:f.x+raw.w*.28,y2:f.y+raw.h-12,class:"archLine"}));
+  g.appendChild(sEl("line",{x1:f.x+raw.w*.45,y1:f.y+raw.h*.25,x2:f.x+raw.w*.78,y2:f.y+raw.h*.70,class:"archLine"}));
  }
  if(i.type==="showerControls"){
-  svg.appendChild(sEl("circle",{cx:i.x+d.w*.34,cy:i.y+d.h/2,r:Math.max(7,Math.min(18,d.h*.24)),class:"archLine"}));
-  svg.appendChild(sEl("circle",{cx:i.x+d.w*.66,cy:i.y+d.h/2,r:Math.max(7,Math.min(18,d.h*.24)),class:"archLine"}));
+  g.appendChild(sEl("circle",{cx:f.x+raw.w*.34,cy:f.y+raw.h/2,r:Math.max(7,Math.min(18,raw.h*.24)),class:"archLine"}));
+  g.appendChild(sEl("circle",{cx:f.x+raw.w*.66,cy:f.y+raw.h/2,r:Math.max(7,Math.min(18,raw.h*.24)),class:"archLine"}));
  }
  if(i.type==="mirror"){
-   const hitW=Math.max(d.w,140),hitH=Math.max(d.h,140),hitX=i.x-(hitW-d.w)/2,hitY=i.y-(hitH-d.h)/2;
-   const hit=sEl("rect",{x:hitX,y:hitY,width:hitW,height:hitH,fill:"transparent","data-id":i.id,style:"cursor:grab"});
-   hit.addEventListener("pointerdown",itemDown);svg.appendChild(hit);
-   const oval=sEl("ellipse",{cx:i.x+d.w/2,cy:i.y+d.h/2,rx:Math.max(10,d.w*.44),ry:Math.max(10,d.h*.44),fill:"#eef4f4",stroke:"#8aa1a6","stroke-width":"2","vector-effect":"non-scaling-stroke","data-id":i.id,style:"cursor:grab"});
-   oval.addEventListener("pointerdown",itemDown);
-   svg.appendChild(oval);
+  const oval=sEl("ellipse",{cx:f.x+raw.w/2,cy:f.y+raw.h/2,rx:Math.max(10,raw.w*.44),ry:Math.max(10,raw.h*.44),fill:"#eef4f4",stroke:"#8aa1a6","stroke-width":"2","vector-effect":"non-scaling-stroke","data-id":i.id,style:"cursor:grab"});oval.addEventListener("pointerdown",itemDown);g.appendChild(oval);
  }
- productItemDetails2D(i,d);
- drawOrientationMarker(i,d);
+ productItemDetails2D(i,raw,g,f.x,f.y);drawOrientationMarker(i,raw,g,f.x,f.y);svg.appendChild(g);
 
  const z=currentZoom();
  if(d.w>240&&d.h>110){
-  const t=sEl("text",{x:i.x+d.w/2,y:i.y+d.h/2-12,class:"label"});t.textContent=i.name;svg.appendChild(t);
-  if(z>1.1){const s=sEl("text",{x:i.x+d.w/2,y:i.y+d.h/2+33,class:"subLabel"});s.textContent=`${Math.round(d.w)} × ${Math.round(d.h)}`;svg.appendChild(s)}
- }else if(z>1.45){
-  const t=sEl("text",{x:i.x+d.w+18,y:i.y+d.h/2,class:"outsideLabel"});t.textContent=i.name;svg.appendChild(t);
- }
- if(warningInfo(i).length){
-  const badge=sEl("circle",{cx:b.x2-18,cy:b.y1+18,r:14,class:"warningBadge"});svg.appendChild(badge);
-  const ex=sEl("text",{x:b.x2-18,y:b.y1+21,"text-anchor":"middle","font-size":"20","font-weight":"900",fill:"#9a6d29"});ex.textContent="!";svg.appendChild(ex);
- }
+  const tx=sEl("text",{x:f.cx,y:f.cy-12,class:"label"});tx.textContent=i.name;svg.appendChild(tx);
+  if(z>1.1){const s=sEl("text",{x:f.cx,y:f.cy+33,class:"subLabel"});s.textContent=`${Math.round(raw.w)} × ${Math.round(raw.h)} · ${Math.round(f.angle)}°`;svg.appendChild(s)}
+ }else if(z>1.45){const tx=sEl("text",{x:b.x2+18,y:f.cy,class:"outsideLabel"});tx.textContent=i.name;svg.appendChild(tx)}
+ if(warningInfo(i).length){const badge=sEl("circle",{cx:b.x2-18,cy:b.y1+18,r:14,class:"warningBadge"});svg.appendChild(badge);const ex=sEl("text",{x:b.x2-18,y:b.y1+21,"text-anchor":"middle","font-size":"20","font-weight":"900",fill:"#9a6d29"});ex.textContent="!";svg.appendChild(ex)}
 }
 
 function serviceColor(type){return{hot:"#b6695f",cold:"#6e92ad",waste:"#6d706b",soil:"#4e514b",electric:"#b49b50"}[type]||"#6d706b"}
@@ -645,14 +653,14 @@ function openingDown(e){
  if(activePointers.size>1)return;
  e.preventDefault();
  if(manualMode){handleMeasureTap(e);return}
- selected={kind:"opening",id:e.currentTarget.dataset.opening};render();openSelectedSheet();
+ selected={kind:"opening",id:e.currentTarget.dataset.opening};closeObjectSheet();render();
 }
 function itemDown(e){
  if(activePointers.size>1)return;
  e.preventDefault();
  if(manualMode){handleMeasureTap(e);return}
  const i=state.items.find(x=>x.id===e.currentTarget.dataset.id);if(!i)return;
- selected={kind:"item",id:i.id};openSelectedSheet();
+ selected={kind:"item",id:i.id};closeObjectSheet();
  if(i.locked){render();return}
  const p=point(e);drag={id:i.id,pointerId:e.pointerId,sx:p.x,sy:p.y,x:i.x,y:i.y,moved:false,checkpointed:false};
  try{svg.setPointerCapture(e.pointerId)}catch(_){}
@@ -663,7 +671,7 @@ function serviceDown(e){
  e.preventDefault();
  if(manualMode){handleMeasureTap(e);return}
  const s=state.services.find(x=>x.id===e.currentTarget.dataset.serviceId);if(!s)return;
- selected={kind:"service",id:s.id};openSelectedSheet();
+ selected={kind:"service",id:s.id};closeObjectSheet();
  const p=point(e);serviceDrag={id:s.id,pointerId:e.pointerId,sx:p.x,sy:p.y,x:s.x,y:s.y,moved:false,checkpointed:false};
  try{svg.setPointerCapture(e.pointerId)}catch(_){}
  render();
@@ -722,7 +730,11 @@ function endDrags(e){
 
 function facingName(rotation){
  const r=((Number(rotation)||0)%360+360)%360;
- return r===0?"far wall / opposite window":r===90?"vanity wall / opposite door":r===180?"window wall":"door wall";
+ if(Math.abs(r-0)<.1||Math.abs(r-360)<.1)return "far wall / opposite window";
+ if(Math.abs(r-90)<.1)return "vanity wall / opposite door";
+ if(Math.abs(r-180)<.1)return "window wall";
+ if(Math.abs(r-270)<.1)return "door wall";
+ return `${Math.round(r)}° angle`;
 }
 
 function refreshMountHostOptions(i){
@@ -741,16 +753,16 @@ function refreshMountHostOptions(i){
 
 function openSelectedSheet(){
  const sheet=$("objectSheet");sheet.classList.remove("hidden");
- $("rotateBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("alignGlassBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");$("itemMountHostWrap").classList.add("hidden");$("itemMountAlongWrap").classList.add("hidden");$("itemMountFaceWrap").classList.add("hidden");$("itemFixtureFinishWrap").classList.add("hidden");$("itemStudGlassStyleWrap").classList.add("hidden");$("itemStudGlassTrimWrap").classList.add("hidden");$("itemGlassPrivacyWrap").classList.add("hidden");$("itemGlassThicknessWrap").classList.add("hidden");
+ $("rotateBtn").classList.remove("hidden");$("rotateMinusBtn").classList.remove("hidden");$("rotatePlusBtn").classList.remove("hidden");$("centreMirrorBtn").classList.add("hidden");$("alignGlassBtn").classList.add("hidden");$("move3DBtn").classList.remove("hidden");$("itemRotationWrap").classList.remove("hidden");$("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");$("itemMountHostWrap").classList.add("hidden");$("itemMountAlongWrap").classList.add("hidden");$("itemMountFaceWrap").classList.add("hidden");$("itemFixtureFinishWrap").classList.add("hidden");$("itemStudGlassStyleWrap").classList.add("hidden");$("itemStudGlassTrimWrap").classList.add("hidden");$("itemGlassPrivacyWrap").classList.add("hidden");$("itemGlassThicknessWrap").classList.add("hidden");
  $("itemQuick").classList.add("hidden");$("itemDetails").classList.toggle("hidden",!(selected.kind==="item"&&exactDetailsPinned));$("openingDetails").classList.add("hidden");$("serviceDetails").classList.add("hidden");$("sheetWarning").classList.add("hidden");
  $("detailsToggle").textContent=exactDetailsPinned?"Hide exact details":"Show exact details";
  if(selected.kind==="item"){
   const i=state.items.find(x=>x.id===selected.id);if(!i)return;
-  const prod=productById(i.productId);$("sheetEyebrow").textContent=prod?"Product object":"Selected item";$("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm · ${Number(i.rotation)||0}°`;
+  const prod=productById(i.productId);$("sheetEyebrow").textContent=prod?"Product object":"Selected item";$("sheetTitle").textContent=`${i.name} · ${Math.round(Number(i.w)||0)} × ${Math.round(Number(i.h)||0)} × ${i.height||0} mm · ${Math.round((Number(i.rotation)||0)*10)/10}°`;
   $("itemQuick").classList.remove("hidden");$("detailsToggle").classList.remove("hidden");
-  $("lockBtn").textContent=i.locked?"Unlock":"Lock";$("rotateBtn").textContent=`Rotate 90° · ${Number(i.rotation)||0}° · front → ${facingName(i.rotation)}`;
-  $("rotateBtn").classList.toggle("hidden",WALL_MOUNT_TYPES.has(i.type));$("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");$("alignGlassBtn").classList.toggle("hidden",i.type!=="glassPanel");$("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
-  $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=i.x;$("itemY").value=i.y;$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;
+  $("lockBtn").textContent=i.locked?"Unlock":"Lock";$("rotateBtn").textContent=`+90°`;
+  const rotationLocked=WALL_MOUNT_TYPES.has(i.type);$("rotateBtn").classList.toggle("hidden",rotationLocked);$("rotateMinusBtn").classList.toggle("hidden",rotationLocked);$("rotatePlusBtn").classList.toggle("hidden",rotationLocked);$("itemRotationWrap").classList.toggle("hidden",rotationLocked);$("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");$("alignGlassBtn").classList.toggle("hidden",i.type!=="glassPanel");$("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
+  $("itemName").value=i.name;$("itemType").value=i.type;$("itemX").value=Math.round(i.x);$("itemY").value=Math.round(i.y);$("itemW").value=i.w;$("itemH").value=i.h;$("itemZ").value=i.z||0;$("itemHeight").value=i.height||0;$("itemRotation").value=Math.round((((Number(i.rotation)||0)%360)+360)%360*10)/10;
   $("itemShowerMountWrap").classList.add("hidden");
   const fixtureTypes=["rainHead","handset","showerControls"],mounted=WALL_MOUNT_TYPES.has(i.type);
   $("itemMirrorWallWrap").classList.add("hidden");$("itemMirrorAlongWrap").classList.add("hidden");
@@ -767,7 +779,7 @@ function openSelectedSheet(){
    $("openA").value=state.room.window.before;$("openW").value=state.room.window.width;$("openB").value=state.room.window.after;$("openSill").value=state.room.window.sill;$("openHeight").value=state.room.window.height;
   }else{
    $("sheetEyebrow").textContent="Opening";$("sheetTitle").textContent="Door";$("doorFields").classList.remove("hidden");$("windowFields").classList.add("hidden");
-   $("doorA").value=state.room.door.before;$("doorW").value=state.room.door.width;$("doorLeafW").value=Math.round(state.room.door.leafWidth||state.room.door.width);$("doorB").value=state.room.door.after;$("doorOpenHeight").value=state.room.door.height;$("doorHinge").value=state.room.door.hinge||"bottom";$("doorAngle").value=state.room.door.openAngle??26;
+   $("doorA").value=state.room.door.before;$("doorW").value=state.room.door.width;$("doorLeafW").value=Math.round(state.room.door.leafWidth||state.room.door.width);$("doorB").value=state.room.door.after;$("doorOpenHeight").value=state.room.door.height;$("doorHinge").value=state.room.door.hinge||"bottom";$("doorSwingDirectionSheet").value=state.room.door.swingDirection||"in";$("doorAngle").value=state.room.door.openAngle??26;
    const dg=doorGeometry();if($("doorFrameAllowanceSheet"))$("doorFrameAllowanceSheet").textContent=`Calculated frame/trim allowance: ${dg.inset.toFixed(1)} mm each side · hinge inset ${dg.inset.toFixed(1)} mm from the framed opening.`;
   }
  }else if(selected.kind==="service"){
@@ -807,13 +819,21 @@ function addService(type){
  checkpoint();const s={id:"s"+Date.now(),type,name:names[type],x:state.room.width/2,y:state.room.depth/2,z:300};state.services.push(s);selected={kind:"service",id:s.id};save();$("addSheet").classList.add("hidden");render();openSelectedSheet();
 }
 
+function renderPlanVariants(){
+ ensurePlanVariants();const sel=$("planVariantSelect");if(!sel)return;
+ const active=activePlanVariant(),current=sel.value;sel.innerHTML="";
+ state.planVariants.forEach(v=>{const o=document.createElement("option");o.value=v.id;o.textContent=v.name+(v.id===state.activePlanId?" · active":"");sel.appendChild(o)});
+ sel.value=state.activePlanId;const meta=$("planVariantMeta");if(meta)meta.textContent=`${state.planVariants.length} saved plan${state.planVariants.length===1?"":"s"} · current layout autosaves`;
+ const del=$("deletePlanBtn");if(del)del.disabled=state.planVariants.length<=1;
+}
 function sync(){
  const r=state.room;
  $("roomWidth").value=r.width;$("roomDepth").value=r.depth;$("ceilingHeight").value=r.ceiling;$("tolerance").value=r.tolerance;
  $("windowBefore").value=r.window.before;$("windowWidth").value=r.window.width;$("windowAfter").value=r.window.after;$("windowSill").value=r.window.sill;$("windowHeight").value=r.window.height;
  $("doorBefore").value=r.door.before;$("doorWidth").value=r.door.width;$("doorLeafWidth").value=Math.round(r.door.leafWidth||r.door.width);$("doorAfter").value=r.door.after;$("doorHeight").value=r.door.height;
+ if($("doorSwingDirection"))$("doorSwingDirection").value=r.door.swingDirection||"in";
  $("projectName").value=state.project.name||"";$("projectPlanName").value=state.project.planName||"";$("notes").value=state.project.notes||"";
- $("measureMode").value=state.ui.measureMode||"selected";updateChecks();
+ $("measureMode").value=state.ui.measureMode||"selected";updateChecks();renderPlanVariants();
 }
 function updateChecks(){
  const r=state.room,ws=r.window.before+r.window.width+r.window.after,ds=r.door.before+r.door.width+r.door.after;
@@ -1007,19 +1027,12 @@ function itemRgb(type){
 
 function productById(id){return state.products.find(p=>p.id===id)}
 function productImageSrc(p){return p&&p.image?p.image:""}
-function productItemDetails2D(i,d){
+function productItemDetails2D(i,d,parent=svg,x=i.x,y=i.y){
  const p=productById(i.productId);if(!p)return;
  if(p.style==="vanity2drawer"){
-  // Cabinet drawer split
-  if(i.rotation===90||i.rotation===270){
-   svg.appendChild(sEl("line",{x1:i.x+d.w*.12,y1:i.y+d.h/2,x2:i.x+d.w*.88,y2:i.y+d.h/2,class:"archLine"}));
-   svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.29,x2:i.x+d.w*.20,y2:i.y+d.h*.44,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
-   svg.appendChild(sEl("line",{x1:i.x+d.w*.20,y1:i.y+d.h*.56,x2:i.x+d.w*.20,y2:i.y+d.h*.71,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
-  }else{
-   svg.appendChild(sEl("line",{x1:i.x+d.w*.08,y1:i.y+d.h/2,x2:i.x+d.w*.92,y2:i.y+d.h/2,class:"archLine"}));
-   svg.appendChild(sEl("line",{x1:i.x+d.w*.38,y1:i.y+d.h*.22,x2:i.x+d.w*.62,y2:i.y+d.h*.22,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
-   svg.appendChild(sEl("line",{x1:i.x+d.w*.38,y1:i.y+d.h*.68,x2:i.x+d.w*.62,y2:i.y+d.h*.68,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
-  }
+  parent.appendChild(sEl("line",{x1:x+d.w*.08,y1:y+d.h/2,x2:x+d.w*.92,y2:y+d.h/2,class:"archLine"}));
+  parent.appendChild(sEl("line",{x1:x+d.w*.38,y1:y+d.h*.22,x2:x+d.w*.62,y2:y+d.h*.22,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
+  parent.appendChild(sEl("line",{x1:x+d.w*.38,y1:y+d.h*.68,x2:x+d.w*.62,y2:y+d.h*.68,stroke:"#ad8753","stroke-width":"3","vector-effect":"non-scaling-stroke"}));
  }
 }
 function line3(a,b,color,w,h,width=1.5){
@@ -1222,6 +1235,7 @@ document.querySelectorAll("[data-add-item]").forEach(b=>b.onclick=()=>addItem(b.
 document.querySelectorAll("[data-add-glass]").forEach(b=>b.onclick=()=>addGlassPanel(b.dataset.addGlass));
 document.querySelectorAll("[data-add-service]").forEach(b=>b.onclick=()=>addService(b.dataset.addService));
 $("closeObjectSheet").onclick=closeObjectSheet;
+$("selectionDetailsBtn").onclick=()=>{if(selected.kind)openSelectedSheet()};
 $("detailsToggle").onclick=()=>{exactDetailsPinned=!exactDetailsPinned;const d=$("itemDetails");d.classList.toggle("hidden",!exactDetailsPinned);$("detailsToggle").textContent=exactDetailsPinned?"Hide exact details":"Show exact details"};
 
 $("centreMirrorBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||i.type!=="mirror")return;const vanity=state.items.find(x=>x.type==="vanity");if(!vanity)return;checkpoint();const vd=itemDims(vanity);i.mountHost="left";i.mountWall="left";i.mountAlong=vanity.y+vd.h/2;syncMountedItemPlan(i);save();render();openSelectedSheet()};
@@ -1232,22 +1246,17 @@ $("move3DBtn").onclick=()=>{
  $("viewMode").value="3d";$("viewMode").dispatchEvent(new Event("change",{bubbles:true}));closeObjectSheet();
  setTimeout(()=>{if(window.BP3DView?.startMove)window.BP3DView.startMove(i.id);else alert("3D move is still loading. Try again in a moment.")},100);
 };
-$("rotateBtn").onclick=()=>{
- const i=state.items.find(x=>x.id===selected.id);if(!i||WALL_MOUNT_TYPES.has(i.type))return;
- checkpoint();
- const before=itemDims(i);
- const cx=i.x+before.w/2,cy=i.y+before.h/2;
- i.rotation=((Number(i.rotation)||0)+90)%360;
- const after=itemDims(i);
- i.x=Math.round(cx-after.w/2);
- i.y=Math.round(cy-after.h/2);
- save();render();openSelectedSheet();
-};
+function rotateSelectedBy(delta){
+ const i=state.items.find(x=>x.id===selected.id);if(!i||WALL_MOUNT_TYPES.has(i.type))return;checkpoint();const before=itemDims(i),cx=i.x+before.w/2,cy=i.y+before.h/2;i.rotation=((((Number(i.rotation)||0)+delta)%360)+360)%360;const after=itemDims(i);i.x=Math.round(cx-after.w/2);i.y=Math.round(cy-after.h/2);save();render();openSelectedSheet();
+}
+$("rotateBtn").onclick=()=>rotateSelectedBy(90);
+$("rotateMinusBtn").onclick=()=>rotateSelectedBy(-15);
+$("rotatePlusBtn").onclick=()=>rotateSelectedBy(15);
 $("lockBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();i.locked=!i.locked;save();render();openSelectedSheet()};
 $("duplicateBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i)return;checkpoint();const c=clone(i);c.id=c.type+Date.now();c.name+=" copy";c.locked=false;if(WALL_MOUNT_TYPES.has(c.type)){c.mountAlong=(Number(c.mountAlong)||0)+80;syncMountedItemPlan(c)}else{c.x+=50;c.y+=50}state.items.push(c);selected={kind:"item",id:c.id};save();render();openSelectedSheet()};
 $("deleteBtn").onclick=()=>{const i=state.items.find(x=>x.id===selected.id);if(!i||!confirm("Delete "+i.name+"?"))return;checkpoint();state.items=state.items.filter(x=>x.id!==i.id);selected={kind:null,id:null};save();render();closeObjectSheet()};
 
-const ITEM_DETAIL_CONTROL_IDS=["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemMountHost","itemMountAlong","itemMountFace","itemFixtureFinish","itemStudGlassStyle","itemStudGlassTrim","itemGlassPrivacy","itemGlassThickness"];
+const ITEM_DETAIL_CONTROL_IDS=["itemName","itemType","itemX","itemY","itemW","itemH","itemZ","itemHeight","itemRotation","itemMountHost","itemMountAlong","itemMountFace","itemFixtureFinish","itemStudGlassStyle","itemStudGlassTrim","itemGlassPrivacy","itemGlassThickness"];
 let detailSaveTimer=null;
 function detailNumber(id,current,min=null,max=null){
  const raw=$(id).value;
@@ -1259,8 +1268,8 @@ function refreshItemDetailChrome(i,changedId){
  if(!i)return;
  const prod=productById(i.productId),fixtureTypes=["rainHead","handset","showerControls"],mounted=WALL_MOUNT_TYPES.has(i.type),isGlass=i.type==="glassPanel";
  $("sheetEyebrow").textContent=prod?"Product object":"Selected item";
- $("sheetTitle").textContent=`${i.name} · ${itemDims(i).w} × ${itemDims(i).h} × ${i.height||0} mm · ${Number(i.rotation)||0}°`;
- $("rotateBtn").classList.toggle("hidden",WALL_MOUNT_TYPES.has(i.type));
+ $("sheetTitle").textContent=`${i.name} · ${Math.round(Number(i.w)||0)} × ${Math.round(Number(i.h)||0)} × ${i.height||0} mm · ${Math.round((Number(i.rotation)||0)*10)/10}°`;
+ const rotationLocked=WALL_MOUNT_TYPES.has(i.type);$("rotateBtn").classList.toggle("hidden",rotationLocked);$("rotateMinusBtn").classList.toggle("hidden",rotationLocked);$("rotatePlusBtn").classList.toggle("hidden",rotationLocked);$("itemRotationWrap").classList.toggle("hidden",rotationLocked);
  $("centreMirrorBtn").classList.toggle("hidden",i.type!=="mirror");
  $("alignGlassBtn").classList.toggle("hidden",i.type!=="glassPanel");
  $("move3DBtn").classList.toggle("hidden",i.locked||i.type==="niche");
@@ -1276,7 +1285,7 @@ function refreshItemDetailChrome(i,changedId){
  $("sheetWarning").classList.add("hidden");const warnings=warningInfo(i);if(warnings.length){$("sheetWarning").classList.remove("hidden");$("sheetWarning").textContent=warnings.join(" ")}
 }
 function syncPassiveItemDetailFields(i){
- const values={itemName:i.name,itemType:i.type,itemX:Math.round(Number(i.x)||0),itemY:Math.round(Number(i.y)||0),itemW:Math.round(Number(i.w)||0),itemH:Math.round(Number(i.h)||0),itemZ:Math.round(Number(i.z)||0),itemHeight:Math.round(Number(i.height)||0),itemMountAlong:Math.round(Number(i.mountAlong)||0),itemFixtureFinish:i.finish||"matt-black",itemStudGlassStyle:i.glassStyle||"fluted",itemStudGlassTrim:i.glassTrimFinish||"matt-black",itemGlassPrivacy:i.glassPrivacy||"light",itemGlassThickness:Number(i.glassThickness)||10};
+ const values={itemName:i.name,itemType:i.type,itemX:Math.round(Number(i.x)||0),itemY:Math.round(Number(i.y)||0),itemW:Math.round(Number(i.w)||0),itemH:Math.round(Number(i.h)||0),itemZ:Math.round(Number(i.z)||0),itemHeight:Math.round(Number(i.height)||0),itemRotation:Math.round((((Number(i.rotation)||0)%360+360)%360)*10)/10,itemMountAlong:Math.round(Number(i.mountAlong)||0),itemFixtureFinish:i.finish||"matt-black",itemStudGlassStyle:i.glassStyle||"fluted",itemStudGlassTrim:i.glassTrimFinish||"matt-black",itemGlassPrivacy:i.glassPrivacy||"light",itemGlassThickness:Number(i.glassThickness)||10};
  Object.entries(values).forEach(([id,value])=>{const el=$(id);if(el&&document.activeElement!==el)el.value=value;});
 }
 function refreshLiveItemViews(i,changedId){
@@ -1288,10 +1297,12 @@ function refreshLiveItemViews(i,changedId){
 }
 function applyItemDetailsLive(changedId){
  const i=state.items.find(x=>x.id===selected.id);if(!i)return;
+ const beforeDims=itemDims(i),beforeCx=Number(i.x)+beforeDims.w/2,beforeCy=Number(i.y)+beforeDims.h/2;
  const oldType=i.type,wasMounted=WALL_MOUNT_TYPES.has(i.type),oldHost=i.mountHost||i.mountWall||"left",oldAlong=Number(i.mountAlong)||0;
  const name=$("itemName").value.trim();if(name)i.name=name;
  i.type=$("itemType").value||i.type;
  i.x=detailNumber("itemX",i.x);i.y=detailNumber("itemY",i.y);i.w=detailNumber("itemW",i.w,20);i.h=detailNumber("itemH",i.h,6);i.z=detailNumber("itemZ",i.z||0,0);i.height=detailNumber("itemHeight",i.height||1,1);
+ if(changedId==="itemRotation"&&!WALL_MOUNT_TYPES.has(i.type)){i.rotation=((detailNumber("itemRotation",i.rotation||0)%360)+360)%360;const afterDims=itemDims(i);i.x=Math.round(beforeCx-afterDims.w/2);i.y=Math.round(beforeCy-afterDims.h/2);}
  if(["rainHead","handset","showerControls"].includes(i.type))i.finish=$("itemFixtureFinish").value||i.finish||"matt-black";
  if(i.type==="glassPanel"){
   i.mountHost="free";delete i.mountAlong;delete i.mountFace;i.glassStyle=$("itemStudGlassStyle").value||i.glassStyle||"fluted";i.glassTrimFinish=$("itemStudGlassTrim").value||i.glassTrimFinish||"matt-black";i.glassPrivacy=$("itemGlassPrivacy").value||i.glassPrivacy||"light";
@@ -1319,10 +1330,19 @@ ITEM_DETAIL_CONTROL_IDS.forEach(id=>{
  el.addEventListener("blur",()=>{save();delete el.dataset.undoArmed;});
 });
 ["openA","openW","openB","openSill","openHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);save();sync();render();openSelectedSheet()});
-["doorA","doorW","doorLeafW","doorB","doorOpenHeight","doorHinge","doorAngle"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.door.before=Math.max(0,Number($("doorA").value)||0);state.room.door.width=Math.max(100,Number($("doorW").value)||100);state.room.door.leafWidth=Math.max(100,Math.min(state.room.door.width,Number($("doorLeafW").value)||state.room.door.width));state.room.door.after=Math.max(0,Number($("doorB").value)||0);state.room.door.height=Math.max(100,Number($("doorOpenHeight").value)||100);state.room.door.hinge=$("doorHinge").value||"bottom";state.room.door.openAngle=Math.max(0,Math.min(120,Number($("doorAngle").value)||0));save();sync();render();openSelectedSheet()});
+["doorA","doorW","doorLeafW","doorB","doorOpenHeight","doorHinge","doorSwingDirectionSheet","doorAngle"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.door.before=Math.max(0,Number($("doorA").value)||0);state.room.door.width=Math.max(100,Number($("doorW").value)||100);state.room.door.leafWidth=Math.max(100,Math.min(state.room.door.width,Number($("doorLeafW").value)||state.room.door.width));state.room.door.after=Math.max(0,Number($("doorB").value)||0);state.room.door.height=Math.max(100,Number($("doorOpenHeight").value)||100);state.room.door.hinge=$("doorHinge").value||"bottom";state.room.door.swingDirection=$("doorSwingDirectionSheet").value||"in";state.room.door.openAngle=Math.max(0,Math.min(120,Number($("doorAngle").value)||0));save();sync();render();openSelectedSheet();if(window.BP3DView?.refresh)window.BP3DView.refresh()});
 ["serviceName","serviceType","serviceX","serviceY","serviceZ"].forEach(id=>$(id).onchange=()=>{
  const s=state.services.find(x=>x.id===selected.id);if(!s)return;checkpoint();s.name=$("serviceName").value.trim()||s.name;s.type=$("serviceType").value;s.x=Number($("serviceX").value)||0;s.y=Number($("serviceY").value)||0;s.z=Math.max(0,Number($("serviceZ").value)||0);save();render();openSelectedSheet();
 });
+
+function refreshDoorEverywhere(){save();sync();resetView(false);render();if(selected.kind==="opening"&&selected.id==="door")openSelectedSheet();if(window.BP3DView?.refresh)window.BP3DView.refresh();}
+function flipDoorOpening(){state.room.door.swingDirection=state.room.door.swingDirection==="out"?"in":"out";refreshDoorEverywhere();}
+function flipDoorHinge(){state.room.door.hinge=state.room.door.hinge==="top"?"bottom":"top";refreshDoorEverywhere();}
+$("doorSwingDirection")?.addEventListener("change",e=>{checkpoint();state.room.door.swingDirection=e.target.value==="out"?"out":"in";refreshDoorEverywhere()});
+$("flipDoorOpeningBtn")?.addEventListener("click",()=>{checkpoint();flipDoorOpening()});
+$("flipDoorOpeningSheetBtn")?.addEventListener("click",()=>{checkpoint();flipDoorOpening()});
+$("flipDoorHingeBtn")?.addEventListener("click",()=>{checkpoint();flipDoorHinge()});
+$("flipDoorHingeSheetBtn")?.addEventListener("click",()=>{checkpoint();flipDoorHinge()});
 
 const numPaths={
  roomWidth:["room","width"],roomDepth:["room","depth"],ceilingHeight:["room","ceiling"],tolerance:["room","tolerance"],
@@ -1334,7 +1354,19 @@ Object.entries(numPaths).forEach(([id,path])=>$(id).onchange=()=>{
  if(id==="doorWidth"||id==="doorLeafWidth")state.room.door.leafWidth=Math.max(100,Math.min(Math.max(100,Number(state.room.door.width)||100),Number(state.room.door.leafWidth)||100));
  save();baseView=makeBaseView();view={...baseView};sync();render();
 });
-[["projectName","name"],["projectPlanName","planName"],["notes","notes"]].forEach(([id,key])=>$(id).onchange=()=>{checkpoint();state.project[key]=$(id).value;save();render()});
+[["projectName","name"],["projectPlanName","planName"],["notes","notes"]].forEach(([id,key])=>$(id).onchange=()=>{checkpoint();state.project[key]=$(id).value;save();render();renderPlanVariants()});
+
+$("planVariantSelect")?.addEventListener("change",e=>loadPlanVariant(e.target.value));
+$("duplicatePlanBtn")?.addEventListener("click",()=>{
+ checkpoint();syncWorkingToActivePlan();const source=activePlanVariant(),suggest=`${source.name||"Plan"} copy`,name=(prompt("Name for the copied plan",suggest)||"").trim();if(!name)return;
+ const id="plan-"+Date.now().toString(36),now=new Date().toISOString(),copyPlan={id,name,items:clone(state.items||[]),services:clone(state.services||[]),createdAt:now,updatedAt:now};state.planVariants.push(copyPlan);state.activePlanId=id;state.project.planName=name;save();sync();render();renderPlanVariants();if(window.BP3DView?.refresh)window.BP3DView.refresh();
+});
+$("renamePlanBtn")?.addEventListener("click",()=>{
+ const v=activePlanVariant(),name=(prompt("Rename this plan",v.name||"Plan")||"").trim();if(!name)return;checkpoint();v.name=name;state.project.planName=name;save();sync();render();renderPlanVariants();
+});
+$("deletePlanBtn")?.addEventListener("click",()=>{
+ ensurePlanVariants();if(state.planVariants.length<=1)return;const current=activePlanVariant();if(!confirm(`Delete plan '${current.name}'? The other saved plans will stay.`))return;checkpoint();const idx=state.planVariants.findIndex(v=>v.id===current.id);state.planVariants.splice(idx,1);const next=state.planVariants[Math.max(0,Math.min(idx,state.planVariants.length-1))];state.activePlanId=next.id;state.items=clone(next.items||[]);state.services=clone(next.services||[]);state.project.planName=next.name;save();sync();resetView(false);render();renderPlanVariants();if(window.BP3DView?.refresh)window.BP3DView.refresh();
+});
 
 $("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download="bathroom-planner-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),500)};
 $("importInput").onchange=async e=>{try{const p=JSON.parse(await e.target.files[0].text());if(!p.room||!Array.isArray(p.items))throw Error("Invalid backup");checkpoint();localStorage.setItem(KEY,JSON.stringify(p));location.reload()}catch(err){alert(err.message)}e.target.value=""};
@@ -1401,7 +1433,7 @@ svg.addEventListener("pointerup",finishPointer);
 svg.addEventListener("pointercancel",finishPointer);
 
 sync();updateUndoRedo();resetView(false);render();renderProducts();if(window.BPSurfaces?.render)window.BPSurfaces.render();
-$("statusHint").textContent="Drag fixtures · pinch to zoom · tap an item for measurements. · V"+VERSION;
+$("statusHint").textContent="Drag fixtures · pinch to zoom · select an item, then tap Details to edit. · V"+VERSION;
 
 window.BP3D={
  getState:()=>state,
@@ -1421,7 +1453,7 @@ window.BP3D={
  replaceState:(v)=>{localStorage.setItem(KEY,JSON.stringify(v));location.reload()},
  storageKey:KEY,
  version:VERSION,
- schemaVersion:5
+ schemaVersion:6
 };
 
 })();

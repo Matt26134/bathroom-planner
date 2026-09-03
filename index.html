@@ -11,7 +11,7 @@
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.4.3 · V2.2 glass recovery + persistent editor</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.5.0 · plan variants + free rotation</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -44,12 +44,13 @@
     <button id="clearMeasuresBtn" class="hidden">Clear</button>
     <div class="spacer"></div>
     <button id="focusBtn">⛶ Focus</button>
+    <button id="selectionDetailsBtn" class="hidden">Details</button>
     <button id="addBtn" class="primary">+ Add</button>
   </div>
 
   <div class="status">
     <span id="surveyStatus" class="pill">Survey dimensions reconcile</span>
-    <span id="statusHint" class="hint">Drag fixtures · pinch to zoom · tap an item for measurements.</span>
+    <span id="statusHint" class="hint">Drag fixtures · pinch to zoom · select an item, then tap Details to edit.</span>
   </div>
 
   <div class="canvasShell">
@@ -253,13 +254,30 @@
     <div id="doorCheck" class="check"></div>
     <div id="doorFrameAllowance" class="heightNote" style="margin-top:7px"></div>
     <div class="heightNote" style="margin-top:4px">Door incl. frame is the surveyed framed width. The actual leaf is centred inside it, so the hinge/swing is automatically inset by half of the difference.</div>
-    <div class="grid" style="margin-top:9px"><label>Door height (mm)<input id="doorHeight" type="number"></label><div class="heightNote">Starter door height is generic and editable.</div></div>
+    <div class="grid" style="margin-top:9px"><label>Door height (mm)<input id="doorHeight" type="number"></label><label>Opening direction<select id="doorSwingDirection"><option value="in">Into bathroom</option><option value="out">Out of bathroom</option></select></label></div>
+    <div class="quickActions" style="margin-top:8px"><button id="flipDoorOpeningBtn">Flip in / out</button><button id="flipDoorHingeBtn">Flip hinge end</button></div>
+    <div class="heightNote">Flip opening changes whether the leaf swings into or out of the bathroom. Hinge end is edited from the door itself in Plan.</div>
     <div class="section">Project</div>
     <div class="grid">
       <label>Project name<input id="projectName"></label>
       <label>Plan name<input id="projectPlanName"></label>
     </div>
     <label style="margin-top:9px">Notes<textarea id="notes" rows="5"></textarea></label>
+  </div>
+
+  <div class="portableCard">
+    <div class="eyebrow">Plan variants</div>
+    <h2 style="margin:3px 0 4px">Try another layout without losing this one</h2>
+    <p class="muted">Duplicate the current plan, move the same fixtures around, and switch back to the original at any time. Products, room dimensions, surfaces and build data stay shared.</p>
+    <div class="grid" style="margin-top:9px">
+      <label>Active plan<select id="planVariantSelect"></select></label>
+      <div id="planVariantMeta" class="heightNote" style="align-self:end"></div>
+    </div>
+    <div class="portableActions">
+      <button id="duplicatePlanBtn" class="primary">Duplicate current plan</button>
+      <button id="renamePlanBtn">Rename active plan</button>
+      <button id="deletePlanBtn" class="danger">Delete active copy</button>
+    </div>
   </div>
 
   <div class="portableCard">
@@ -297,7 +315,7 @@
     </div>
 
     <div id="itemQuick" class="quickActions">
-      <button id="rotateBtn">Rotate 90°</button><button id="centreMirrorBtn" class="hidden">Centre over vanity</button><button id="alignGlassBtn" class="hidden">Place above stud</button>
+      <button id="rotateMinusBtn">−15°</button><button id="rotatePlusBtn">+15°</button><button id="rotateBtn">+90°</button><button id="centreMirrorBtn" class="hidden">Centre over vanity</button><button id="alignGlassBtn" class="hidden">Place above stud</button>
       <button id="move3DBtn">Move in 3D</button>
       <button id="lockBtn">Lock</button>
       <button id="duplicateBtn">Duplicate</button>
@@ -321,6 +339,7 @@
         <label>Depth (mm)<input id="itemH" type="number"></label>
         <label>Bottom above floor (mm)<input id="itemZ" type="number"></label>
         <label>Height (mm)<input id="itemHeight" type="number"></label>
+        <label id="itemRotationWrap">Rotation °<input id="itemRotation" type="number" min="0" max="359" step="1"></label>
         <label id="itemShowerMountWrap" class="hidden">Shower mount side<select id="itemShowerMount"><option value="left">Fixed shower layout</option><option value="right">Fixed shower layout</option></select></label>
         <label id="itemMirrorWallWrap" class="hidden">Mounted wall<select id="itemMirrorWall">
           <option value="left">Vanity wall / opposite door</option>
@@ -367,7 +386,9 @@
         <label>Far-wall end<input id="doorB" type="number"></label>
         <label>Door height<input id="doorOpenHeight" type="number"></label>
         <label>Hinge side<select id="doorHinge"><option value="top">Toward window wall</option><option value="bottom">Away from window wall</option></select></label>
+        <label>Opening direction<select id="doorSwingDirectionSheet"><option value="in">Into bathroom</option><option value="out">Out of bathroom</option></select></label>
         <label>Open angle °<input id="doorAngle" type="number" min="0" max="120"></label>
+        <div class="quickActions"><button id="flipDoorOpeningSheetBtn" type="button">Flip in / out</button><button id="flipDoorHingeSheetBtn" type="button">Flip hinge end</button></div>
       </div>
       <div id="doorFrameAllowanceSheet" class="heightNote" style="margin-top:8px"></div>
     </div>

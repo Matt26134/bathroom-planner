@@ -2,7 +2,7 @@
 
 Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` data migrates forward in place.
 
-## V2.5.4 — centre-room Person view
+## V2.5.4 — Crete Apex Oak product-specific 3D
 
 ### Plan variants
 - Project now contains **Plan variants**.
@@ -65,11 +65,8 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 
 
 ### V2.5.4 additions
-- Added a dedicated **Person view** in 3D.
-- Person view places the camera in the exact centre of the bathroom.
-- Camera eye height is **1.70m**, representing the natural eye line of an approximately **1.8m-tall adult**.
-- Drag left/right for unlimited 360-degree turning and drag up/down to look towards the floor or ceiling.
-- Pinch on mobile or use the mouse wheel on desktop to adjust field of view without moving position.
-- Person view is fixed in place, so fixture collision logic cannot stop you turning or push the viewpoint around.
-- The normal room walls remain visible from inside the room; exterior wall-culling from orbit view does not interfere with the centre-room viewpoint.
-- Existing Walkthrough remains available separately when you want to physically move around the room.
+- Added dedicated SKU recognition for **Crete C82754** floor-standing fluted Apex Oak 800 vanity.
+- Added dedicated SKU recognition for **Crete 72137** wall-hung fluted Apex Oak tall cabinet.
+- Added a lighter Apex Oak material distinct from the darker Arezzo/Milan oak finishes.
+- C82754 now renders as a floor-standing oak cabinet with two fluted drawer fronts, recessed finger pulls and an integrated white ceramic basin.
+- 72137 now renders as a slim wall-hung tall cabinet with two vertically fluted door faces, a central seam and recessed finger-pull details.

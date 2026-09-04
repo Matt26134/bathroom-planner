@@ -8,7 +8,6 @@ const floorXrayToggle = document.getElementById("floorXrayToggle");
 const floorXrayBtn = document.getElementById("floorXrayBtn");
 const done3DMoveBtn = document.getElementById("done3DMoveBtn");
 const walkthroughBtn = document.getElementById("walkthroughBtn");
-const personViewBtn = document.getElementById("personViewBtn");
 const walkControls = document.getElementById("walkControls");
 const elevationWrap = document.getElementById("elevationWrap");
 
@@ -71,7 +70,7 @@ if (!api || !legacy) {
   const mats = {
     floor:new THREE.MeshStandardMaterial({color:0xe9e3d8,roughness:.92}),wall:new THREE.MeshStandardMaterial({color:0xf1eee7,roughness:.92}),wallSide:new THREE.MeshStandardMaterial({color:0xe1ddd3,roughness:.94}),
     ceramic:new THREE.MeshPhysicalMaterial({color:0xf8f8f5,roughness:.18,clearcoat:.28,clearcoatRoughness:.18}),ceramicInner:new THREE.MeshPhysicalMaterial({color:0xe7e8e5,roughness:.34,clearcoat:.12}),acrylic:new THREE.MeshPhysicalMaterial({color:0xfbfaf7,roughness:.22,clearcoat:.34,clearcoatRoughness:.15}),
-    oak:new THREE.MeshStandardMaterial({color:0xa7835e,roughness:.72,map:oakTex}),autumnOak:new THREE.MeshStandardMaterial({color:0xa87e52,roughness:.68,map:oakTex}),oakDark:new THREE.MeshStandardMaterial({color:0x80613f,roughness:.78,map:oakTex}),timber:new THREE.MeshStandardMaterial({color:0xb39875,roughness:.8}),joist:new THREE.MeshStandardMaterial({color:0x9b7857,roughness:.9}),
+    oak:new THREE.MeshStandardMaterial({color:0xa7835e,roughness:.72,map:oakTex}),autumnOak:new THREE.MeshStandardMaterial({color:0xa87e52,roughness:.68,map:oakTex}),oakDark:new THREE.MeshStandardMaterial({color:0x80613f,roughness:.78,map:oakTex}),apexOak:new THREE.MeshStandardMaterial({color:0xb39a78,roughness:.74,map:oakTex}),apexOakDark:new THREE.MeshStandardMaterial({color:0x8d7658,roughness:.82,map:oakTex}),timber:new THREE.MeshStandardMaterial({color:0xb39875,roughness:.8}),joist:new THREE.MeshStandardMaterial({color:0x9b7857,roughness:.9}),
     heating:new THREE.MeshStandardMaterial({color:0xb95037,roughness:.7,transparent:true,opacity:.62,side:THREE.DoubleSide}),brass:new THREE.MeshStandardMaterial({color:0xb88943,roughness:.28,metalness:.7}),brushedBrass:new THREE.MeshStandardMaterial({color:0xc09a59,roughness:.34,metalness:.72}),metal:new THREE.MeshStandardMaterial({color:0xc8c8c3,roughness:.34,metalness:.68}),chrome:new THREE.MeshPhysicalMaterial({color:0xe7e8e7,roughness:.12,metalness:.96,clearcoat:.55}),
     dark:new THREE.MeshStandardMaterial({color:0x080808,roughness:.76,metalness:.12}),mattBlack:new THREE.MeshStandardMaterial({color:0x111211,roughness:.58,metalness:.35}),anthracite:new THREE.MeshStandardMaterial({color:0x34383a,roughness:.62,metalness:.52}),mproSlate:new THREE.MeshStandardMaterial({color:0x4b5051,roughness:.48,metalness:.72}),walnut:new THREE.MeshStandardMaterial({color:0x6f4b2f,roughness:.72,map:oakTex}),leafGreen:new THREE.MeshStandardMaterial({color:0x356a3f,roughness:.78}),leafGreen2:new THREE.MeshStandardMaterial({color:0x5b8a50,roughness:.82}),potBlack:new THREE.MeshStandardMaterial({color:0x171816,roughness:.72}),paperWhite:new THREE.MeshStandardMaterial({color:0xf2f0e9,roughness:.96}),cardboard:new THREE.MeshStandardMaterial({color:0x9f744d,roughness:.9}),graphiteSlate:new THREE.MeshStandardMaterial({color:0x363735,roughness:.84,map:slateTex,bumpMap:slateTex,bumpScale:.007}),niche:new THREE.MeshStandardMaterial({color:0xb8aa96,roughness:.88}),
     glass:new THREE.MeshPhysicalMaterial({color:0xbfdce0,transmission:.74,transparent:true,opacity:.30,roughness:.08,ior:1.46,thickness:.012,side:THREE.DoubleSide,depthWrite:false}),flutedGlass:new THREE.MeshPhysicalMaterial({color:0xc8dde0,transmission:.55,transparent:true,opacity:.36,roughness:.34,ior:1.46,thickness:.014,side:THREE.DoubleSide,depthWrite:false}),mirror:new THREE.MeshPhysicalMaterial({color:0xdce5e7,metalness:.72,roughness:.08,transparent:true,opacity:.94,side:THREE.DoubleSide}),windowGlass:new THREE.MeshPhysicalMaterial({color:0xc7e2e7,transmission:.80,transparent:true,opacity:.21,roughness:.04,thickness:.01,side:THREE.DoubleSide,depthWrite:false})
@@ -88,7 +87,7 @@ if (!api || !legacy) {
   let radius = 4.7, theta = 0.72, phi = 1.00;
   let pointers = new Map(), drag = null, pinch = null;
   let moveMode=null, moveDrag=null;
-  let walkMode=false,personMode=false,walkTimer=null;const walk={position:new THREE.Vector3(1.7,1.65,1.25),yaw:Math.PI,pitch:-.05,eye:1.65};const personEye=1.70;
+  let walkMode=false,walkTimer=null;const walk={position:new THREE.Vector3(1.7,1.65,1.25),yaw:Math.PI,pitch:-.05,eye:1.65};
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
@@ -113,9 +112,9 @@ if (!api || !legacy) {
   function roundedRectShape(w,h,r){const x=-w/2,y=-h/2,rr=Math.min(Math.abs(r),w/2,h/2),sh=new THREE.Shape();sh.moveTo(x+rr,y);sh.lineTo(x+w-rr,y);sh.quadraticCurveTo(x+w,y,x+w,y+rr);sh.lineTo(x+w,y+h-rr);sh.quadraticCurveTo(x+w,y+h,x+w-rr,y+h);sh.lineTo(x+rr,y+h);sh.quadraticCurveTo(x,y+h,x,y+h-rr);sh.lineTo(x,y+rr);sh.quadraticCurveTo(x,y,x+rr,y);return sh}
   function roundedBox(w,h,d,r,material,x=0,y=0,z=0,cast=true){const shape=roundedRectShape(Math.max(.01,w),Math.max(.01,h),Math.max(.002,r)),bevel=Math.min(.006,Math.max(.001,r*.12),Math.max(.001,d*.18)),geo=new THREE.ExtrudeGeometry(shape,{depth:Math.max(.004,d),bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:bevel,bevelThickness:bevel});geo.translate(0,0,-Math.max(.004,d)/2);const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;return m}
   function roundedRing(w,d,border,height,material,r=.08){const outer=roundedRectShape(w,d,r),inner=roundedRectShape(Math.max(.03,w-border*2),Math.max(.03,d-border*2),Math.max(.01,r-border*.45));outer.holes.push(inner);const geo=new THREE.ExtrudeGeometry(outer,{depth:height,bevelEnabled:true,bevelSegments:2,bevelSize:Math.min(.004,height*.18),bevelThickness:Math.min(.003,height*.16)});geo.rotateX(-Math.PI/2);geo.translate(0,height/2,0);const m=new THREE.Mesh(geo,material);m.castShadow=true;return m}
-  function productProfile(prod){const explicit=(prod?.render3d?.profile||"").toLowerCase(),sku=(prod?.sku||"").trim().toUpperCase(),code=String(prod?.productCode||prod?.gtin||"").trim();if(explicit&&explicit!=="auto"&&explicit!=="generic")return explicit;if(sku==="METCC")return "metro-metcc";if(sku==="GR1208CW"||sku.startsWith("GR1208"))return "imperia-graphite";if(sku==="MILF800WHAOBB")return "milan-fluted-oak";if(sku==="51120")return "merton-curved-left";if(sku==="ARZIM10MB")return "arezzo-black-led";if(sku==="73483")return "jolie-73483";if(sku==="AZSLOTUWH")return "arezzo-tall-azslotuwh";if(sku==="AZ9CRVLOMW")return "arezzo-vanity-az9crvlomw";if(sku==="C51092")return "newham-c51092";if(sku==="12004")return "trent-12004";if(sku==="33138")return "madrid-33138";if(sku==="PRO047T")return "crosswater-pro047t";if(sku==="FDY3STRMB")return "foundry-fdy3strmb";if(sku==="5059340670249"||code==="5059340670249")return "goodhome-cusko-5059340670249";if(sku==="6313817070598"||code==="6313817070598")return "fake-hanging-plants-6313817070598";if(sku==="ALOE-BARBADENSIS")return "aloe-vera-barbadensis";if(sku==="1269407")return "architeckt-trh-1269407";if(sku==="GENERIC-TOILET-ROLL")return "generic-toilet-roll";return "generic"}
+  function productProfile(prod){const explicit=(prod?.render3d?.profile||"").toLowerCase(),sku=(prod?.sku||"").trim().toUpperCase(),code=String(prod?.productCode||prod?.gtin||"").trim();if(explicit&&explicit!=="auto"&&explicit!=="generic")return explicit;if(sku==="METCC")return "metro-metcc";if(sku==="GR1208CW"||sku.startsWith("GR1208"))return "imperia-graphite";if(sku==="MILF800WHAOBB")return "milan-fluted-oak";if(sku==="51120")return "merton-curved-left";if(sku==="ARZIM10MB")return "arezzo-black-led";if(sku==="73483")return "jolie-73483";if(sku==="AZSLOTUWH")return "arezzo-tall-azslotuwh";if(sku==="AZ9CRVLOMW")return "arezzo-vanity-az9crvlomw";if(sku==="C82754")return "crete-c82754";if(sku==="72137")return "crete-72137";if(sku==="C51092")return "newham-c51092";if(sku==="12004")return "trent-12004";if(sku==="33138")return "madrid-33138";if(sku==="PRO047T")return "crosswater-pro047t";if(sku==="FDY3STRMB")return "foundry-fdy3strmb";if(sku==="5059340670249"||code==="5059340670249")return "goodhome-cusko-5059340670249";if(sku==="6313817070598"||code==="6313817070598")return "fake-hanging-plants-6313817070598";if(sku==="ALOE-BARBADENSIS")return "aloe-vera-barbadensis";if(sku==="1269407")return "architeckt-trh-1269407";if(sku==="GENERIC-TOILET-ROLL")return "generic-toilet-roll";return "generic"}
   function renderFinish(prod){return (prod?.render3d?.finish||"auto").toLowerCase()}
-  function finishMaterial(prod,fallback=mats.timber){const override=renderFinish(prod),finish=(prod?.finish||"").toLowerCase();if(override==="graphite-slate"||finish.includes("graphite")||finish.includes("slate"))return mats.graphiteSlate;if(override==="autumn-oak"||finish.includes("autumn oak"))return mats.autumnOak;if(override==="matt-black"||finish.includes("matt black"))return mats.mattBlack;if(override==="brushed-brass"||finish.includes("brushed brass"))return mats.brushedBrass;if(override==="chrome"||override==="silver"||finish.includes("chrome")||finish.includes("silver"))return mats.chrome;if(override==="gloss-white"||finish.includes("gloss white"))return mats.ceramic;return fallback}
+  function finishMaterial(prod,fallback=mats.timber){const override=renderFinish(prod),finish=(prod?.finish||"").toLowerCase();if(override==="graphite-slate"||finish.includes("graphite")||finish.includes("slate"))return mats.graphiteSlate;if(override==="autumn-oak"||finish.includes("autumn oak"))return mats.autumnOak;if(override==="apex-oak"||finish.includes("apex oak"))return mats.apexOak;if(override==="matt-black"||finish.includes("matt black"))return mats.mattBlack;if(override==="brushed-brass"||finish.includes("brushed brass"))return mats.brushedBrass;if(override==="chrome"||override==="silver"||finish.includes("chrome")||finish.includes("silver"))return mats.chrome;if(override==="gloss-white"||finish.includes("gloss white"))return mats.ceramic;return fallback}
   function fixtureFinishMaterial(item){const finish=(item?.finish||"matt-black").toLowerCase();if(finish==="chrome"||finish==="silver")return mats.chrome;if(finish==="brushed-brass")return mats.brushedBrass;return mats.mattBlack}
   function trimFinishMaterial(item){const finish=(item?.glassTrimFinish||item?.finish||"matt-black").toLowerCase();if(finish==="chrome"||finish==="silver")return mats.chrome;if(finish==="brushed-brass")return mats.brushedBrass;return mats.mattBlack}
   function studShowerFaceSign(i,s){
@@ -556,7 +555,41 @@ if (!api || !legacy) {
     return setItemId(g,i.id)
   }
 
-  function buildVanity(i,s){const prod=(s.products||[]).find(p=>p.id===i.productId),profile=productProfile(prod);if(profile==="milan-fluted-oak")return buildMilanVanity(i,prod);if(profile==="arezzo-vanity-az9crvlomw")return buildArezzoVanity(i,s,prod);const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||850),z=mm(i.z||0),wood=finishMaterial(prod,prod?.finish?.toLowerCase().includes("oak")?mats.oak:mats.timber),bodyH=Math.max(.12,h-.055);g.add(roundedBox(w,bodyH,d,.012,wood,0,z+bodyH/2,0));const frontZ=d/2+.011,panelH=bodyH*.46;[-.25,.25].forEach((q,idx)=>{g.add(meshBox(w*.94,panelH,.018,idx?mats.oakDark:wood,0,z+bodyH*(idx?.25:.74),frontZ));const handle=cylinder(.007,w*.28,mats.brushedBrass,"x",18);handle.position.set(0,z+bodyH*(idx?.30:.79),frontZ+.018);g.add(handle)});g.add(roundedBox(w,.05,d+.012,.012,mats.ceramic,0,z+h-.025,.003));const bowl=new THREE.Mesh(new THREE.TorusGeometry(Math.min(w,d)*.18,.018,14,48),mats.ceramicInner);bowl.rotation.x=Math.PI/2;bowl.scale.z=.68;bowl.position.set(0,z+h+.006,.035);g.add(bowl);const drain=cylinder(.015,.006,mats.chrome,"y",20);drain.position.set(0,z+h+.012,.035);g.add(drain);if(prod?.tapIncluded!==false){const stem=cylinder(.011,.16,mats.brass,"y",16);stem.position.set(0,z+h+.08,-d*.26);g.add(stem);g.add(meshBox(.025,.025,.13,mats.brass,0,z+h+.14,-d*.20))}return setItemId(g,i.id)}
+
+  function buildCreteC82754Vanity(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||812),d=mm(i.h||464),h=mm(i.height||849),z=mm(i.z||0),wood=mats.apexOak,dark=mats.apexOakDark;
+    const basinH=Math.max(.045,Math.min(.070,h*.07)),bodyH=Math.max(.35,h-basinH),frontSkin=.026,frontZ=d/2+frontSkin/2+.004;
+    // Full-height floor-standing carcass with lightly rounded front corners.
+    g.add(roundedBox(w,bodyH,d,.018,wood,0,z+bodyH/2,0));
+    // Two fluted drawer faces. The real Crete range has tight vertical grooves and handleless finger pulls.
+    const gap=.008,panelH=(bodyH-gap)/2,slatSpan=w*.91,slatCount=Math.max(24,Math.round(w/.027));
+    for(let row=0;row<2;row++){
+      const cy=z+bodyH-(row+.5)*panelH-row*gap;
+      g.add(roundedBox(w*.982,panelH-.006,frontSkin,.012,wood,0,cy,frontZ,false));
+      for(let n=0;n<slatCount;n++){
+        const px=-slatSpan/2+n*(slatSpan/Math.max(1,slatCount-1));
+        g.add(roundedBox(.009,panelH*.94,.013,.003,dark,px,cy,frontZ+.019,false));
+      }
+      // Dark recessed shadow behind the centered scalloped/finger-pull area.
+      const pullW=Math.min(.22,w*.30),pullY=cy+panelH*.40;
+      g.add(roundedBox(pullW,.030,.017,.013,new THREE.MeshStandardMaterial({color:0x5f503d,roughness:.94}),0,pullY,frontZ+.027,false));
+    }
+    // Integrated white ceramic basin with sloped inner bowl and rear tap deck.
+    const basinMat=new THREE.MeshPhysicalMaterial({color:0xf7f7f3,roughness:.18,clearcoat:.22,clearcoatRoughness:.16});
+    g.add(roundedBox(w,basinH,d,.010,basinMat,0,z+bodyH+basinH/2,0));
+    const innerW=w*.71,innerD=d*.54,innerY=z+bodyH+basinH*.64;
+    g.add(roundedBox(innerW,.018,innerD,.040,mats.ceramicInner,0,innerY,d*.035,false));
+    const backSlope=meshBox(innerW*.98,.030,innerD*.28,mats.ceramicInner,0,innerY+.012,-innerD*.30,false);backSlope.rotation.x=-.12;g.add(backSlope);
+    const frontSlope=meshBox(innerW*.98,.026,innerD*.25,mats.ceramicInner,0,innerY+.008,innerD*.31,false);frontSlope.rotation.x=.10;g.add(frontSlope);
+    const waste=cylinder(.020,.008,mats.chrome,"y",28);waste.position.set(0,z+bodyH+basinH*.73,d*.05);g.add(waste);
+    const overflow=cylinder(.009,.006,mats.chrome,"z",22);overflow.position.set(0,z+bodyH+basinH*.69,-d*.22);g.add(overflow);
+    const tapHole=cylinder(.009,.006,new THREE.MeshStandardMaterial({color:0xbababa,roughness:.55,metalness:.15}),"y",20);tapHole.position.set(0,z+bodyH+basinH+.002,-d*.32);g.add(tapHole);
+    // Very small floor shadow/lip so the unit reads as floor-standing rather than floating.
+    g.add(meshBox(w*.94,.010,d*.88,dark,0,z+.006,0,false));
+    return setItemId(g,i.id)
+  }
+
+  function buildVanity(i,s){const prod=(s.products||[]).find(p=>p.id===i.productId),profile=productProfile(prod);if(profile==="milan-fluted-oak")return buildMilanVanity(i,prod);if(profile==="arezzo-vanity-az9crvlomw")return buildArezzoVanity(i,s,prod);if(profile==="crete-c82754")return buildCreteC82754Vanity(i,s,prod);const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||850),z=mm(i.z||0),wood=finishMaterial(prod,prod?.finish?.toLowerCase().includes("oak")?mats.oak:mats.timber),bodyH=Math.max(.12,h-.055);g.add(roundedBox(w,bodyH,d,.012,wood,0,z+bodyH/2,0));const frontZ=d/2+.011,panelH=bodyH*.46;[-.25,.25].forEach((q,idx)=>{g.add(meshBox(w*.94,panelH,.018,idx?mats.oakDark:wood,0,z+bodyH*(idx?.25:.74),frontZ));const handle=cylinder(.007,w*.28,mats.brushedBrass,"x",18);handle.position.set(0,z+bodyH*(idx?.30:.79),frontZ+.018);g.add(handle)});g.add(roundedBox(w,.05,d+.012,.012,mats.ceramic,0,z+h-.025,.003));const bowl=new THREE.Mesh(new THREE.TorusGeometry(Math.min(w,d)*.18,.018,14,48),mats.ceramicInner);bowl.rotation.x=Math.PI/2;bowl.scale.z=.68;bowl.position.set(0,z+h+.006,.035);g.add(bowl);const drain=cylinder(.015,.006,mats.chrome,"y",20);drain.position.set(0,z+h+.012,.035);g.add(drain);if(prod?.tapIncluded!==false){const stem=cylinder(.011,.16,mats.brass,"y",16);stem.position.set(0,z+h+.08,-d*.26);g.add(stem);g.add(meshBox(.025,.025,.13,mats.brass,0,z+h+.14,-d*.20))}return setItemId(g,i.id)}
 
   function buildShower(i,s){
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=Math.max(.025,mm(i.height||40)),z=mm(i.z||0),prod=(s.products||[]).find(p=>p.id===i.productId),profile=productProfile(prod),slate=profile==="imperia-graphite"||renderFinish(prod)==="graphite-slate"||(prod?.finish||"").toLowerCase().includes("graphite"),trayMat=slate?mats.graphiteSlate:finishMaterial(prod,mats.ceramic),topMat=slate?mats.graphiteSlate:mats.ceramicInner;
@@ -636,9 +669,36 @@ if (!api || !legacy) {
     return setItemId(g,i.id)
   }
 
+
+  function buildCrete72137Tall(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||350),d=mm(i.h||300),h=mm(i.height||1400),z=mm(i.z||300),wood=mats.apexOak,dark=mats.apexOakDark;
+    const bodyD=d*.96,frontSkin=.025,frontZ=bodyD/2+frontSkin/2+.004;
+    // Slim wall-hung cabinet carcass.
+    g.add(roundedBox(w,h,bodyD,.012,wood,0,z+h/2,0));
+    const gap=.008,panelH=(h-gap)/2,slatSpan=w*.88,slatCount=Math.max(13,Math.round(w/.026));
+    for(let row=0;row<2;row++){
+      const cy=z+h-(row+.5)*panelH-row*gap;
+      g.add(roundedBox(w*.982,panelH-.006,frontSkin,.010,wood,0,cy,frontZ,false));
+      for(let n=0;n<slatCount;n++){
+        const px=-slatSpan/2+n*(slatSpan/Math.max(1,slatCount-1));
+        g.add(roundedBox(.008,panelH*.95,.012,.003,dark,px,cy,frontZ+.018,false));
+      }
+    }
+    // Horizontal seam and the opposing recessed finger-pull shapes shown on the product front.
+    const seamY=z+h*.5;
+    g.add(meshBox(w*.84,.009,.018,new THREE.MeshStandardMaterial({color:0x78644b,roughness:.92}),0,seamY,frontZ+.024,false));
+    const pullMat=new THREE.MeshStandardMaterial({color:0x5b4d3a,roughness:.96});
+    g.add(roundedBox(w*.34,.032,.016,.014,pullMat,-w*.10,seamY+.026,frontZ+.030,false));
+    g.add(roundedBox(w*.34,.032,.016,.014,pullMat, w*.10,seamY-.026,frontZ+.030,false));
+    // Slight wall shadow/back panel clarifies that this is a suspended cabinet.
+    g.add(meshBox(w*.90,h*.94,.010,new THREE.MeshStandardMaterial({color:0x6f5c45,roughness:.96}),0,z+h/2,-bodyD/2-.004,false));
+    return setItemId(g,i.id)
+  }
+
   function buildStorage(i,s) {
     const prod=(s.products||[]).find(p=>p.id===i.productId),profile=productProfile(prod);
     if(profile==="arezzo-tall-azslotuwh") return buildArezzoTallStorage(i,s,prod);
+    if(profile==="crete-72137") return buildCrete72137Tall(i,s,prod);
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||1800),z=mm(i.z||0);
     g.add(meshBox(w,h,d,mats.timber,0,z+h/2,0));
     const front=meshBox(w*.92,h*.94,.018,mats.oak,0,z+h/2,d/2+.011);g.add(front);
@@ -888,7 +948,7 @@ if (!api || !legacy) {
     updateCamera();
   }
 
-  function updateCamera(){if(walkMode||personMode){camera.position.copy(walk.position);const cp=Math.cos(walk.pitch),dir=new THREE.Vector3(cp*Math.cos(walk.yaw),Math.sin(walk.pitch),cp*Math.sin(walk.yaw));camera.lookAt(walk.position.clone().add(dir))}else{camera.position.set(target.x+radius*Math.sin(phi)*Math.cos(theta),target.y+radius*Math.cos(phi),target.z+radius*Math.sin(phi)*Math.sin(theta));camera.lookAt(target)}updateWallVisibility()}
+  function updateCamera(){if(walkMode){camera.position.copy(walk.position);const cp=Math.cos(walk.pitch),dir=new THREE.Vector3(cp*Math.cos(walk.yaw),Math.sin(walk.pitch),cp*Math.sin(walk.yaw));camera.lookAt(walk.position.clone().add(dir))}else{camera.position.set(target.x+radius*Math.sin(phi)*Math.cos(theta),target.y+radius*Math.cos(phi),target.z+radius*Math.sin(phi)*Math.sin(theta));camera.lookAt(target)}updateWallVisibility()}
 
   function updateWallVisibility() {
     if(!room)return;
@@ -918,11 +978,9 @@ if (!api || !legacy) {
     const s=api.getState(),px=pos.x*1000,pz=pos.z*1000,pad=170;
     return (s.items||[]).some(i=>{if(["mirror","rainHead","handset","showerControls","niche","glassPanel","radiator"].includes(i.type))return false;if(i.type==="shower"&&(Number(i.height)||40)<120)return false;const d=itemDims(i),top=(Number(i.z)||0)+(Number(i.height)||0);if(top<250)return false;return px>=i.x-pad&&px<=i.x+d.w+pad&&pz>=i.y-pad&&pz<=i.y+d.d+pad});
   }
-  function setWalkMode(on,resetPosition=true){if(on&&personMode)setPersonMode(false,false);if(on&&moveMode)stopMoveMode(true);if(on&&floorXrayToggle?.checked)setFloorXray(false,false);walkMode=!!on;if(walkMode&&resetPosition){const st=api.getState(),W=mm(st.room.width),D=mm(st.room.depth),doorZ=mm(st.room.door.before+st.room.door.width/2);walk.position.set(Math.max(.12,W-.20),walk.eye,THREE.MathUtils.clamp(doorZ,.12,Math.max(.12,D-.12)));walk.yaw=Math.PI;walk.pitch=-.04}if(walkthroughBtn){walkthroughBtn.classList.toggle("active3d",walkMode);walkthroughBtn.setAttribute("aria-pressed",walkMode?"true":"false");walkthroughBtn.textContent=walkMode?"Exit walkthrough":"Walkthrough"}walkControls?.classList.toggle("hidden",!walkMode);camera.fov=walkMode?62:(personMode?68:48);camera.updateProjectionMatrix();status.textContent=walkMode?"Walkthrough · drag to look · arrows/WASD to move":personMode?"Person view · 1.8m adult · centre of room · drag to look":"Visual 3D · tap a fixture to edit";updateCamera()}
-  function setPersonMode(on,resetPosition=true){if(on&&walkMode)setWalkMode(false,false);if(on&&moveMode)stopMoveMode(true);if(on&&floorXrayToggle?.checked)setFloorXray(false,false);personMode=!!on;if(personMode&&resetPosition){const st=api.getState(),W=mm(st.room.width),D=mm(st.room.depth);walk.position.set(W/2,personEye,D/2);walk.yaw=-Math.PI/2;walk.pitch=-.02}if(personViewBtn){personViewBtn.classList.toggle("active3d",personMode);personViewBtn.setAttribute("aria-pressed",personMode?"true":"false");personViewBtn.textContent=personMode?"Exit person view":"Person view"}walkControls?.classList.add("hidden");camera.fov=personMode?68:(walkMode?62:48);camera.updateProjectionMatrix();status.textContent=personMode?"Person view · 1.8m adult · eye height 1.70m · drag to look 360°":"Visual 3D · tap a fixture to edit";updateCamera()}
+  function setWalkMode(on,resetPosition=true){if(on&&moveMode)stopMoveMode(true);if(on&&floorXrayToggle?.checked)setFloorXray(false,false);walkMode=!!on;if(walkMode&&resetPosition){const st=api.getState(),W=mm(st.room.width),D=mm(st.room.depth),doorZ=mm(st.room.door.before+st.room.door.width/2);walk.position.set(Math.max(.12,W-.20),walk.eye,THREE.MathUtils.clamp(doorZ,.12,Math.max(.12,D-.12)));walk.yaw=Math.PI;walk.pitch=-.04}if(walkthroughBtn){walkthroughBtn.classList.toggle("active3d",walkMode);walkthroughBtn.setAttribute("aria-pressed",walkMode?"true":"false");walkthroughBtn.textContent=walkMode?"Exit walkthrough":"Walkthrough"}walkControls?.classList.toggle("hidden",!walkMode);camera.fov=walkMode?62:48;camera.updateProjectionMatrix();status.textContent=walkMode?"Walkthrough · drag to look · arrows/WASD to move":"Visual 3D · tap a fixture to edit";updateCamera()}
   function walkStep(kind,amount=.14){if(!walkMode)return;const f=new THREE.Vector3(Math.cos(walk.yaw),0,Math.sin(walk.yaw)),r=new THREE.Vector3(-f.z,0,f.x),next=walk.position.clone();if(kind==="forward")next.addScaledVector(f,amount);else if(kind==="back")next.addScaledVector(f,-amount);else if(kind==="left")next.addScaledVector(r,-amount);else if(kind==="right")next.addScaledVector(r,amount);const before=walk.position.clone();walk.position.copy(next);clampWalk();if(walkBlocked(walk.position))walk.position.copy(before);updateCamera()}
   function stopWalkTimer(){if(walkTimer){clearInterval(walkTimer);walkTimer=null}}
-  personViewBtn?.addEventListener("click",()=>setPersonMode(!personMode,true));
   walkthroughBtn?.addEventListener("click",()=>setWalkMode(!walkMode,true));
   walkControls?.querySelectorAll("[data-walk]").forEach(btn=>{const start=e=>{e.preventDefault();stopWalkTimer();walkStep(btn.dataset.walk,.12);walkTimer=setInterval(()=>walkStep(btn.dataset.walk,.09),90)};btn.addEventListener("pointerdown",start);btn.addEventListener("pointerup",stopWalkTimer);btn.addEventListener("pointercancel",stopWalkTimer);btn.addEventListener("pointerleave",stopWalkTimer)});
   window.addEventListener("keydown",e=>{if(!walkMode||viewMode?.value!=="3d"||/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||""))return;const m={ArrowUp:"forward",w:"forward",W:"forward",ArrowDown:"back",s:"back",S:"back",ArrowLeft:"left",a:"left",A:"left",ArrowRight:"right",d:"right",D:"right"};if(m[e.key]){e.preventDefault();walkStep(m[e.key],.16)}});
@@ -938,7 +996,6 @@ if (!api || !legacy) {
 
   function preset(name) {
     if(walkMode)setWalkMode(false,false);
-    if(personMode)setPersonMode(false,false);
     const s=api.getState(),W=mm(s.room.width),D=mm(s.room.depth),H=mm(s.room.ceiling);
     if(name==="door"){
       const dz=mm(s.room.door.before+s.room.door.width/2);
@@ -997,7 +1054,6 @@ if (!api || !legacy) {
     const item=api.getState()?.items?.find(i=>i.id===id);
     if(!item||item.locked||item.type==="niche")return;
     if(walkMode)setWalkMode(false,false);
-    if(personMode)setPersonMode(false,false);
     setFloorXray(false,false);
     moveMode={id};moveDrag=null;api.checkpoint?.();
     if(done3DMoveBtn)done3DMoveBtn.classList.remove("hidden");
@@ -1014,7 +1070,7 @@ if (!api || !legacy) {
   }
   done3DMoveBtn?.addEventListener("click",()=>stopMoveMode(true));
   window.BP3DView={startMove:startMoveMode,stopMove:()=>stopMoveMode(true),refresh:()=>rebuildScene(true)};
-  document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{if(tab.dataset.tab!=="threeD"&&moveMode)stopMoveMode(true);if(tab.dataset.tab!=="threeD"&&walkMode)setWalkMode(false,false);if(tab.dataset.tab!=="threeD"&&personMode)setPersonMode(false,false)}));
+  document.querySelectorAll(".tab").forEach(tab=>tab.addEventListener("click",()=>{if(tab.dataset.tab!=="threeD"&&moveMode)stopMoveMode(true);if(tab.dataset.tab!=="threeD"&&walkMode)setWalkMode(false,false)}));
 
   function selectAt(clientX,clientY) {
     rayFromClient(clientX,clientY);
@@ -1054,7 +1110,7 @@ if (!api || !legacy) {
         }
       }
     }
-    if(pointers.size===1){drag=(walkMode||personMode)?{id:e.pointerId,x:e.clientX,y:e.clientY,walkYaw:walk.yaw,walkPitch:walk.pitch,moved:false}:{id:e.pointerId,x:e.clientX,y:e.clientY,theta,phi,moved:false};try{canvas.setPointerCapture(e.pointerId)}catch(_){}
+    if(pointers.size===1){drag=walkMode?{id:e.pointerId,x:e.clientX,y:e.clientY,walkYaw:walk.yaw,walkPitch:walk.pitch,moved:false}:{id:e.pointerId,x:e.clientX,y:e.clientY,theta,phi,moved:false};try{canvas.setPointerCapture(e.pointerId)}catch(_){}
     }else if(pointers.size===2){
       const p=[...pointers.values()];
       pinch={d:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y),radius,fov:camera.fov};
@@ -1084,8 +1140,8 @@ if (!api || !legacy) {
       }
       return;
     }
-    if(pointers.size===2&&pinch){e.preventDefault();const p=[...pointers.values()],d=Math.max(20,Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y));if(walkMode||personMode){camera.fov=THREE.MathUtils.clamp(pinch.fov*(pinch.d/d),42,82);camera.updateProjectionMatrix()}else radius=THREE.MathUtils.clamp(pinch.radius*pinch.d/d,1,8);updateCamera();return}
-    if(drag&&drag.id===e.pointerId){e.preventDefault();const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;if(walkMode||personMode){walk.yaw=drag.walkYaw-dx*.0065;walk.pitch=THREE.MathUtils.clamp(drag.walkPitch-dy*.0048,personMode?-1.35:-1.05,personMode?1.35:1.05)}else{theta=drag.theta-dx*.008;phi=THREE.MathUtils.clamp(drag.phi-dy*.006,.12,(floorXrayToggle?.checked?3.02:1.52))}updateCamera()}
+    if(pointers.size===2&&pinch){e.preventDefault();const p=[...pointers.values()],d=Math.max(20,Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y));if(walkMode){camera.fov=THREE.MathUtils.clamp(pinch.fov*(pinch.d/d),42,76);camera.updateProjectionMatrix()}else radius=THREE.MathUtils.clamp(pinch.radius*pinch.d/d,1,8);updateCamera();return}
+    if(drag&&drag.id===e.pointerId){e.preventDefault();const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;if(walkMode){walk.yaw=drag.walkYaw-dx*.0065;walk.pitch=THREE.MathUtils.clamp(drag.walkPitch-dy*.0048,-1.05,1.05)}else{theta=drag.theta-dx*.008;phi=THREE.MathUtils.clamp(drag.phi-dy*.006,.12,(floorXrayToggle?.checked?3.02:1.52))}updateCamera()}
   },{passive:false});
 
   function endPointer(e){
@@ -1105,7 +1161,7 @@ if (!api || !legacy) {
   }
   canvas.addEventListener("pointerup",endPointer);
   canvas.addEventListener("pointercancel",endPointer);
-  canvas.addEventListener("wheel",e=>{e.preventDefault();if(walkMode)walkStep(e.deltaY>0?"back":"forward",.12);else if(personMode){camera.fov=THREE.MathUtils.clamp(camera.fov*(e.deltaY>0?1.06:.94),42,82);camera.updateProjectionMatrix();updateCamera()}else{radius=THREE.MathUtils.clamp(radius*(e.deltaY>0?1.09:.92),1,8);updateCamera()}},{passive:false});
+  canvas.addEventListener("wheel",e=>{e.preventDefault();if(walkMode)walkStep(e.deltaY>0?"back":"forward",.12);else{radius=THREE.MathUtils.clamp(radius*(e.deltaY>0?1.09:.92),1,8);updateCamera()}},{passive:false});
 
   function syncViewMode() {
     const is3d=viewMode?.value==="3d";
@@ -1123,7 +1179,6 @@ if (!api || !legacy) {
   wallsToggle?.addEventListener("change",updateWallVisibility);
   function setFloorXray(on, moveCamera=true){
     if(on&&walkMode)setWalkMode(false,false);
-    if(on&&personMode)setPersonMode(false,false);
     if(on&&moveMode)stopMoveMode(true);
     if(floorXrayToggle) floorXrayToggle.checked=!!on;
     if(floorXrayBtn){

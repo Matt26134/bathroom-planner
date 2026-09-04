@@ -25,7 +25,7 @@
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.5.7 · cache-proof Odesa Arc 4-drawer 3D</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.5.8 · Odesa double-basin option + global brushed brass fixtures</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -278,6 +278,10 @@
       <label>Plan name<input id="projectPlanName"></label>
     </div>
     <label style="margin-top:9px">Notes<textarea id="notes" rows="5"></textarea></label>
+    <div class="grid" style="margin-top:9px">
+      <label>Global fixture finish<select id="globalFixtureFinish"><option value="use-item">Use each item's own finish</option><option value="matt-black">Matt black</option><option value="chrome">Silver / chrome</option><option value="brushed-brass">Brushed brass</option></select></label>
+    </div>
+    <div class="heightNote">Applies to shower fittings, glass trim, freestanding taps and the new Odesa basin-top taps. Change it any time.</div>
   </div>
 
   <div class="portableCard">
@@ -371,6 +375,7 @@
           <option value="chrome">Silver / chrome</option>
           <option value="brushed-brass">Brushed brass</option>
         </select></label>
+        <label id="itemVanityTopWrap" class="hidden">Vanity top<select id="itemVanityTop"><option value="countertop">Plain walnut countertop</option><option value="double-basin">Double ceramic basin top</option></select></label>
         <label id="itemStudGlassStyleWrap" class="hidden">Glass type<select id="itemStudGlassStyle">
           <option value="fluted">Fluted / reeded</option>
           <option value="plain">Plain clear</option>
@@ -667,9 +672,9 @@
   </div>
 </div>
 
-<script src="./app-2.5.7.js?build=2.5.7"></script>
-<script type="module" src="./three-view-2.5.7.js?build=2.5.7"></script>
-<script src="./surfaces-manager.js?build=2.5.7"></script>
-<script src="./build-manager.js?build=2.5.7"></script>
+<script src="./app-2.5.8.js?build=2.5.8"></script>
+<script type="module" src="./three-view-2.5.8.js?build=2.5.8"></script>
+<script src="./surfaces-manager.js?build=2.5.8"></script>
+<script src="./build-manager.js?build=2.5.8"></script>
 </body>
 </html>

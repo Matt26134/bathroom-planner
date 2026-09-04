@@ -15,7 +15,7 @@
     "height": 855,
     "defaultZ": 0,
     "url": "https://www.ergonomicdesigns.co.uk/product/ODAR2X6FSFLCALWTOP~odesa-arc-1200mm-fluted-california-walnut-floorstanding-vanity-unit-and-walnut-countertop.html",
-    "notes": "Floorstanding Odesa Arc 1200mm vanity in fluted California Walnut with a matching walnut countertop. The 1200mm unit is visually formed as two side-by-side drawer banks, each with two drawer fronts (four visible drawer fronts total), with integrated milled handles, soft-close hardware and rounded Arc outer corners. Basin, taps and accessories are not included. Planner geometry uses 1200mm width and 855 x 424mm height/depth as the current working dimensions; verify final dimensions against the retailer specification before ordering. Dedicated 3D profile models the 2 x 2 drawer layout, centre join, light California Walnut finish, subtle fluting, rounded outer corners, inset plinth and matching walnut countertop.",
+    "notes": "Floorstanding Odesa Arc 1200mm vanity in fluted California Walnut with a matching walnut countertop. The 1200mm unit is visually formed as two side-by-side drawer banks, each with two drawer fronts (four visible drawer fronts total), with integrated milled handles, soft-close hardware and rounded Arc outer corners. Basin, taps and accessories are not included. Planner geometry uses 1200mm width and 855 x 424mm height/depth as the current working dimensions; verify final dimensions against the retailer specification before ordering. Dedicated 3D profile models the 2 x 2 drawer layout, centre join, light California Walnut finish, subtle fluting, rounded outer corners, inset plinth and matching walnut countertop. The planner also supports a visual alternate top style of a double ceramic basin top inspired by the user reference image.",
     "priceGBP": 649.0,
     "priceCapturedDate": "2026-09-04",
     "material": "MDF / PVC",
@@ -42,6 +42,11 @@
     "modules": 2,
     "drawersPerModule": 2,
     "visibleDrawerFronts": 4,
-    "drawerConfiguration": "2 columns x 2 rows"
+    "drawerConfiguration": "2 columns x 2 rows",
+    "topOptions": [
+      "countertop",
+      "double-basin"
+    ],
+    "defaultTopStyle": "countertop"
   }
 }

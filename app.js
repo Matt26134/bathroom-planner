@@ -1,7 +1,7 @@
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.5.4", KEY="bathroomPlannerStable";
+const VERSION="2.5.5", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -878,7 +878,7 @@ function renderProducts(){
     </div>
     <div class="productMeta">${escHtml(p.finish||"")}${p.sku?` · ${escHtml(p.sku)}`:""}</div>
     ${p.builtIn?'<div class="productBadge">Starter product</div>':""}
-    ${p.render3d?.profile&&p.render3d.profile!=="auto"?`<div class="productBadge">3D · ${escHtml(p.render3d.profile)}</div>`:(/^(METCC|GR1208CW|MILF800WHAOBB|51120|ARZIM10MB)$/i.test(p.sku||"")?'<div class="productBadge">3D · product matched</div>':"")}
+    ${p.render3d?.profile&&p.render3d.profile!=="auto"?`<div class="productBadge">3D · ${escHtml(p.render3d.profile)}</div>`:(/^(METCC|GR1208CW|MILF800WHAOBB|51120|ARZIM10MB|73483|AZSLOTUWH|AZ9CRVLOMW|C82754|72137|ODAR2X6FSFLCALWTOP|C51092|12004)$/i.test(p.sku||"")?'<div class="productBadge">3D · product matched</div>':"")}
     <div class="productActions">
       <button data-place="${escHtml(p.id)}" class="primary">Add to plan</button>
       <button data-edit-product="${escHtml(p.id)}">Edit</button>
@@ -960,7 +960,7 @@ async function importProductFile(file){
  try{
   const data=JSON.parse(await file.text()),p=data.product||data;
   if(!p.name||!p.width||!p.depth||!p.height)throw Error("Product JSON needs name, width, depth and height.");
-  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;ensureProduct3D(p);state.products.push(p);save();renderProducts();alert("Product imported. V2.5.4 will use its product-specific 3D profile automatically when recognised.");
+  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;ensureProduct3D(p);state.products.push(p);save();renderProducts();alert("Product imported. V2.5.5 will use its product-specific 3D profile automatically when recognised.");
  }catch(err){alert("Could not import product: "+err.message)}
 }
 $("newProductBtn").onclick=()=>openProductEditor();

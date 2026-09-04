@@ -1,7 +1,7 @@
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.5.2", KEY="bathroomPlannerStable";
+const VERSION="2.5.3", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -960,7 +960,7 @@ async function importProductFile(file){
  try{
   const data=JSON.parse(await file.text()),p=data.product||data;
   if(!p.name||!p.width||!p.depth||!p.height)throw Error("Product JSON needs name, width, depth and height.");
-  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;ensureProduct3D(p);state.products.push(p);save();renderProducts();alert("Product imported. V2.5.2 will use its product-specific 3D profile automatically when recognised.");
+  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;ensureProduct3D(p);state.products.push(p);save();renderProducts();alert("Product imported. V2.5.3 will use its product-specific 3D profile automatically when recognised.");
  }catch(err){alert("Could not import product: "+err.message)}
 }
 $("newProductBtn").onclick=()=>openProductEditor();

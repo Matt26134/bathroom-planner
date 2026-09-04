@@ -1,8 +1,8 @@
-# Bathroom Planner V2.5.2
+# Bathroom Planner V2.5.3
 
 Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` data migrates forward in place.
 
-## V2.5.2 — accessories, wall-feature cleanup and window reveal
+## V2.5.3 — bespoke 3D product renderers for Jolie + Arezzo
 
 ### Plan variants
 - Project now contains **Plan variants**.
@@ -40,7 +40,7 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Product-aware 3D, walkthrough, 3D movement, joist mapping, floor build-up, UFH planning and phone↔laptop `.bathplan` transfer.
 
 ## Data schema
-- App version: 2.5.2
+- App version: 2.5.3
 - Project schema: v6
 - Portable `.bathplan` format remains format 2 and carries the complete project including plan variants.
 
@@ -55,3 +55,10 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Product-specific 3D profiles for Madrid 33138 towel rail, Crosswater MPRO PRO047T, Foundry FDY3STRMB, GoodHome Cusko shelf, hanging plants, Aloe Vera, Architeckt toilet-roll stand and a generic toilet roll.
 - Window reveal/ledge depth is now editable and defaults to 200mm. The internal room face stays fixed while the window frame/glass sits at the back of the reveal.
 - Surfaces includes **Clear wall feature zones** so the pink herringbone feature can be removed without disturbing the full-wall tile scheme.
+
+
+### V2.5.3 additions
+- Added dedicated 3D recognition for **Jolie 73483** illuminated mirror.
+- Added dedicated 3D recognition for **Arezzo AZSLOTUWH** slatted curved tall storage.
+- Added dedicated 3D recognition for **Arezzo AZ9CRVLOMW** curved slatted vanity with matt white basin.
+- These products now render as product-shaped models instead of generic rectangles when their SKU is recognised.

@@ -112,7 +112,7 @@ if (!api || !legacy) {
   function roundedRectShape(w,h,r){const x=-w/2,y=-h/2,rr=Math.min(Math.abs(r),w/2,h/2),sh=new THREE.Shape();sh.moveTo(x+rr,y);sh.lineTo(x+w-rr,y);sh.quadraticCurveTo(x+w,y,x+w,y+rr);sh.lineTo(x+w,y+h-rr);sh.quadraticCurveTo(x+w,y+h,x+w-rr,y+h);sh.lineTo(x+rr,y+h);sh.quadraticCurveTo(x,y+h,x,y+h-rr);sh.lineTo(x,y+rr);sh.quadraticCurveTo(x,y,x+rr,y);return sh}
   function roundedBox(w,h,d,r,material,x=0,y=0,z=0,cast=true){const shape=roundedRectShape(Math.max(.01,w),Math.max(.01,h),Math.max(.002,r)),bevel=Math.min(.006,Math.max(.001,r*.12),Math.max(.001,d*.18)),geo=new THREE.ExtrudeGeometry(shape,{depth:Math.max(.004,d),bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:bevel,bevelThickness:bevel});geo.translate(0,0,-Math.max(.004,d)/2);const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;return m}
   function roundedRing(w,d,border,height,material,r=.08){const outer=roundedRectShape(w,d,r),inner=roundedRectShape(Math.max(.03,w-border*2),Math.max(.03,d-border*2),Math.max(.01,r-border*.45));outer.holes.push(inner);const geo=new THREE.ExtrudeGeometry(outer,{depth:height,bevelEnabled:true,bevelSegments:2,bevelSize:Math.min(.004,height*.18),bevelThickness:Math.min(.003,height*.16)});geo.rotateX(-Math.PI/2);geo.translate(0,height/2,0);const m=new THREE.Mesh(geo,material);m.castShadow=true;return m}
-  function productProfile(prod){const explicit=(prod?.render3d?.profile||"").toLowerCase();if(explicit&&explicit!=="auto")return explicit;const sku=(prod?.sku||"").trim().toUpperCase();if(sku==="METCC")return "metro-metcc";if(sku==="GR1208CW"||sku.startsWith("GR1208"))return "imperia-graphite";if(sku==="MILF800WHAOBB")return "milan-fluted-oak";if(sku==="51120")return "merton-curved-left";if(sku==="ARZIM10MB")return "arezzo-black-led";return "generic"}
+  function productProfile(prod){const explicit=(prod?.render3d?.profile||"").toLowerCase(),sku=(prod?.sku||"").trim().toUpperCase();if(explicit&&explicit!=="auto"&&explicit!=="generic")return explicit;if(sku==="METCC")return "metro-metcc";if(sku==="GR1208CW"||sku.startsWith("GR1208"))return "imperia-graphite";if(sku==="MILF800WHAOBB")return "milan-fluted-oak";if(sku==="51120")return "merton-curved-left";if(sku==="ARZIM10MB")return "arezzo-black-led";if(sku==="C51092")return "newham-c51092";if(sku==="12004")return "trent-12004";return "generic"}
   function renderFinish(prod){return (prod?.render3d?.finish||"auto").toLowerCase()}
   function finishMaterial(prod,fallback=mats.timber){const override=renderFinish(prod),finish=(prod?.finish||"").toLowerCase();if(override==="graphite-slate"||finish.includes("graphite")||finish.includes("slate"))return mats.graphiteSlate;if(override==="autumn-oak"||finish.includes("autumn oak"))return mats.autumnOak;if(override==="matt-black"||finish.includes("matt black"))return mats.mattBlack;if(override==="brushed-brass"||finish.includes("brushed brass"))return mats.brushedBrass;if(override==="chrome"||override==="silver"||finish.includes("chrome")||finish.includes("silver"))return mats.chrome;if(override==="gloss-white"||finish.includes("gloss white"))return mats.ceramic;return fallback}
   function fixtureFinishMaterial(item){const finish=(item?.finish||"matt-black").toLowerCase();if(finish==="chrome"||finish==="silver")return mats.chrome;if(finish==="brushed-brass")return mats.brushedBrass;return mats.mattBlack}
@@ -459,8 +459,71 @@ if (!api || !legacy) {
     });
   }
   function curvedCornerShape(w,d,hand="left",inset=0){const W=Math.max(.12,w-inset*2),D=Math.max(.12,d-inset*2),x0=-W/2,x1=W/2,z0=-D/2,z1=D/2,big=Math.min(D*.42,W*.18),small=Math.min(D*.12,W*.05),yy=z=>-z,sh=new THREE.Shape();if(hand==="left"){sh.moveTo(x0,yy(z0));sh.lineTo(x1,yy(z0));sh.lineTo(x1,yy(z1-small));sh.quadraticCurveTo(x1,yy(z1),x1-small,yy(z1));sh.lineTo(x0+big,yy(z1));sh.quadraticCurveTo(x0,yy(z1),x0,yy(z1-big));sh.lineTo(x0,yy(z0))}else{sh.moveTo(x0,yy(z0));sh.lineTo(x1,yy(z0));sh.lineTo(x1,yy(z1-big));sh.quadraticCurveTo(x1,yy(z1),x1-big,yy(z1));sh.lineTo(x0+small,yy(z1));sh.quadraticCurveTo(x0,yy(z1),x0,yy(z1-small));sh.lineTo(x0,yy(z0))}return sh}
+  function bathCapsuleShape(w,d,inset=0){
+    const W=Math.max(.18,w-inset*2),D=Math.max(.16,d-inset*2),r=Math.min(D*.50,W*.24);
+    return roundedRectShape(W,D,r);
+  }
+  function buildNewhamBath(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||1520),d=mm(i.h||730),h=mm(i.height||550),z=mm(i.z||0),outerMat=finishMaterial(prod,mats.acrylic),innerMat=mats.ceramicInner;
+    // Continuous rounded freestanding shell: no rectangular side/panel pieces.
+    const outer=bathCapsuleShape(w*.985,d*.985,0),inner=bathCapsuleShape(w*.985,d*.985,.085);outer.holes.push(inner);
+    const shellGeo=new THREE.ExtrudeGeometry(outer,{depth:h*.84,steps:1,bevelEnabled:true,bevelSegments:5,bevelSize:.020,bevelThickness:.018});
+    shellGeo.rotateX(-Math.PI/2);shellGeo.translate(0,z+.035,0);
+    const shell=new THREE.Mesh(shellGeo,outerMat);shell.castShadow=true;shell.receiveShadow=true;g.add(shell);
+    // Soft rolled top rim and inner lip.
+    const rim=roundedRing(w*.985,d*.985,.060,.035,outerMat,d*.49);rim.position.y=z+h*.84;g.add(rim);
+    const lip=roundedRing(w*.855,d*.755,.025,.020,innerMat,d*.37);lip.position.y=z+h*.815;g.add(lip);
+    // Internal bath floor and symmetric reclining end walls.
+    const floorShape=bathCapsuleShape(w*.665,d*.53,0),floorGeo=new THREE.ShapeGeometry(floorShape,48);floorGeo.rotateX(-Math.PI/2);floorGeo.translate(0,z+h*.17,0);const floor=new THREE.Mesh(floorGeo,innerMat);floor.receiveShadow=true;g.add(floor);
+    const endD=d*.56,endH=h*.47;
+    const leftEnd=roundedBox(.030,endH,endD,.018,innerMat,-w*.315,z+h*.43,0,false),rightEnd=roundedBox(.030,endH,endD,.018,innerMat,w*.315,z+h*.43,0,false);
+    leftEnd.rotation.z=-.34;rightEnd.rotation.z=.34;g.add(leftEnd,rightEnd);
+    // Integrated centre waste and overflow detail.
+    const drain=cylinder(.022,.008,mats.chrome,"y",36);drain.position.set(0,z+h*.185,0);g.add(drain);
+    const overflow=cylinder(.014,.009,mats.chrome,"z",30);overflow.position.set(0,z+h*.63,-d*.36);g.add(overflow);
+    return setItemId(g,i.id);
+  }
+  function tubePath(points,radius,material,segments=40){
+    const curve=new THREE.CatmullRomCurve3(points),geo=new THREE.TubeGeometry(curve,segments,radius,10,false),m=new THREE.Mesh(geo,material);m.castShadow=true;return m;
+  }
+  function buildTrentTap(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||200),d=mm(i.h||336),h=mm(i.height||1165),z=mm(i.z||0),mat=mats.chrome;
+    // Circular floor plate and slim round riser.
+    const baseR=Math.max(.070,Math.min(.105,w*.48)),base=cylinder(baseR,.020,mat,"y",48);base.position.y=z+.010;g.add(base);
+    const collar=cylinder(baseR*.58,.050,mat,"y",40);collar.position.y=z+.045;g.add(collar);
+    const stemH=h*.74,stem=cylinder(.027,stemH,mat,"y",36);stem.position.set(0,z+.070+stemH/2,0);g.add(stem);
+    // Mixer body and small side lever.
+    const mixer=cylinder(.041,.155,mat,"x",36);mixer.position.set(0,z+h*.73,0);g.add(mixer);
+    const leverStem=cylinder(.008,.075,mat,"x",20);leverStem.position.set(.100,z+h*.755,0);leverStem.rotation.z=.10;g.add(leverStem);
+    const leverKnob=cylinder(.014,.030,mat,"x",20);leverKnob.position.set(.135,z+h*.765,0);g.add(leverKnob);
+    // Tall swan-neck fixed spout, curving over the bath and then down.
+    const spout=tubePath([
+      new THREE.Vector3(0,z+h*.73,.005),
+      new THREE.Vector3(0,z+h*.86,.005),
+      new THREE.Vector3(0,z+h*.96,.035),
+      new THREE.Vector3(0,z+h*.995,.115),
+      new THREE.Vector3(0,z+h*.965,.190)
+    ],.020,mat,48);g.add(spout);
+    const nozzle=cylinder(.023,.072,mat,"y",30);nozzle.position.set(0,z+h*.935,.190);g.add(nozzle);
+    // Hand shower mounted to one side of the riser.
+    const holder=cylinder(.014,.070,mat,"x",24);holder.position.set(-.060,z+h*.69,-.010);g.add(holder);
+    const handGrip=cylinder(.017,.205,mat,"y",28);handGrip.position.set(-.095,z+h*.70,-.010);handGrip.rotation.z=-.10;g.add(handGrip);
+    const handHead=cylinder(.034,.040,mat,"z",32);handHead.position.set(-.110,z+h*.795,-.010);g.add(handHead);
+    // Flexible hose hanging in a soft U curve.
+    const hoseMat=new THREE.MeshStandardMaterial({color:0xbfc4c7,roughness:.30,metalness:.82});
+    const hose=tubePath([
+      new THREE.Vector3(-.060,z+h*.66,-.010),
+      new THREE.Vector3(-.125,z+h*.49,-.015),
+      new THREE.Vector3(-.115,z+h*.29,-.020),
+      new THREE.Vector3(-.020,z+h*.22,-.015),
+      new THREE.Vector3(.025,z+h*.39,-.008),
+      new THREE.Vector3(.015,z+h*.60,-.004)
+    ],.006,hoseMat,54);g.add(hose);
+    return setItemId(g,i.id);
+  }
+
   function buildMertonBath(i,s,prod){const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||585),z=mm(i.z||0),hand=productProfile(prod).includes("right")?"right":"left",outer=curvedCornerShape(w,d,hand,0),inner=curvedCornerShape(w,d,hand,.062);outer.holes.push(inner);const geo=new THREE.ExtrudeGeometry(outer,{depth:h*.94,steps:1,bevelEnabled:true,bevelSegments:4,bevelSize:.012,bevelThickness:.010});geo.rotateX(-Math.PI/2);geo.translate(0,z,0);const shell=new THREE.Mesh(geo,mats.acrylic);shell.castShadow=true;shell.receiveShadow=true;g.add(shell);const floorGeo=new THREE.ShapeGeometry(curvedCornerShape(w,d,hand,.105),40);floorGeo.rotateX(-Math.PI/2);floorGeo.translate(0,z+h*.24,0);g.add(new THREE.Mesh(floorGeo,mats.ceramicInner));const drain=cylinder(.019,.009,mats.chrome,"y",30);drain.position.set(hand==="left"?w*.20:-w*.20,z+h*.255,0);g.add(drain);const overflow=cylinder(.013,.008,mats.chrome,"z",24);overflow.position.set(hand==="left"?w*.38:-w*.38,z+h*.62,-d*.36);g.add(overflow);return setItemId(g,i.id)}
-  function buildBath(i,s){const prod=(s.products||[]).find(p=>p.id===i.productId),profile=productProfile(prod);if(profile==="merton-curved-left"||profile==="merton-curved-right")return buildMertonBath(i,s,prod);const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||550),z=mm(i.z||0),style=prod?.style||"box",acrylic=finishMaterial(prod,mats.acrylic),panel=new THREE.MeshStandardMaterial({color:0xf1f0ec,roughness:.46}),inner=mats.ceramicInner,panelT=.035;g.add(meshBox(w,h*.78,panelT,panel,0,z+h*.39,d/2-panelT/2));g.add(meshBox(w,h*.78,panelT,panel,0,z+h*.39,-d/2+panelT/2));g.add(meshBox(panelT,h*.78,d,panel,-w/2+panelT/2,z+h*.39,0));g.add(meshBox(panelT,h*.78,d,panel,w/2-panelT/2,z+h*.39,0));const rimH=.045,rimT=Math.min(.065,Math.min(w,d)*.09);g.add(meshBox(w,rimH,rimT,acrylic,0,z+h-rimH/2,-d/2+rimT/2));g.add(meshBox(w,rimH,rimT,acrylic,0,z+h-rimH/2,d/2-rimT/2));g.add(meshBox(rimT,rimH,Math.max(.04,d-rimT*2),acrylic,-w/2+rimT/2,z+h-rimH/2,0));g.add(meshBox(rimT,rimH,Math.max(.04,d-rimT*2),acrylic,w/2-rimT/2,z+h-rimH/2,0));const innerW=Math.max(.25,w-rimT*2.6),innerD=Math.max(.18,d-rimT*2.6);g.add(meshBox(innerW,.025,innerD,inner,0,z+h*.27,0,false));const ls1=meshBox(innerW,h*.50,.025,inner,0,z+h*.54,-innerD/2,false),ls2=meshBox(innerW,h*.50,.025,inner,0,z+h*.54,innerD/2,false);ls1.rotation.x=-.16;ls2.rotation.x=.16;g.add(ls1,ls2);const sr=style==="straightSingleEndedRight",sl=style==="straightSingleEndedLeft",de=style==="doubleEndedBath",leftEnd=meshBox(.03,h*.58,innerD,inner,-innerW/2,z+h*.58,0,false),rightEnd=meshBox(.03,h*.58,innerD,inner,innerW/2,z+h*.58,0,false);if(sr){leftEnd.rotation.z=-.23;rightEnd.rotation.z=.04}else if(sl){leftEnd.rotation.z=-.04;rightEnd.rotation.z=.23}else if(de){leftEnd.rotation.z=-.20;rightEnd.rotation.z=.20}else{leftEnd.rotation.z=-.14;rightEnd.rotation.z=.14}g.add(leftEnd,rightEnd);const drain=cylinder(.018,.007,mats.chrome,"y",26);drain.position.set(sr?w*.23:sl?-w*.23:0,z+h*.295,0);g.add(drain);return setItemId(g,i.id)}
+  function buildBath(i,s){const prod=(s.products||[]).find(p=>p.id===i.productId),profile=productProfile(prod);if(profile==="newham-c51092")return buildNewhamBath(i,s,prod);if(profile==="merton-curved-left"||profile==="merton-curved-right")return buildMertonBath(i,s,prod);const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||550),z=mm(i.z||0),style=prod?.style||"box",acrylic=finishMaterial(prod,mats.acrylic),panel=new THREE.MeshStandardMaterial({color:0xf1f0ec,roughness:.46}),inner=mats.ceramicInner,panelT=.035;g.add(meshBox(w,h*.78,panelT,panel,0,z+h*.39,d/2-panelT/2));g.add(meshBox(w,h*.78,panelT,panel,0,z+h*.39,-d/2+panelT/2));g.add(meshBox(panelT,h*.78,d,panel,-w/2+panelT/2,z+h*.39,0));g.add(meshBox(panelT,h*.78,d,panel,w/2-panelT/2,z+h*.39,0));const rimH=.045,rimT=Math.min(.065,Math.min(w,d)*.09);g.add(meshBox(w,rimH,rimT,acrylic,0,z+h-rimH/2,-d/2+rimT/2));g.add(meshBox(w,rimH,rimT,acrylic,0,z+h-rimH/2,d/2-rimT/2));g.add(meshBox(rimT,rimH,Math.max(.04,d-rimT*2),acrylic,-w/2+rimT/2,z+h-rimH/2,0));g.add(meshBox(rimT,rimH,Math.max(.04,d-rimT*2),acrylic,w/2-rimT/2,z+h-rimH/2,0));const innerW=Math.max(.25,w-rimT*2.6),innerD=Math.max(.18,d-rimT*2.6);g.add(meshBox(innerW,.025,innerD,inner,0,z+h*.27,0,false));const ls1=meshBox(innerW,h*.50,.025,inner,0,z+h*.54,-innerD/2,false),ls2=meshBox(innerW,h*.50,.025,inner,0,z+h*.54,innerD/2,false);ls1.rotation.x=-.16;ls2.rotation.x=.16;g.add(ls1,ls2);const sr=style==="straightSingleEndedRight",sl=style==="straightSingleEndedLeft",de=style==="doubleEndedBath",leftEnd=meshBox(.03,h*.58,innerD,inner,-innerW/2,z+h*.58,0,false),rightEnd=meshBox(.03,h*.58,innerD,inner,innerW/2,z+h*.58,0,false);if(sr){leftEnd.rotation.z=-.23;rightEnd.rotation.z=.04}else if(sl){leftEnd.rotation.z=-.04;rightEnd.rotation.z=.23}else if(de){leftEnd.rotation.z=-.20;rightEnd.rotation.z=.20}else{leftEnd.rotation.z=-.14;rightEnd.rotation.z=.14}g.add(leftEnd,rightEnd);const drain=cylinder(.018,.007,mats.chrome,"y",26);drain.position.set(sr?w*.23:sl?-w*.23:0,z+h*.295,0);g.add(drain);return setItemId(g,i.id)}
   function buildMetroWC(i,prod){const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||820),z=mm(i.z||0),panH=mm(prod?.panHeightMm||415),cisH=Math.max(.25,h-panH*.98),cisD=d*.245,cisY=-d*.365;g.add(roundedBox(w*.92,cisH,cisD,.045,mats.ceramic,0,z+panH+cisH*.50,cisY));g.add(roundedBox(w*.94,.026,cisD*1.03,.035,mats.ceramic,0,z+panH+cisH+.003,cisY,false));const flush=cylinder(.018,.008,mats.chrome,"y",30);flush.position.set(0,z+panH+cisH+.020,cisY);g.add(flush);g.add(roundedBox(w*.57,panH*.78,d*.37,.055,mats.ceramic,0,z+panH*.39,-d*.17));const bowl=new THREE.Mesh(new THREE.SphereGeometry(.5,40,26),mats.ceramic);bowl.scale.set(w*.82,panH*.32,d*.60);bowl.position.set(0,z+panH*.66,d*.105);bowl.castShadow=true;g.add(bowl);g.add(roundedBox(w*.76,panH*.18,d*.48,.095,mats.ceramic,0,z+panH*.69,-d*.02));const seat=roundedRing(w*.80,d*.49,.045,.025,mats.ceramicInner,.14);seat.position.set(0,z+panH*.955,d*.085);g.add(seat);g.add(roundedBox(w*.78,.018,d*.47,.13,new THREE.MeshPhysicalMaterial({color:0xf2f3f0,roughness:.26,clearcoat:.16}),0,z+panH*.995,d*.078,false));return setItemId(g,i.id)}
   function buildWC(i,s){const prod=(s.products||[]).find(p=>p.id===i.productId),profile=productProfile(prod);if(profile==="metro-metcc")return buildMetroWC(i,prod);const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||800),z=mm(i.z||0),style=prod?.style||"wcCloseCoupledRound",isBack=style==="wcBackToWallRound",isHung=style==="wcWallHungRound",isSquare=style==="wcCompactSquare";if(!isHung){const cisH=isBack?h*.50:h*.44,cisD=isBack?d*.20:d*.27,cisY=isBack?-d*.38:-d*.34;g.add(roundedBox(w*.82,cisH,cisD,.035,mats.ceramic,0,z+h*.72,cisY));g.add(roundedBox(w*.84,.025,cisD*1.04,.025,mats.ceramic,0,z+h*.96,cisY))}if(isSquare){g.add(roundedBox(w*.78,h*.30,d*.54,.07,mats.ceramic,0,z+(isHung?h*.38:h*.28),d*.10));g.add(roundedBox(w*.66,.035,d*.43,.09,mats.ceramicInner,0,z+(isHung?h*.57:h*.50),d*.12))}else{const bowl=new THREE.Mesh(new THREE.SphereGeometry(.5,32,20),mats.ceramic);bowl.scale.set(w*.78,h*.34,d*.72);bowl.position.set(0,z+(isHung?h*.38:h*.30),d*.08);bowl.castShadow=true;g.add(bowl);const seat=roundedRing(w*.68,d*.44,.04,.022,mats.ceramicInner,.12);seat.position.set(0,z+(isHung?h*.57:h*.52),d*.10);g.add(seat)}if(isHung)g.add(meshBox(w*.62,.028,d*.38,new THREE.MeshStandardMaterial({color:0xbdbbb5,transparent:true,opacity:.20}),0,z+.025,d*.08,false));else g.add(roundedBox(w*.42,h*.28,d*.34,.04,mats.ceramic,0,z+h*.14,-d*.02));if(!isHung){const flush=cylinder(.015,.006,mats.chrome,"y",24);flush.position.set(0,z+h*.985,-d*.34);g.add(flush)}return setItemId(g,i.id)}
   function buildMilanVanity(i,prod){const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||589),z=mm(i.z||300),bodyH=Math.max(.18,h-.055),frontZ=d/2+.010;g.add(roundedBox(w,bodyH,d,.015,mats.autumnOak,0,z+bodyH/2,0));const gap=.012,panelH=(bodyH-gap)/2;for(let row=0;row<2;row++){const cy=z+bodyH-(row+.5)*panelH-row*gap;g.add(meshBox(w*.965,panelH-.010,.016,mats.autumnOak,0,cy,frontZ,false));const count=Math.max(22,Math.round(w/.022));for(let n=0;n<count;n++){const px=-w*.46+n*(w*.92/Math.max(1,count-1));g.add(roundedBox(.007,panelH*.88,.011,.003,mats.oakDark,px,cy,frontZ+.012,false))}g.add(meshBox(w*.56,.010,.014,mats.brushedBrass,0,cy+panelH*.31,frontZ+.028,false))}g.add(roundedBox(w,.045,d+.010,.015,mats.ceramic,0,z+h-.022,.002));g.add(roundedBox(w*.58,.018,d*.48,.07,mats.ceramicInner,0,z+h+.006,.025,false));const drain=cylinder(.014,.006,mats.chrome,"y",22);drain.position.set(0,z+h+.018,.035);g.add(drain);if(prod?.tapIncluded===true){const stem=cylinder(.011,.16,mats.brushedBrass,"y",16);stem.position.set(0,z+h+.08,-d*.26);g.add(stem);g.add(meshBox(.025,.025,.13,mats.brushedBrass,0,z+h+.14,-d*.20))}return setItemId(g,i.id)}
@@ -611,6 +674,8 @@ if (!api || !legacy) {
   }
 
   function buildItem(i,s) {
+    const prod=(s.products||[]).find(p=>p.id===i.productId),profile=productProfile(prod);
+    if(profile==="trent-12004") return buildTrentTap(i,s,prod);
     if(i.type==="niche") return buildNiche(i,s);
     if(i.type==="bath") return buildBath(i,s);
     if(i.type==="wc") return buildWC(i,s);

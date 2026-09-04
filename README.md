@@ -1,8 +1,8 @@
-# Bathroom Planner V2.5.0
+# Bathroom Planner V2.5.1
 
 Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` data migrates forward in place.
 
-## V2.5.0 — layout experiments, free rotation and calmer 2D editing
+## V2.5.1 — Newham bath + Trent freestanding tap fidelity
 
 ### Plan variants
 - Project now contains **Plan variants**.
@@ -40,6 +40,12 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Product-aware 3D, walkthrough, 3D movement, joist mapping, floor build-up, UFH planning and phone↔laptop `.bathplan` transfer.
 
 ## Data schema
-- App version: 2.5.0
+- App version: 2.5.1
 - Project schema: v6
 - Portable `.bathplan` format remains format 2 and carries the complete project including plan variants.
+
+
+### Product fidelity fix
+- Bathroom Mountain Newham C51092 now uses a dedicated rounded/capsule freestanding bath shell with hollow basin, rolled rim, internal floor, reclining end walls, centre waste and overflow. It no longer renders as a rectangular generic bath.
+- Bathroom Mountain Trent 12004 now uses a dedicated floor-mounted chrome mixer model with circular base, slim riser, mixer body, curved swan-neck spout, lever, hand shower and hanging hose. It no longer renders as a generic box.
+- Known SKU recognition now overrides old `generic` render profiles for these two products, so products already imported from the previous JSONs upgrade automatically.

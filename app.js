@@ -1,7 +1,7 @@
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.5.0", KEY="bathroomPlannerStable";
+const VERSION="2.5.1", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 

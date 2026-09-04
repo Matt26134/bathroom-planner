@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <script>
 (() => {
-  const BUILD="2.5.7";
+  const BUILD="3.0.0";
   try {
     const u=new URL(location.href);
     if(u.searchParams.get("build")!==BUILD){u.searchParams.set("build",BUILD);u.searchParams.delete("fresh");history.replaceState(null,"",u.toString());}
@@ -19,23 +19,25 @@
 })();
 </script>
 <title>Bathroom Planner</title>
-<link rel="manifest" href="./manifest.json?build=2.5.7">
-<link rel="icon" href="./icon-192.png?build=2.5.7">
-<link rel="stylesheet" href="./styles.css?build=2.5.7">
+<link rel="manifest" href="./manifest.json?build=3.0.0">
+<link rel="icon" href="./icon-192.png?build=3.0.0">
+<link rel="stylesheet" href="./styles.css?build=3.0.0">
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.5.10 · runtime hotfix + refined Odesa basins + global fixture finishes</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V3.0.0 · complete bathroom design system</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
 <nav>
   <button class="tab active" data-tab="plan">Plan</button>
   <button class="tab" data-tab="threeD">3D</button>
+  <button class="tab" data-tab="scene">Scene</button>
   <button class="tab" data-tab="build">Build</button>
   <button class="tab" data-tab="products">Products</button>
   <button class="tab" data-tab="surfaces">Surfaces</button>
   <button class="tab" data-tab="project">Project</button>
+  <button class="tab" data-tab="schedule">Schedule</button>
   <button class="tab" data-tab="backup">Backup</button>
 </nav>
 
@@ -98,12 +100,22 @@
       <button id="viewWindow">Window view</button>
       <button id="viewTop">Top</button>
       <button id="viewReset">Reset</button>
+      <select id="cameraPreset" aria-label="Camera preset">
+        <option value="">Camera…</option><option value="vanity">Vanity</option><option value="bath">Bath</option><option value="shower">Shower</option><option value="wc">WC</option><option value="corner">Corner</option><option value="eye">Eye level</option><option value="saved">Saved view</option>
+      </select>
+      <button id="saveCameraBtn" type="button">Save view</button>
       <button id="walkthroughBtn" type="button" aria-pressed="false">Walkthrough</button>
       <span class="spacer"></span>
+      <select id="wallMode" aria-label="Wall visibility"><option value="auto">Walls: Auto</option><option value="all">Walls: All</option><option value="none">Walls: None</option></select>
+      <select id="fidelityMode" aria-label="3D fidelity"><option value="draft">Draft</option><option value="detailed" selected>Detailed</option><option value="presentation">Presentation</option></select>
+      <button id="measure3DBtn" type="button" aria-pressed="false">3D measure</button>
+      <button id="sectionXBtn" type="button" aria-pressed="false">Section X</button>
+      <button id="sectionYBtn" type="button" aria-pressed="false">Section Y</button>
+      <button id="fullScreen3DBtn" type="button">Full screen</button>
       <input id="floorXrayToggle" type="checkbox" hidden>
       <button id="floorXrayBtn" type="button" aria-pressed="false">Under floor</button>
       <button id="done3DMoveBtn" type="button" class="hidden">Done moving</button>
-      <label style="display:flex;align-items:center;gap:5px"><input id="wallsToggle" type="checkbox" checked style="width:18px">Walls</label>
+      <label class="legacyWallsToggle" style="display:none"><input id="wallsToggle" type="checkbox" checked>Walls</label>
     </div>
     <canvas id="threeDCanvas"></canvas>
     <div id="walkControls" class="walkControls hidden" aria-label="Walkthrough movement controls">
@@ -113,11 +125,27 @@
       <button type="button" class="walkRight" data-walk="right" aria-label="Step right">→</button>
     </div>
     <div id="elevationWrap" class="elevationWrap"><svg id="elevationSvg" class="elevationSvg"></svg></div>
-    <div class="threeDHint">Orbit: drag to orbit · pinch to zoom · tap an item to edit. <strong>Walkthrough</strong>: eye-level view, drag to look, use the arrows on phone or WASD/arrow keys on desktop. Choose <strong>Move in 3D</strong> in an item panel to reposition it.</div>
+    <div class="threeDHint">Orbit: drag · pinch/scroll to zoom · tap an item to edit. <strong>Auto walls</strong> cut away the wall between you and the room. Camera presets frame major fixtures. <strong>3D measure</strong> lets you tap two surfaces. Section X/Y cuts through the room. Full screen gives the model the whole display.</div>
   </div>
 </section>
 
 
+<section id="scene" class="panel">
+  <div class="v3Workspace">
+    <div class="v3Hero"><div><div class="eyebrow">V3 scene manager</div><h2>Objects, assemblies & relationships</h2><p class="muted">Organise the room into useful zones, hide or lock objects, and move related items together.</p></div><div class="v3HeroActions"><button id="smartAssembliesBtn" class="primary">Create smart assemblies</button><button id="showAllSceneBtn">Show all</button><button id="unlockAllSceneBtn">Unlock all</button></div></div>
+    <div class="v3SceneLayout">
+      <div class="v3SceneMain"><div id="sceneList" class="sceneList"></div></div>
+      <aside class="v3SideCard">
+        <h3>Assembly controls</h3>
+        <label>Selected assembly<select id="assemblySelect"><option value="">None</option></select></label>
+        <div class="quickActions"><button data-assembly-nudge="left">← 50</button><button data-assembly-nudge="up">↑ 50</button><button data-assembly-nudge="down">↓ 50</button><button data-assembly-nudge="right">50 →</button></div>
+        <div class="quickActions"><button id="addSelectedToAssemblyBtn">Add selected item</button><button id="removeSelectedFromAssemblyBtn">Remove selected</button></div>
+        <label>New assembly name<input id="newAssemblyName" placeholder="e.g. Vanity zone"></label><button id="newAssemblyBtn" style="margin-top:8px">Create assembly</button>
+        <div class="section">Design checks</div><div id="sceneChecks" class="v3CheckList"></div>
+      </aside>
+    </div>
+  </div>
+</section>
 
 <section id="build" class="panel">
   <div class="buildTop">
@@ -281,7 +309,17 @@
     <div class="grid" style="margin-top:9px">
       <label>Global fixture finish<select id="globalFixtureFinish"><option value="use-item">Use each item's own finish</option><option value="matt-black">Matt black</option><option value="chrome">Silver / chrome</option><option value="brushed-brass">Brushed brass</option></select></label>
     </div>
-    <div class="heightNote">Applies to shower fittings, glass trim, freestanding taps and the new Odesa basin-top taps. Change it any time.</div>
+    <div class="heightNote">V3 metal finish is inherited by compatible taps, shower fittings, glass trim, towel rails, radiator metalwork, accessories, wastes and flush details unless an item explicitly overrides it.</div>
+    <div class="section">Room finish palette</div>
+    <div class="grid">
+      <label>Metalwork<select id="paletteMetal"><option value="use-item">Use item / product finish</option><option value="matt-black">Matt black</option><option value="chrome">Silver / chrome</option><option value="brushed-brass">Brushed brass</option></select></label>
+      <label>Sanitaryware<select id="paletteSanitary"><option value="bright-white">Bright white</option><option value="warm-white">Warm white</option><option value="soft-matt-white">Soft matt white</option></select></label>
+      <label>Furniture override<select id="paletteFurniture"><option value="product">Use product finish</option><option value="california-walnut">California walnut</option><option value="light-oak">Light oak</option><option value="dark-walnut">Dark walnut</option><option value="white">White</option></select></label>
+      <label>Default glass<select id="paletteGlass"><option value="fluted">Fluted / reeded</option><option value="plain">Plain clear</option><option value="frosted">Frosted</option></select></label>
+      <label>Glass trim<select id="paletteGlassTrim"><option value="inherit-metal">Inherit metalwork</option><option value="matt-black">Matt black</option><option value="chrome">Silver / chrome</option><option value="brushed-brass">Brushed brass</option></select></label>
+      <label>3D quality<select id="paletteFidelity"><option value="draft">Draft</option><option value="detailed">Detailed</option><option value="presentation">Presentation</option></select></label>
+    </div>
+    <div class="quickActions"><button id="applyPaletteBtn" class="primary">Apply palette to compatible items</button><button id="resetPaletteOverridesBtn">Keep product-specific finishes</button></div>
   </div>
 
   <div class="portableCard">
@@ -308,6 +346,18 @@
       <button id="exportBathplanBtn" class="primary">Export .bathplan</button>
       <label class="filebtn">Import .bathplan<input id="importBathplanInput" type="file" accept=".bathplan,.json,application/json"></label>
       <button id="downloadLegacyJsonBtn">Export readable JSON</button>
+    </div>
+  </div>
+</section>
+
+<section id="schedule" class="panel">
+  <div class="v3Workspace">
+    <div class="v3Hero"><div><div class="eyebrow">V3 output</div><h2>Specification, services & comparison</h2><p class="muted">A live schedule generated from the design. This is a planning aid, not a substitute for manufacturer or trade installation requirements.</p></div><div class="v3HeroActions"><button id="refreshScheduleBtn">Refresh</button><button id="downloadScheduleBtn" class="primary">Export schedule CSV</button></div></div>
+    <div class="v3ScheduleGrid">
+      <div class="v3SideCard"><h3>Product schedule</h3><div id="specSchedule"></div></div>
+      <div class="v3SideCard"><h3>Generated service targets</h3><div id="serviceTargetList"></div><div class="quickActions"><button id="addServiceTargetsBtn">Add targets to plan</button><button id="removeGeneratedServicesBtn">Remove generated targets</button></div></div>
+      <div class="v3SideCard"><h3>Plan comparison</h3><label>Compare with<select id="comparePlanSelect"></select></label><div id="compareMetrics" class="v3MetricStack"></div><div class="quickActions"><button id="previewCompareBtn">Preview other plan</button><button id="returnCompareBtn" class="hidden">Return to active</button></div></div>
+      <div class="v3SideCard"><h3>Recovery</h3><p class="muted">V3 keeps lightweight local restore points before major V3 actions.</p><select id="recoverySelect"></select><div class="quickActions"><button id="restoreRecoveryBtn">Restore selected</button><button id="makeRecoveryBtn">Create restore point</button></div></div>
     </div>
   </div>
 </section>
@@ -375,7 +425,7 @@
           <option value="chrome">Silver / chrome</option>
           <option value="brushed-brass">Brushed brass</option>
         </select></label>
-        <label id="itemVanityTopWrap" class="hidden">Vanity top<select id="itemVanityTop"><option value="countertop">Plain walnut countertop</option><option value="double-basin">Double ceramic basin top</option></select></label>
+        <label id="itemVanityTopWrap" class="hidden">Vanity top<select id="itemVanityTop"><option value="countertop">Plain walnut countertop</option><option value="double-basin">Double ceramic basin top</option><option value="double-vessel">Two vessel basins on walnut top</option></select></label>
         <label id="itemStudGlassStyleWrap" class="hidden">Glass type<select id="itemStudGlassStyle">
           <option value="fluted">Fluted / reeded</option>
           <option value="plain">Plain clear</option>
@@ -388,7 +438,14 @@
         </select></label>
         <label id="itemGlassPrivacyWrap" class="hidden">Privacy<select id="itemGlassPrivacy"><option value="clear">Clear</option><option value="light">Light privacy</option><option value="medium">Medium privacy</option></select></label>
         <label id="itemGlassThicknessWrap" class="hidden">Glass thickness (mm)<input id="itemGlassThickness" type="number" min="6" max="15"></label>
+        <label id="v3ItemAssemblyWrap">Assembly<select id="v3ItemAssembly"><option value="">None</option></select></label>
+        <label>Visibility<select id="v3ItemVisibility"><option value="visible">Visible</option><option value="hidden">Hidden</option></select></label>
       </div>
+      <div class="section">Configuration</div><div id="v3ConfigFields" class="grid"></div>
+      <div class="section">Align & snap</div><div class="quickActions v3AlignActions">
+        <button type="button" data-v3-align="centre-x">Centre room X</button><button type="button" data-v3-align="centre-y">Centre room Y</button><button type="button" data-v3-align="touch-wall">Touch nearest wall</button><button type="button" data-v3-align="gap-10">10 mm wall gap</button><button type="button" data-v3-align="nearest-edge">Align nearest edge</button><button type="button" data-v3-align="equal-gap">Equalise side gap</button><button type="button" data-v3-align="centre-vanity">Centre over vanity</button><button type="button" data-v3-align="glass-tray">Glass → tray edge</button>
+      </div>
+      <div class="section">Relationships & services</div><div id="v3InspectorRelations" class="productNote"></div>
     </div>
 
     <div id="openingDetails" class="details hidden">
@@ -516,7 +573,7 @@
     </div>
 
     <div id="product3dNote" class="productNote">
-      V2.5.7 recognises known SKUs and uses product-specific geometry/materials. Automatic now includes Odesa Arc ODAR2X6FSFLCALWTOP alongside the existing Metro, Imperia, Milan, Merton, Arezzo, Jolie, Crete, Newham and Trent profiles. Product photos remain references rather than flat images pasted onto the model.
+      V3 uses product-specific profiles plus data-driven configuration fields. Known SKUs retain their dedicated geometry, while configurable products can expose options such as basin/top style directly in the inspector. Product photos remain references rather than flat images pasted onto the model.
     </div>
     <div class="section">Dimensions</div>
     <div class="grid">
@@ -672,9 +729,10 @@
   </div>
 </div>
 
-<script src="./app-2.5.10.js?build=2.5.10"></script>
-<script type="module" src="./three-view-2.5.10.js?build=2.5.10"></script>
-<script src="./surfaces-manager.js?build=2.5.10"></script>
-<script src="./build-manager.js?build=2.5.10"></script>
+<script src="./app-3.0.0.js?build=3.0.0"></script>
+<script src="./v3-manager.js?build=3.0.0"></script>
+<script type="module" src="./three-view-3.0.0.js?build=3.0.0"></script>
+<script src="./surfaces-manager.js?build=3.0.0"></script>
+<script src="./build-manager.js?build=3.0.0"></script>
 </body>
 </html>

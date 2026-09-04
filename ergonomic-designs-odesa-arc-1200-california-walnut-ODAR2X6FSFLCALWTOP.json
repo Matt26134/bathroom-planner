@@ -15,7 +15,7 @@
     "height": 855,
     "defaultZ": 0,
     "url": "https://www.ergonomicdesigns.co.uk/product/ODAR2X6FSFLCALWTOP~odesa-arc-1200mm-fluted-california-walnut-floorstanding-vanity-unit-and-walnut-countertop.html",
-    "notes": "Floorstanding Odesa Arc 1200mm vanity in fluted California Walnut with a matching walnut countertop. The 1200mm unit is visually formed as two side-by-side drawer banks, each with two drawer fronts (four visible drawer fronts total), with integrated milled handles, soft-close hardware and rounded Arc outer corners. Basin, taps and accessories are not included. Planner geometry uses 1200mm width and 855 x 424mm height/depth as the current working dimensions; verify final dimensions against the retailer specification before ordering. Dedicated 3D profile models the 2 x 2 drawer layout, centre join, light California Walnut finish, subtle fluting, rounded outer corners, inset plinth and matching walnut countertop. The planner also supports a visual alternate top style of a double ceramic basin top inspired by the user reference image.",
+    "notes": "Floorstanding Odesa Arc 1200mm vanity in fluted California Walnut with a matching walnut countertop. The 1200mm unit is visually formed as two side-by-side drawer banks, each with two drawer fronts (four visible drawer fronts total), with integrated milled handles, soft-close hardware and rounded Arc outer corners. Basin, taps and accessories are not included. Planner geometry uses 1200mm width and 855 x 424mm height/depth as the current working dimensions; verify final dimensions against the retailer specification before ordering. Dedicated 3D profile models the 2 x 2 drawer layout, centre join, light California Walnut finish, subtle fluting, rounded outer corners, inset plinth and matching walnut countertop. The planner also supports a visual alternate top style of a double ceramic basin top inspired by the user reference image. V3 supports configurable countertop, integrated double-basin and double-vessel visual configurations without changing the base product record.",
     "priceGBP": 649.0,
     "priceCapturedDate": "2026-09-04",
     "material": "MDF / PVC",
@@ -45,8 +45,37 @@
     "drawerConfiguration": "2 columns x 2 rows",
     "topOptions": [
       "countertop",
-      "double-basin"
+      "double-basin",
+      "double-vessel"
     ],
-    "defaultTopStyle": "countertop"
+    "defaultTopStyle": "countertop",
+    "configSchema": {
+      "topStyle": {
+        "label": "Top",
+        "type": "select",
+        "default": "countertop",
+        "options": [
+          {
+            "value": "countertop",
+            "label": "Walnut countertop"
+          },
+          {
+            "value": "double-basin",
+            "label": "Integrated double ceramic basin"
+          },
+          {
+            "value": "double-vessel",
+            "label": "Two vessel basins on walnut top"
+          }
+        ]
+      },
+      "basinCount": {
+        "label": "Basins",
+        "type": "number",
+        "min": 0,
+        "max": 2,
+        "default": 0
+      }
+    }
   }
 }

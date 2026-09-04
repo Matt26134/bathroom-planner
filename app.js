@@ -1,7 +1,7 @@
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.5.5", KEY="bathroomPlannerStable";
+const VERSION="2.5.6", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -111,6 +111,13 @@ if(!state.products.some(p=>p.id==="prod-lille-800")){
 function ensureProduct3D(p){
  if(!p||typeof p!=="object")return p;
  p.render3d={profile:"auto",finish:"auto",...(p.render3d||{})};
+ const sku=String(p.sku||"").trim().toUpperCase();
+ // V2.5.6: repair metadata from the first Odesa JSON as well as its renderer.
+ // The 1200 floorstanding unit presents as two side-by-side two-drawer banks: four visible drawer fronts.
+ if(sku==="ODAR2X6FSFLCALWTOP"){
+  p.style="vanity4drawer";p.drawers=4;p.modules=2;p.drawersPerModule=2;p.visibleDrawerFronts=4;p.drawerConfiguration="2 columns x 2 rows";
+  p.render3d.profile="odesa-arc-odar2x6fsflcalwtop";p.render3d.finish="california-walnut";
+ }
  return p;
 }
 state.products.forEach(ensureProduct3D);
@@ -960,7 +967,7 @@ async function importProductFile(file){
  try{
   const data=JSON.parse(await file.text()),p=data.product||data;
   if(!p.name||!p.width||!p.depth||!p.height)throw Error("Product JSON needs name, width, depth and height.");
-  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;ensureProduct3D(p);state.products.push(p);save();renderProducts();alert("Product imported. V2.5.5 will use its product-specific 3D profile automatically when recognised.");
+  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;ensureProduct3D(p);state.products.push(p);save();renderProducts();alert("Product imported. V2.5.6 will use its product-specific 3D profile automatically when recognised.");
  }catch(err){alert("Could not import product: "+err.message)}
 }
 $("newProductBtn").onclick=()=>openProductEditor();

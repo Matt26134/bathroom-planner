@@ -70,7 +70,7 @@ if (!api || !legacy) {
   const mats = {
     floor:new THREE.MeshStandardMaterial({color:0xe9e3d8,roughness:.92}),wall:new THREE.MeshStandardMaterial({color:0xf1eee7,roughness:.92}),wallSide:new THREE.MeshStandardMaterial({color:0xe1ddd3,roughness:.94}),
     ceramic:new THREE.MeshPhysicalMaterial({color:0xf8f8f5,roughness:.18,clearcoat:.28,clearcoatRoughness:.18}),ceramicInner:new THREE.MeshPhysicalMaterial({color:0xe7e8e5,roughness:.34,clearcoat:.12}),acrylic:new THREE.MeshPhysicalMaterial({color:0xfbfaf7,roughness:.22,clearcoat:.34,clearcoatRoughness:.15}),
-    oak:new THREE.MeshStandardMaterial({color:0xa7835e,roughness:.72,map:oakTex}),autumnOak:new THREE.MeshStandardMaterial({color:0xa87e52,roughness:.68,map:oakTex}),oakDark:new THREE.MeshStandardMaterial({color:0x80613f,roughness:.78,map:oakTex}),apexOak:new THREE.MeshStandardMaterial({color:0xb39a78,roughness:.74,map:oakTex}),apexOakDark:new THREE.MeshStandardMaterial({color:0x8d7658,roughness:.82,map:oakTex}),californiaWalnut:new THREE.MeshStandardMaterial({color:0x8a5f39,roughness:.70,map:oakTex}),californiaWalnutDark:new THREE.MeshStandardMaterial({color:0x5f3d24,roughness:.84,map:oakTex}),timber:new THREE.MeshStandardMaterial({color:0xb39875,roughness:.8}),joist:new THREE.MeshStandardMaterial({color:0x9b7857,roughness:.9}),
+    oak:new THREE.MeshStandardMaterial({color:0xa7835e,roughness:.72,map:oakTex}),autumnOak:new THREE.MeshStandardMaterial({color:0xa87e52,roughness:.68,map:oakTex}),oakDark:new THREE.MeshStandardMaterial({color:0x80613f,roughness:.78,map:oakTex}),apexOak:new THREE.MeshStandardMaterial({color:0xb39a78,roughness:.74,map:oakTex}),apexOakDark:new THREE.MeshStandardMaterial({color:0x8d7658,roughness:.82,map:oakTex}),californiaWalnut:new THREE.MeshStandardMaterial({color:0xfff1d7,roughness:.68,map:oakTex}),californiaWalnutDark:new THREE.MeshStandardMaterial({color:0x8a6242,roughness:.84}),californiaWalnutGroove:new THREE.MeshStandardMaterial({color:0x896342,roughness:.90}),timber:new THREE.MeshStandardMaterial({color:0xb39875,roughness:.8}),joist:new THREE.MeshStandardMaterial({color:0x9b7857,roughness:.9}),
     heating:new THREE.MeshStandardMaterial({color:0xb95037,roughness:.7,transparent:true,opacity:.62,side:THREE.DoubleSide}),brass:new THREE.MeshStandardMaterial({color:0xb88943,roughness:.28,metalness:.7}),brushedBrass:new THREE.MeshStandardMaterial({color:0xc09a59,roughness:.34,metalness:.72}),metal:new THREE.MeshStandardMaterial({color:0xc8c8c3,roughness:.34,metalness:.68}),chrome:new THREE.MeshPhysicalMaterial({color:0xe7e8e7,roughness:.12,metalness:.96,clearcoat:.55}),
     dark:new THREE.MeshStandardMaterial({color:0x080808,roughness:.76,metalness:.12}),mattBlack:new THREE.MeshStandardMaterial({color:0x111211,roughness:.58,metalness:.35}),anthracite:new THREE.MeshStandardMaterial({color:0x34383a,roughness:.62,metalness:.52}),mproSlate:new THREE.MeshStandardMaterial({color:0x4b5051,roughness:.48,metalness:.72}),walnut:new THREE.MeshStandardMaterial({color:0x6f4b2f,roughness:.72,map:oakTex}),leafGreen:new THREE.MeshStandardMaterial({color:0x356a3f,roughness:.78}),leafGreen2:new THREE.MeshStandardMaterial({color:0x5b8a50,roughness:.82}),potBlack:new THREE.MeshStandardMaterial({color:0x171816,roughness:.72}),paperWhite:new THREE.MeshStandardMaterial({color:0xf2f0e9,roughness:.96}),cardboard:new THREE.MeshStandardMaterial({color:0x9f744d,roughness:.9}),graphiteSlate:new THREE.MeshStandardMaterial({color:0x363735,roughness:.84,map:slateTex,bumpMap:slateTex,bumpScale:.007}),niche:new THREE.MeshStandardMaterial({color:0xb8aa96,roughness:.88}),
     glass:new THREE.MeshPhysicalMaterial({color:0xbfdce0,transmission:.74,transparent:true,opacity:.30,roughness:.08,ior:1.46,thickness:.012,side:THREE.DoubleSide,depthWrite:false}),flutedGlass:new THREE.MeshPhysicalMaterial({color:0xc8dde0,transmission:.55,transparent:true,opacity:.36,roughness:.34,ior:1.46,thickness:.014,side:THREE.DoubleSide,depthWrite:false}),mirror:new THREE.MeshPhysicalMaterial({color:0xdce5e7,metalness:.72,roughness:.08,transparent:true,opacity:.94,side:THREE.DoubleSide}),windowGlass:new THREE.MeshPhysicalMaterial({color:0xc7e2e7,transmission:.80,transparent:true,opacity:.21,roughness:.04,thickness:.01,side:THREE.DoubleSide,depthWrite:false})
@@ -592,42 +592,69 @@ if (!api || !legacy) {
 
   function buildOdesaArc1200Vanity(i,s,prod){
     const g=groupForItem(i),w=mm(i.w||1200),d=mm(i.h||424),h=mm(i.height||855),z=mm(i.z||0);
-    const wood=mats.californiaWalnut,dark=mats.californiaWalnutDark;
-    const topH=Math.max(.022,Math.min(.034,h*.035)),plinthH=Math.max(.030,Math.min(.050,h*.055)),bodyH=Math.max(.42,h-topH-plinthH);
-    const arcR=Math.max(.045,Math.min(.082,d*.20)),bodyY=z+plinthH;
-    // True plan-view rounded footprint gives the Odesa Arc its wrap-around front corners.
-    const carcass=roundedFootprintBox(w,bodyH,d,arcR,wood,0,bodyY,0);g.add(carcass);
-    // Inset floor plinth/shadow so the 1200 unit reads as floorstanding rather than floating.
-    g.add(roundedFootprintBox(w*.92,plinthH,d*.78,Math.max(.018,arcR*.50),dark,0,z,0,false));
-    const frontZ=d/2+.008,gap=.012,panelH=(bodyH-gap)/2,flatSpan=Math.max(.20,w-arcR*2.05),ribStep=.022;
-    const grooveMat=new THREE.MeshStandardMaterial({color:0x4f321f,roughness:.92});
-    for(let row=0;row<2;row++){
-      const cy=bodyY+bodyH-(row+.5)*panelH-row*gap;
-      // Flat front face under the fluting.
-      g.add(meshBox(flatSpan,panelH-.008,.015,wood,0,cy,frontZ,false));
-      const count=Math.max(28,Math.floor(flatSpan/ribStep));
-      for(let n=0;n<=count;n++){
-        const px=-flatSpan/2+n*(flatSpan/Math.max(1,count));
-        g.add(roundedBox(.010,panelH*.94,.012,.003,dark,px,cy,frontZ+.014,false));
+    const wood=mats.californiaWalnut,dark=mats.californiaWalnutDark,groove=mats.californiaWalnutGroove;
+    const topH=Math.max(.022,Math.min(.034,h*.035)),plinthH=Math.max(.040,Math.min(.060,h*.068)),bodyH=Math.max(.42,h-topH-plinthH);
+    const arcR=Math.max(.045,Math.min(.078,d*.185)),bodyY=z+plinthH;
+    // Odesa 1200 floorstanding is visually two side-by-side 600-ish drawer banks in one rounded carcass.
+    g.add(roundedFootprintBox(w,bodyH,d,arcR,wood,0,bodyY,0));
+    // Inset plinth beneath both banks.
+    g.add(roundedFootprintBox(w*.93,plinthH,d*.80,Math.max(.018,arcR*.48),dark,0,z,0,false));
+
+    const frontZ=d/2+.008;
+    const centreGap=Math.max(.008,Math.min(.014,w*.010));
+    const rowGap=.010;
+    const bankW=(w-centreGap)/2;
+    const panelW=bankW-.010;
+    const panelH=(bodyH-rowGap)/2;
+    const faceDepth=.014;
+    const ribStep=.024;
+
+    // Four visible drawer fronts: 2 columns x 2 rows.
+    for(let col=0;col<2;col++){
+      const cx=(col===0?-1:1)*(centreGap/2+bankW/2);
+      for(let row=0;row<2;row++){
+        const cy=bodyY+bodyH-(row+.5)*panelH-row*rowGap;
+        // Slightly rounded panel faces; only the outside carcass carries the strong Arc radius.
+        g.add(roundedBox(panelW,panelH-.008,faceDepth,.009,wood,cx,cy,frontZ,false));
+
+        // Narrow, subtle fluting. Grooves are shadows rather than near-black raised bars.
+        const usable=panelW*.94;
+        const count=Math.max(18,Math.floor(usable/ribStep));
+        for(let n=0;n<=count;n++){
+          const px=cx-usable/2+n*(usable/Math.max(1,count));
+          g.add(roundedBox(.0045,panelH*.90,.007,.0015,groove,px,cy,frontZ+.011,false));
+        }
+
+        // Integrated milled pull at the top edge of each individual drawer.
+        const handleY=cy+panelH*.425;
+        g.add(roundedBox(panelW*.88,.015,.010,.005,dark,cx,handleY,frontZ+.014,false));
       }
-      // Continue the vertical flutes around both rounded front corners.
-      const curveCount=7,cz=d/2-arcR,cx=w/2-arcR;
+    }
+
+    // The central join between the two drawer banks is an important visual cue on the real 1200 unit.
+    g.add(meshBox(centreGap*.55,bodyH*.975,.011,dark,0,bodyY+bodyH/2,frontZ+.010,false));
+    // Horizontal break between upper and lower drawers, split either side of the centre join.
+    const breakY=bodyY+bodyH*.5;
+    for(const cx of [-(centreGap/2+bankW/2),(centreGap/2+bankW/2)]){
+      g.add(meshBox(panelW*.96,.007,.012,dark,cx,breakY,frontZ+.013,false));
+    }
+
+    // Fluting wraps around the two OUTER front Arc corners only.
+    const curveCount=8,cz=d/2-arcR,cxEdge=w/2-arcR;
+    for(let row=0;row<2;row++){
+      const cy=bodyY+bodyH-(row+.5)*panelH-row*rowGap;
       for(let n=1;n<=curveCount;n++){
         const a=(Math.PI/2)*(n/(curveCount+1));
-        const zz=cz+arcR*Math.cos(a),xr=cx+arcR*Math.sin(a),xl=-cx-arcR*Math.sin(a);
-        const rr=roundedBox(.010,panelH*.94,.012,.003,dark,xr,cy,zz+.012,false);rr.rotation.y=a;g.add(rr);
-        const rl=roundedBox(.010,panelH*.94,.012,.003,dark,xl,cy,zz+.012,false);rl.rotation.y=-a;g.add(rl);
+        const zz=cz+arcR*Math.cos(a),xr=cxEdge+arcR*Math.sin(a),xl=-cxEdge-arcR*Math.sin(a);
+        const rr=roundedBox(.0045,panelH*.90,.007,.0015,groove,xr,cy,zz+.009,false);rr.rotation.y=a;g.add(rr);
+        const rl=roundedBox(.0045,panelH*.90,.007,.0015,groove,xl,cy,zz+.009,false);rl.rotation.y=-a;g.add(rl);
       }
-      // Integrated milled handle: a recessed shadow line at the top of each drawer rather than a metal pull.
-      const handleY=cy+panelH*.43;
-      g.add(roundedBox(flatSpan*.94,.022,.017,.008,grooveMat,0,handleY,frontZ+.022,false));
     }
-    // Strong horizontal drawer separation visible through the fluting.
-    g.add(meshBox(flatSpan*.97,.010,.018,grooveMat,0,bodyY+bodyH*.5,frontZ+.023,false));
-    // Matching California Walnut countertop; no basin is part of this SKU.
-    const top=roundedFootprintBox(w+.010,topH,d+.010,arcR+.005,wood,0,z+plinthH+bodyH,0);g.add(top);
-    // Subtle front edge on the worktop makes the separate countertop legible in 3D.
-    g.add(roundedBox(flatSpan*.99,topH*.72,.010,.004,dark,0,z+plinthH+bodyH+topH*.52,d/2+.012,false));
+
+    // Matching California Walnut countertop; no basin/taps are included with this SKU.
+    g.add(roundedFootprintBox(w+.010,topH,d+.010,arcR+.005,wood,0,z+plinthH+bodyH,0));
+    // Thin front edge/shadow keeps the separate countertop readable without making the unit look dark.
+    g.add(roundedBox(w-arcR*2.15,topH*.58,.008,.003,groove,0,z+plinthH+bodyH+topH*.52,d/2+.011,false));
     return setItemId(g,i.id)
   }
 

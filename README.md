@@ -1,8 +1,8 @@
-# Bathroom Planner V2.5.5
+# Bathroom Planner V2.5.6
 
 Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` data migrates forward in place.
 
-## V2.5.5 — Odesa Arc 1200 full 3D
+## V2.5.6 — Odesa Arc 1200 corrected 4-drawer 3D
 
 ### Plan variants
 - Project now contains **Plan variants**.
@@ -40,7 +40,7 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Product-aware 3D, walkthrough, 3D movement, joist mapping, floor build-up, UFH planning and phone↔laptop `.bathplan` transfer.
 
 ## Data schema
-- App version: 2.5.5
+- App version: 2.5.6
 - Project schema: v6
 - Portable `.bathplan` format remains format 2 and carries the complete project including plan variants.
 
@@ -65,11 +65,19 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 
 
 
+### V2.5.6 Odesa correction
+- Corrected **ODAR2X6FSFLCALWTOP** from two full-width drawers to the visually correct **2 x 2 drawer-front layout**: two side-by-side drawer banks with two drawers each.
+- Added the centre join between the two 600-ish banks and split the horizontal drawer break either side of it.
+- Lightened California Walnut substantially: the previous material double-tinted an already-brown timber texture and rendered far too dark.
+- Fluting is now narrower and more subtle, with shadow-coloured grooves rather than near-black ribs.
+- Retains the rounded outer Arc corners, inset floor plinth and separate matching walnut countertop.
+- Existing imported Odesa products upgrade automatically because the SKU/profile is unchanged; V2.5.6 also repairs the old `drawers: 2` metadata to four visible drawer fronts on load.
+
 ### V2.5.5 additions
 - Added dedicated SKU recognition for **Odesa Arc ODAR2X6FSFLCALWTOP**.
 - Added a distinct **California Walnut** material and finish override.
 - The Odesa Arc now uses a true rounded plan-view carcass rather than a generic rectangular vanity.
-- Two full-width drawers have dense vertical fluting, flutes that wrap around both front arc corners, recessed milled handle grooves and a visible centre drawer break.
+- Initial Odesa renderer (superseded by V2.5.6 correction).
 - Added an inset floor plinth/shadow so the model reads as the floorstanding version.
 - Added the matching California Walnut countertop as a separate 3D layer with no basin or tap modelled, matching the countertop-only SKU.
 - Existing imported Odesa JSON using `render3d.profile = "odesa-arc-odar2x6fsflcalwtop"` renders automatically; SKU recognition also works as a fallback.

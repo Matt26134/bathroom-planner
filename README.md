@@ -1,8 +1,8 @@
-# Bathroom Planner V2.5.3
+# Bathroom Planner V2.5.4
 
 Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` data migrates forward in place.
 
-## V2.5.3 — bespoke 3D product renderers for Jolie + Arezzo
+## V2.5.4 — centre-room Person view
 
 ### Plan variants
 - Project now contains **Plan variants**.
@@ -40,7 +40,7 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Product-aware 3D, walkthrough, 3D movement, joist mapping, floor build-up, UFH planning and phone↔laptop `.bathplan` transfer.
 
 ## Data schema
-- App version: 2.5.3
+- App version: 2.5.4
 - Project schema: v6
 - Portable `.bathplan` format remains format 2 and carries the complete project including plan variants.
 
@@ -62,3 +62,14 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Added dedicated 3D recognition for **Arezzo AZSLOTUWH** slatted curved tall storage.
 - Added dedicated 3D recognition for **Arezzo AZ9CRVLOMW** curved slatted vanity with matt white basin.
 - These products now render as product-shaped models instead of generic rectangles when their SKU is recognised.
+
+
+### V2.5.4 additions
+- Added a dedicated **Person view** in 3D.
+- Person view places the camera in the exact centre of the bathroom.
+- Camera eye height is **1.70m**, representing the natural eye line of an approximately **1.8m-tall adult**.
+- Drag left/right for unlimited 360-degree turning and drag up/down to look towards the floor or ceiling.
+- Pinch on mobile or use the mouse wheel on desktop to adjust field of view without moving position.
+- Person view is fixed in place, so fixture collision logic cannot stop you turning or push the viewpoint around.
+- The normal room walls remain visible from inside the room; exterior wall-culling from orbit view does not interfere with the centre-room viewpoint.
+- Existing Walkthrough remains available separately when you want to physically move around the room.

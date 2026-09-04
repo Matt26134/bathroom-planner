@@ -1,6 +1,20 @@
-# Bathroom Planner V2.5.6
+# Bathroom Planner V2.5.7
 
 Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` data migrates forward in place.
+
+## V2.5.7 — cache-proof Odesa Arc 1200 4-drawer 3D
+
+### Cache/deployment fix
+- `index.html` now pins every JS/CSS asset to build **2.5.7** and uses uniquely named `app-2.5.7.js` / `three-view-2.5.7.js`, so an older cached renderer cannot silently run under a newer page header.
+- Once V2.5.7 loads, the address is normalised to `?build=2.5.7`, so ordinary refreshes stay on the build-specific URL instead of dropping back to the cached bare GitHub Pages URL.
+- The page proactively removes legacy service workers and Cache Storage entries.
+- The 3D status line visibly says **renderer V2.5.7**, making HTML/renderer version mismatch obvious.
+- PWA manifest start URL is pinned to `?build=2.5.7`.
+
+### Odesa visual correction
+- Dedicated lighter California Walnut texture rather than tinting the darker generic oak texture.
+- Four drawer fronts are now deliberately separated by a recessed backing, central vertical joint and horizontal row joint so the **2 columns × 2 rows** arrangement remains visible from room-view distance.
+- Fine walnut-toned fluting replaces the overly dark rib effect.
 
 ## V2.5.6 — Odesa Arc 1200 corrected 4-drawer 3D
 
@@ -40,7 +54,7 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Product-aware 3D, walkthrough, 3D movement, joist mapping, floor build-up, UFH planning and phone↔laptop `.bathplan` transfer.
 
 ## Data schema
-- App version: 2.5.6
+- App version: 2.5.7
 - Project schema: v6
 - Portable `.bathplan` format remains format 2 and carries the complete project including plan variants.
 

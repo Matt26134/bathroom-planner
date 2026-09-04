@@ -1,8 +1,8 @@
-# Bathroom Planner V2.5.1
+# Bathroom Planner V2.5.2
 
 Complete replacement build. Upload every file in this folder over the GitHub Pages repo root. Existing `bathroomPlannerStable` data migrates forward in place.
 
-## V2.5.1 — Newham bath + Trent freestanding tap fidelity
+## V2.5.2 — accessories, wall-feature cleanup and window reveal
 
 ### Plan variants
 - Project now contains **Plan variants**.
@@ -40,7 +40,7 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Product-aware 3D, walkthrough, 3D movement, joist mapping, floor build-up, UFH planning and phone↔laptop `.bathplan` transfer.
 
 ## Data schema
-- App version: 2.5.1
+- App version: 2.5.2
 - Project schema: v6
 - Portable `.bathplan` format remains format 2 and carries the complete project including plan variants.
 
@@ -49,3 +49,9 @@ Complete replacement build. Upload every file in this folder over the GitHub Pag
 - Bathroom Mountain Newham C51092 now uses a dedicated rounded/capsule freestanding bath shell with hollow basin, rolled rim, internal floor, reclining end walls, centre waste and overflow. It no longer renders as a rectangular generic bath.
 - Bathroom Mountain Trent 12004 now uses a dedicated floor-mounted chrome mixer model with circular base, slim riser, mixer body, curved swan-neck spout, lever, hand shower and hanging hose. It no longer renders as a generic box.
 - Known SKU recognition now overrides old `generic` render profiles for these two products, so products already imported from the previous JSONs upgrade automatically.
+
+
+### V2.5.2 additions
+- Product-specific 3D profiles for Madrid 33138 towel rail, Crosswater MPRO PRO047T, Foundry FDY3STRMB, GoodHome Cusko shelf, hanging plants, Aloe Vera, Architeckt toilet-roll stand and a generic toilet roll.
+- Window reveal/ledge depth is now editable and defaults to 200mm. The internal room face stays fixed while the window frame/glass sits at the back of the reveal.
+- Surfaces includes **Clear wall feature zones** so the pink herringbone feature can be removed without disturbing the full-wall tile scheme.

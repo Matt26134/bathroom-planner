@@ -72,7 +72,7 @@ if (!api || !legacy) {
     ceramic:new THREE.MeshPhysicalMaterial({color:0xf8f8f5,roughness:.18,clearcoat:.28,clearcoatRoughness:.18}),ceramicInner:new THREE.MeshPhysicalMaterial({color:0xe7e8e5,roughness:.34,clearcoat:.12}),acrylic:new THREE.MeshPhysicalMaterial({color:0xfbfaf7,roughness:.22,clearcoat:.34,clearcoatRoughness:.15}),
     oak:new THREE.MeshStandardMaterial({color:0xa7835e,roughness:.72,map:oakTex}),autumnOak:new THREE.MeshStandardMaterial({color:0xa87e52,roughness:.68,map:oakTex}),oakDark:new THREE.MeshStandardMaterial({color:0x80613f,roughness:.78,map:oakTex}),timber:new THREE.MeshStandardMaterial({color:0xb39875,roughness:.8}),joist:new THREE.MeshStandardMaterial({color:0x9b7857,roughness:.9}),
     heating:new THREE.MeshStandardMaterial({color:0xb95037,roughness:.7,transparent:true,opacity:.62,side:THREE.DoubleSide}),brass:new THREE.MeshStandardMaterial({color:0xb88943,roughness:.28,metalness:.7}),brushedBrass:new THREE.MeshStandardMaterial({color:0xc09a59,roughness:.34,metalness:.72}),metal:new THREE.MeshStandardMaterial({color:0xc8c8c3,roughness:.34,metalness:.68}),chrome:new THREE.MeshPhysicalMaterial({color:0xe7e8e7,roughness:.12,metalness:.96,clearcoat:.55}),
-    dark:new THREE.MeshStandardMaterial({color:0x080808,roughness:.76,metalness:.12}),mattBlack:new THREE.MeshStandardMaterial({color:0x111211,roughness:.58,metalness:.35}),graphiteSlate:new THREE.MeshStandardMaterial({color:0x363735,roughness:.84,map:slateTex,bumpMap:slateTex,bumpScale:.007}),niche:new THREE.MeshStandardMaterial({color:0xb8aa96,roughness:.88}),
+    dark:new THREE.MeshStandardMaterial({color:0x080808,roughness:.76,metalness:.12}),mattBlack:new THREE.MeshStandardMaterial({color:0x111211,roughness:.58,metalness:.35}),anthracite:new THREE.MeshStandardMaterial({color:0x34383a,roughness:.62,metalness:.52}),mproSlate:new THREE.MeshStandardMaterial({color:0x4b5051,roughness:.48,metalness:.72}),walnut:new THREE.MeshStandardMaterial({color:0x6f4b2f,roughness:.72,map:oakTex}),leafGreen:new THREE.MeshStandardMaterial({color:0x356a3f,roughness:.78}),leafGreen2:new THREE.MeshStandardMaterial({color:0x5b8a50,roughness:.82}),potBlack:new THREE.MeshStandardMaterial({color:0x171816,roughness:.72}),paperWhite:new THREE.MeshStandardMaterial({color:0xf2f0e9,roughness:.96}),cardboard:new THREE.MeshStandardMaterial({color:0x9f744d,roughness:.9}),graphiteSlate:new THREE.MeshStandardMaterial({color:0x363735,roughness:.84,map:slateTex,bumpMap:slateTex,bumpScale:.007}),niche:new THREE.MeshStandardMaterial({color:0xb8aa96,roughness:.88}),
     glass:new THREE.MeshPhysicalMaterial({color:0xbfdce0,transmission:.74,transparent:true,opacity:.30,roughness:.08,ior:1.46,thickness:.012,side:THREE.DoubleSide,depthWrite:false}),flutedGlass:new THREE.MeshPhysicalMaterial({color:0xc8dde0,transmission:.55,transparent:true,opacity:.36,roughness:.34,ior:1.46,thickness:.014,side:THREE.DoubleSide,depthWrite:false}),mirror:new THREE.MeshPhysicalMaterial({color:0xdce5e7,metalness:.72,roughness:.08,transparent:true,opacity:.94,side:THREE.DoubleSide}),windowGlass:new THREE.MeshPhysicalMaterial({color:0xc7e2e7,transmission:.80,transparent:true,opacity:.21,roughness:.04,thickness:.01,side:THREE.DoubleSide,depthWrite:false})
   };
   const sharedMaterials=new Set(Object.values(mats));
@@ -112,7 +112,7 @@ if (!api || !legacy) {
   function roundedRectShape(w,h,r){const x=-w/2,y=-h/2,rr=Math.min(Math.abs(r),w/2,h/2),sh=new THREE.Shape();sh.moveTo(x+rr,y);sh.lineTo(x+w-rr,y);sh.quadraticCurveTo(x+w,y,x+w,y+rr);sh.lineTo(x+w,y+h-rr);sh.quadraticCurveTo(x+w,y+h,x+w-rr,y+h);sh.lineTo(x+rr,y+h);sh.quadraticCurveTo(x,y+h,x,y+h-rr);sh.lineTo(x,y+rr);sh.quadraticCurveTo(x,y,x+rr,y);return sh}
   function roundedBox(w,h,d,r,material,x=0,y=0,z=0,cast=true){const shape=roundedRectShape(Math.max(.01,w),Math.max(.01,h),Math.max(.002,r)),bevel=Math.min(.006,Math.max(.001,r*.12),Math.max(.001,d*.18)),geo=new THREE.ExtrudeGeometry(shape,{depth:Math.max(.004,d),bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:bevel,bevelThickness:bevel});geo.translate(0,0,-Math.max(.004,d)/2);const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;return m}
   function roundedRing(w,d,border,height,material,r=.08){const outer=roundedRectShape(w,d,r),inner=roundedRectShape(Math.max(.03,w-border*2),Math.max(.03,d-border*2),Math.max(.01,r-border*.45));outer.holes.push(inner);const geo=new THREE.ExtrudeGeometry(outer,{depth:height,bevelEnabled:true,bevelSegments:2,bevelSize:Math.min(.004,height*.18),bevelThickness:Math.min(.003,height*.16)});geo.rotateX(-Math.PI/2);geo.translate(0,height/2,0);const m=new THREE.Mesh(geo,material);m.castShadow=true;return m}
-  function productProfile(prod){const explicit=(prod?.render3d?.profile||"").toLowerCase(),sku=(prod?.sku||"").trim().toUpperCase();if(explicit&&explicit!=="auto"&&explicit!=="generic")return explicit;if(sku==="METCC")return "metro-metcc";if(sku==="GR1208CW"||sku.startsWith("GR1208"))return "imperia-graphite";if(sku==="MILF800WHAOBB")return "milan-fluted-oak";if(sku==="51120")return "merton-curved-left";if(sku==="ARZIM10MB")return "arezzo-black-led";if(sku==="C51092")return "newham-c51092";if(sku==="12004")return "trent-12004";return "generic"}
+  function productProfile(prod){const explicit=(prod?.render3d?.profile||"").toLowerCase(),sku=(prod?.sku||"").trim().toUpperCase(),code=String(prod?.productCode||prod?.gtin||"").trim();if(explicit&&explicit!=="auto"&&explicit!=="generic")return explicit;if(sku==="METCC")return "metro-metcc";if(sku==="GR1208CW"||sku.startsWith("GR1208"))return "imperia-graphite";if(sku==="MILF800WHAOBB")return "milan-fluted-oak";if(sku==="51120")return "merton-curved-left";if(sku==="ARZIM10MB")return "arezzo-black-led";if(sku==="C51092")return "newham-c51092";if(sku==="12004")return "trent-12004";if(sku==="33138")return "madrid-33138";if(sku==="PRO047T")return "crosswater-pro047t";if(sku==="FDY3STRMB")return "foundry-fdy3strmb";if(sku==="5059340670249"||code==="5059340670249")return "goodhome-cusko-5059340670249";if(sku==="6313817070598"||code==="6313817070598")return "fake-hanging-plants-6313817070598";if(sku==="ALOE-BARBADENSIS")return "aloe-vera-barbadensis";if(sku==="1269407")return "architeckt-trh-1269407";if(sku==="GENERIC-TOILET-ROLL")return "generic-toilet-roll";return "generic"}
   function renderFinish(prod){return (prod?.render3d?.finish||"auto").toLowerCase()}
   function finishMaterial(prod,fallback=mats.timber){const override=renderFinish(prod),finish=(prod?.finish||"").toLowerCase();if(override==="graphite-slate"||finish.includes("graphite")||finish.includes("slate"))return mats.graphiteSlate;if(override==="autumn-oak"||finish.includes("autumn oak"))return mats.autumnOak;if(override==="matt-black"||finish.includes("matt black"))return mats.mattBlack;if(override==="brushed-brass"||finish.includes("brushed brass"))return mats.brushedBrass;if(override==="chrome"||override==="silver"||finish.includes("chrome")||finish.includes("silver"))return mats.chrome;if(override==="gloss-white"||finish.includes("gloss white"))return mats.ceramic;return fallback}
   function fixtureFinishMaterial(item){const finish=(item?.finish||"matt-black").toLowerCase();if(finish==="chrome"||finish==="silver")return mats.chrome;if(finish==="brushed-brass")return mats.brushedBrass;return mats.mattBlack}
@@ -180,13 +180,15 @@ if (!api || !legacy) {
   function buildWalls(s) {
     wallSets = { window: [], opposite: [], left: [], right: [] };
     const W=mm(s.room.width), D=mm(s.room.depth), H=mm(s.room.ceiling), T=.055;
-    const win=s.room.window, wb=mm(win.before), ww=mm(win.width), sill=mm(win.sill), wh=mm(win.height);
+    const win=s.room.window, wb=mm(win.before), ww=mm(win.width), sill=mm(win.sill), wh=mm(win.height), windowT=Math.max(.055,mm(win.depth||200));
     const wr=Math.max(0,W-wb-ww), above=Math.max(0,H-sill-wh);
 
-    addWallBox("window", wb,H,T, wb/2,H/2,-T/2);
-    addWallBox("window", wr,H,T, wb+ww+wr/2,H/2,-T/2);
-    addWallBox("window", ww,sill,T, wb+ww/2,sill/2,-T/2);
-    addWallBox("window", ww,above,T, wb+ww/2,sill+wh+above/2,-T/2);
+    // The internal face stays at z=0. The window wall/reveal extends backwards,
+    // so the sill reads as a real 200mm-deep ledge without changing room dimensions.
+    addWallBox("window", wb,H,windowT, wb/2,H/2,-windowT/2);
+    addWallBox("window", wr,H,windowT, wb+ww+wr/2,H/2,-windowT/2);
+    addWallBox("window", ww,sill,windowT, wb+ww/2,sill/2,-windowT/2);
+    addWallBox("window", ww,above,windowT, wb+ww/2,sill+wh+above/2,-windowT/2);
 
     addWallBox("opposite", W,H,T, W/2,H/2,D+T/2);
     addWallBox("left", T,H,D, -T/2,H/2,D/2);
@@ -235,13 +237,13 @@ if (!api || !legacy) {
 
     // Window frame + glass
     const frameMat = new THREE.MeshStandardMaterial({color:0xc8c2b6,roughness:.55});
-    const fw=.035;
+    const fw=.035, frameZ=-windowT+.018;
     const frame = new THREE.Group();
-    frame.add(meshBox(ww,fw,.025,frameMat,wb+ww/2,sill,-.012,false));
-    frame.add(meshBox(ww,fw,.025,frameMat,wb+ww/2,sill+wh,-.012,false));
-    frame.add(meshBox(fw,wh,.025,frameMat,wb,sill+wh/2,-.012,false));
-    frame.add(meshBox(fw,wh,.025,frameMat,wb+ww,sill+wh/2,-.012,false));
-    const glass = meshBox(Math.max(.01,ww-fw*2),Math.max(.01,wh-fw*2),.008,mats.windowGlass,wb+ww/2,sill+wh/2,-.005,false);
+    frame.add(meshBox(ww,fw,.025,frameMat,wb+ww/2,sill,frameZ,false));
+    frame.add(meshBox(ww,fw,.025,frameMat,wb+ww/2,sill+wh,frameZ,false));
+    frame.add(meshBox(fw,wh,.025,frameMat,wb,sill+wh/2,frameZ,false));
+    frame.add(meshBox(fw,wh,.025,frameMat,wb+ww,sill+wh/2,frameZ,false));
+    const glass = meshBox(Math.max(.01,ww-fw*2),Math.max(.01,wh-fw*2),.008,mats.windowGlass,wb+ww/2,sill+wh/2,-windowT+.030,false);
     frame.add(glass);
     fixedRoot.add(frame);
   }
@@ -667,6 +669,106 @@ if (!api || !legacy) {
 
   function buildMirror(i,s){const faceW=mm(i.w||500),faceH=mm(i.height||500),proj=Math.max(.012,mm(i.h||25)),bottom=mm(i.z||1200),along=mm(i.mountAlong||1185),wall=i.mountHost||i.mountWall||"left",prod=(s.products||[]).find(p=>p.id===i.productId),style=prod?.style||"mirrorRound",profile=productProfile(prod),g=new THREE.Group(),W=mm(s.room.width),D=mm(s.room.depth),inset=.014;g.userData.itemId=i.id;if(wall==="left"){g.position.set(inset,bottom+faceH/2,along);g.rotation.y=Math.PI/2}else if(wall==="right"){g.position.set(W-inset,bottom+faceH/2,along);g.rotation.y=-Math.PI/2}else if(wall==="window"){g.position.set(along,bottom+faceH/2,inset)}else{g.position.set(along,bottom+faceH/2,D-inset);g.rotation.y=Math.PI}const arezzo=profile==="arezzo-black-led",edge=arezzo?mats.mattBlack:new THREE.MeshStandardMaterial({color:0xbfc4c2,roughness:.30,metalness:.55});if(style==="mirrorRound"||arezzo){const r=Math.min(faceW,faceH)/2,body=new THREE.Mesh(new THREE.CylinderGeometry(r,r,proj,72),edge);body.rotation.x=Math.PI/2;body.position.z=proj/2;body.castShadow=true;g.add(body);const face=new THREE.Mesh(new THREE.CircleGeometry(Math.max(.03,r-(arezzo?.018:.012)),80),mats.mirror);face.position.z=proj+.003;g.add(face);const haloMat=new THREE.MeshStandardMaterial({color:arezzo?0xddeeff:0xf6f1df,emissive:arezzo?0xbfdcff:0xeadfbd,emissiveIntensity:arezzo?2.4:.85,roughness:.25,transparent:true,opacity:.92}),halo=new THREE.Mesh(new THREE.TorusGeometry(r*(arezzo?.94:.98),arezzo?.010:.012,14,80),haloMat);halo.position.z=proj+.007;g.add(halo);if(arezzo){const glow=new THREE.PointLight(0xdfefff,.45,1.35,2);glow.position.set(0,0,proj+.06);g.add(glow)}}else{g.add(meshBox(faceW,faceH,proj,edge,0,0,proj/2));g.add(meshBox(Math.max(.04,faceW-.025),Math.max(.04,faceH-.025),.006,mats.mirror,0,0,proj+.004,false))}return setItemId(g,i.id)}
 
+
+  function buildMadridTowelRail(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||450),d=Math.max(.040,mm(i.h||57)),h=mm(i.height||1200),z=mm(i.z||500),mat=mats.anthracite;
+    const sideW=Math.max(.018,w*.055),sideD=Math.min(.032,d*.62),edge=w*.43;
+    g.add(meshBox(sideW,h*.94,sideD,mat,-edge,z+h*.50,0));
+    g.add(meshBox(sideW,h*.94,sideD,mat, edge,z+h*.50,0));
+    const rows=[.08,.145,.21,.365,.43,.495,.56,.715,.78,.845,.91];
+    rows.forEach(q=>g.add(roundedBox(w*.88,.032,Math.min(.034,d*.72),.004,mat,0,z+h*q,0)));
+    const bracketMat=new THREE.MeshStandardMaterial({color:0x242829,roughness:.65,metalness:.45});
+    [-1,1].forEach(side=>[.22,.75].forEach(q=>g.add(meshBox(.025,.025,d*.75,bracketMat,side*edge,z+h*q,-d*.12,false))));
+    return setItemId(g,i.id);
+  }
+
+  function buildSwivelRail(i,s,prod,count=2,mat=mats.mproSlate){
+    const g=groupForItem(i),w=mm(i.w||446),d=Math.max(.12,mm(i.h||100)),h=Math.max(.07,mm(i.height||100)),z=mm(i.z||1050);
+    const armLen=Math.max(.30,mm(prod?.armLengthMm||prod?.productLengthMm||446)),baseH=Math.max(.07,h),baseW=.028,back=-d/2+.018;
+    g.add(roundedBox(.050,baseH,.030,.010,mat,-w*.43,z+baseH/2,back,false));
+    const pivotX=-w*.43, pivotZ=back+.022;
+    for(let n=0;n<count;n++){
+      const yy=z+baseH*(.22+(count===1?0:n*(.56/Math.max(1,count-1))));
+      const angle=(n-(count-1)/2)*(count===3?.12:.10);
+      const arm=new THREE.Group();arm.position.set(pivotX,yy,pivotZ);arm.rotation.y=angle;
+      const hinge=cylinder(.019,.040,mat,"y",28);hinge.position.y=0;arm.add(hinge);
+      const rail=cylinder(.0105,armLen,mat,"z",22);rail.position.z=armLen/2;arm.add(rail);
+      const cap=cylinder(.012,.016,mat,"z",22);cap.position.z=armLen;arm.add(cap);g.add(arm);
+    }
+    if(count===3){
+      // Subtle knurled collars echo the Foundry detailing without overloading the scene.
+      for(let n=0;n<3;n++){const yy=z+baseH*(.22+n*.28),ring=new THREE.Mesh(new THREE.TorusGeometry(.020,.0028,8,22),mat);ring.rotation.x=Math.PI/2;ring.position.set(pivotX,yy,pivotZ+.012);g.add(ring)}
+    }
+    return setItemId(g,i.id);
+  }
+
+  function buildCuskoShelf(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||800),d=mm(i.h||235),h=Math.max(.025,mm(i.height||38)),z=mm(i.z||1450),mat=mats.walnut;
+    g.add(roundedBox(w,h,d,.006,mat,0,z+h/2,0));
+    const underside=new THREE.MeshStandardMaterial({color:0x5d3d28,roughness:.78});
+    g.add(meshBox(w*.94,.006,d*.91,underside,0,z+.004,0,false));
+    return setItemId(g,i.id);
+  }
+
+  function leafMesh(len,width,material){
+    const sh=new THREE.Shape();sh.moveTo(0,0);sh.quadraticCurveTo(width*.55,len*.22,width*.32,len*.48);sh.quadraticCurveTo(width*.18,len*.76,0,len);sh.quadraticCurveTo(-width*.18,len*.76,-width*.32,len*.48);sh.quadraticCurveTo(-width*.55,len*.22,0,0);
+    const geo=new THREE.ShapeGeometry(sh,12),m=new THREE.Mesh(geo,material);m.castShadow=true;return m;
+  }
+
+  function buildHangingPlants(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||620),d=mm(i.h||180),h=mm(i.height||720),z=mm(i.z||900),potMat=mats.potBlack;
+    const potY=z+h*.82, spacing=w/4, styles=[0,1,0,1];
+    for(let pidx=0;pidx<4;pidx++){
+      const px=-w*.375+pidx*spacing, pot=new THREE.Mesh(new THREE.CylinderGeometry(.055,.045,.105,28),potMat);pot.position.set(px,potY,0);pot.castShadow=true;g.add(pot);
+      const vineCount=styles[pidx]?5:4;
+      for(let v=0;v<vineCount;v++){
+        const phase=(pidx+1)*1.7+v*.9,drop=h*(.38+.07*((v+pidx)%3)),side=(v-(vineCount-1)/2)*.026;
+        const pts=[new THREE.Vector3(px+side,potY-.035,0),new THREE.Vector3(px+side+.025*Math.sin(phase),potY-drop*.35,.012*Math.cos(phase)),new THREE.Vector3(px+side-.020*Math.cos(phase),potY-drop*.72,.018*Math.sin(phase)),new THREE.Vector3(px+side+.030*Math.sin(phase*.7),potY-drop,.010)];
+        g.add(tubePath(pts,.0036,mats.leafGreen,18));
+        for(let q=1;q<=5;q++){
+          const t=q/6,curve=new THREE.CatmullRomCurve3(pts),pos=curve.getPoint(t),leaf=leafMesh(.042,.018,(q+pidx)%2?mats.leafGreen:mats.leafGreen2);leaf.position.copy(pos);leaf.rotation.set(-.65,phase+t*5,.18*Math.sin(phase+q));leaf.scale.setScalar(.85+.12*((q+pidx)%2));g.add(leaf);
+        }
+      }
+    }
+    return setItemId(g,i.id);
+  }
+
+  function buildAloe(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||260),d=mm(i.h||260),h=mm(i.height||400),z=mm(i.z||0),potR=Math.min(w,d)*.23,potH=h*.26;
+    const pot=new THREE.Mesh(new THREE.CylinderGeometry(potR*.90,potR,potH,32),new THREE.MeshStandardMaterial({color:0x7d6c59,roughness:.88}));pot.position.y=z+potH/2;pot.castShadow=true;g.add(pot);
+    const soil=new THREE.Mesh(new THREE.CylinderGeometry(potR*.82,potR*.82,.015,28),new THREE.MeshStandardMaterial({color:0x443429,roughness:1}));soil.position.y=z+potH+.004;g.add(soil);
+    const leafMat=new THREE.MeshStandardMaterial({color:0x4e8b55,roughness:.72,side:THREE.DoubleSide});
+    const count=13;
+    for(let n=0;n<count;n++){
+      const a=n/count*Math.PI*2,outer=n%2===0,leafH=h*(outer?.60:.72),leafW=Math.min(w,d)*(outer?.10:.085),leaf=leafMesh(leafH,leafW,leafMat);
+      leaf.position.set(Math.cos(a)*potR*.18,z+potH*.88,Math.sin(a)*potR*.18);
+      leaf.rotation.order='YXZ';leaf.rotation.y=-a+Math.PI/2;leaf.rotation.x=outer?-.38:-.18;leaf.rotation.z=(n%3-1)*.06;g.add(leaf);
+    }
+    return setItemId(g,i.id);
+  }
+
+  function buildToiletRollHolder(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||200),d=mm(i.h||130),h=mm(i.height||511),z=mm(i.z||0),mat=mats.mattBlack;
+    const baseH=.018;g.add(roundedBox(w,baseH,d,.012,mat,0,z+baseH/2,0));
+    const postX=-w*.31,post=meshBox(.018,h*.82,.018,mat,postX,z+baseH+h*.41,0);g.add(post);
+    const armLen=w*.55,arm=meshBox(armLen,.018,.018,mat,postX+armLen/2,z+h*.90,0);g.add(arm);
+    const lip=meshBox(.018,.045,.018,mat,postX+armLen,z+h*.885,0);g.add(lip);
+    const spareX=w*.22,spare=meshBox(.014,h*.50,.014,mat,spareX,z+baseH+h*.25,0);g.add(spare);
+    // Two spare rolls so the 3D object reads immediately as a toilet-roll stand.
+    for(let n=0;n<2;n++){
+      const rollR=Math.min(.057,d*.42),rollH=.095,roll=new THREE.Mesh(new THREE.CylinderGeometry(rollR,rollR,rollH,36),mats.paperWhite);roll.rotation.z=Math.PI/2;roll.position.set(spareX,z+.105+n*(rollR*1.7),0);roll.castShadow=true;g.add(roll);
+      const core=cylinder(.020,rollH+.004,mats.cardboard,"x",28);core.position.copy(roll.position);g.add(core);
+    }
+    return setItemId(g,i.id);
+  }
+
+  function buildToiletRoll(i,s,prod){
+    const g=groupForItem(i),w=mm(i.w||100),d=mm(i.h||120),h=mm(i.height||120),z=mm(i.z||0),r=Math.max(.035,Math.min(d,h)/2),roll=new THREE.Mesh(new THREE.CylinderGeometry(r,r,w,48),mats.paperWhite);
+    roll.rotation.z=Math.PI/2;roll.position.set(0,z+r,0);roll.castShadow=true;g.add(roll);
+    const core=cylinder(Math.max(.015,r*.35),w+.004,mats.cardboard,"x",32);core.position.copy(roll.position);g.add(core);
+    return setItemId(g,i.id);
+  }
+
   function buildGeneric(i) {
     const g=groupForItem(i),w=mm(i.w),d=mm(i.h),h=mm(i.height||900),z=mm(i.z||0);
     g.add(meshBox(w,h,d,mats.timber,0,z+h/2,0));
@@ -676,6 +778,14 @@ if (!api || !legacy) {
   function buildItem(i,s) {
     const prod=(s.products||[]).find(p=>p.id===i.productId),profile=productProfile(prod);
     if(profile==="trent-12004") return buildTrentTap(i,s,prod);
+    if(profile==="madrid-33138") return buildMadridTowelRail(i,s,prod);
+    if(profile==="crosswater-pro047t") return buildSwivelRail(i,s,prod,2,mats.mproSlate);
+    if(profile==="foundry-fdy3strmb") return buildSwivelRail(i,s,prod,3,mats.mattBlack);
+    if(profile==="goodhome-cusko-5059340670249") return buildCuskoShelf(i,s,prod);
+    if(profile==="fake-hanging-plants-6313817070598") return buildHangingPlants(i,s,prod);
+    if(profile==="aloe-vera-barbadensis") return buildAloe(i,s,prod);
+    if(profile==="architeckt-trh-1269407") return buildToiletRollHolder(i,s,prod);
+    if(profile==="generic-toilet-roll") return buildToiletRoll(i,s,prod);
     if(i.type==="niche") return buildNiche(i,s);
     if(i.type==="bath") return buildBath(i,s);
     if(i.type==="wc") return buildWC(i,s);

@@ -346,6 +346,18 @@
   }
   function setZoneFullHeight(){ $("zoneBottom").value=0; $("zoneTop").value=Number(state().room.ceiling||0); $("zoneFull").checked=false; syncZoneFields(); updateZoneMetrics(); }
 
+
+  function clearWallFeatureZones(){
+    const s=state(), features=(s.surfaceZones||[]).filter(z=>z.surface!=="floor" && !z.full);
+    if(!features.length){ alert("There are no partial wall feature zones to remove."); return; }
+    if(!confirm(`Remove ${features.length} wall feature zone${features.length===1?"":"s"}? Full-wall tile zones will stay in place.`)) return;
+    api.checkpoint();
+    const ids=new Set(features.map(z=>z.id));
+    s.surfaceZones=(s.surfaceZones||[]).filter(z=>!ids.has(z.id));
+    api.persist();render();
+    window.BP3DView?.refresh?.();
+  }
+
   function resetSuggestedScheme(){
     if(!confirm("Reset surfaces to the suggested Laurito + Granley scheme?")) return;
     const s = state(), r = s.room, defaults = [
@@ -391,6 +403,7 @@
 
   $("addFloorZoneBtn")?.addEventListener("click", ()=>openZoneEditor(null,"floor"));
   $("addWallZoneBtn")?.addEventListener("click", ()=>openZoneEditor(null,"wall"));
+  $("clearWallFeaturesBtn")?.addEventListener("click", clearWallFeatureZones);
   $("resetSurfacePresetBtn")?.addEventListener("click", resetSuggestedScheme);
   $("closeZoneSheet")?.addEventListener("click", closeZoneEditor);
   $("saveZoneBtn")?.addEventListener("click", saveZone);

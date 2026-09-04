@@ -11,7 +11,7 @@
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.5.1 · Newham + Trent product 3D</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V2.5.2 · accessories + 200mm window reveal</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -217,6 +217,7 @@
         <span class="spacer"></span>
         <button id="addFloorZoneBtn">+ Floor zone</button>
         <button id="addWallZoneBtn">+ Wall zone</button>
+        <button id="clearWallFeaturesBtn">Clear wall feature zones</button>
         <button id="resetSurfacePresetBtn">Reset suggested scheme</button>
       </div>
       <div id="surfaceSummary" class="surfaceSummary" style="margin-top:10px"></div>
@@ -243,7 +244,7 @@
       <label>Door-wall end<input id="windowAfter" type="number"></label>
     </div>
     <div id="windowCheck" class="check"></div>
-    <div class="grid" style="margin-top:9px"><label>Window sill height (mm)<input id="windowSill" type="number"></label><label>Window height (mm)<input id="windowHeight" type="number"></label></div>
+    <div class="grid" style="margin-top:9px"><label>Window sill height (mm)<input id="windowSill" type="number"></label><label>Window height (mm)<input id="windowHeight" type="number"></label><label>Window reveal / ledge depth (mm)<input id="windowDepth" type="number" min="20"></label></div><div class="heightNote" style="margin-top:5px">Depth is measured backwards from the finished internal wall face. The room dimensions stay unchanged.</div>
     <div class="section">Door wall</div>
     <div class="grid three">
       <label>Before door<input id="doorBefore" type="number"></label>
@@ -378,6 +379,7 @@
         <label>Door-wall end<input id="openB" type="number"></label>
         <label>Sill height<input id="openSill" type="number"></label>
         <label>Window height<input id="openHeight" type="number"></label>
+        <label>Reveal / ledge depth<input id="openDepth" type="number" min="20"></label>
       </div>
       <div id="doorFields" class="grid three hidden">
         <label>Window-wall end<input id="doorA" type="number"></label>
@@ -468,6 +470,14 @@
         <option value="arezzo-black-led">Arezzo black round LED mirror</option>
         <option value="newham-c51092">Newham C51092 freestanding bath</option>
         <option value="trent-12004">Trent 12004 freestanding bath mixer</option>
+        <option value="madrid-33138">Madrid 33138 anthracite towel rail</option>
+        <option value="crosswater-pro047t">Crosswater MPRO PRO047T swivel rail</option>
+        <option value="foundry-fdy3strmb">Foundry FDY3STRMB triple swivel rail</option>
+        <option value="goodhome-cusko-5059340670249">GoodHome Cusko walnut shelf</option>
+        <option value="fake-hanging-plants-6313817070598">4-piece hanging plants</option>
+        <option value="aloe-vera-barbadensis">Aloe Vera Barbadensis</option>
+        <option value="architeckt-trh-1269407">Architeckt freestanding toilet roll holder</option>
+        <option value="generic-toilet-roll">Toilet roll</option>
       </select></label>
       <label>3D finish override<select id="prodRenderFinish">
         <option value="auto">Automatic from product finish</option>

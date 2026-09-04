@@ -1,7 +1,7 @@
 window.addEventListener("error",e=>{const b=document.getElementById("bootError");if(b){b.textContent="Planner error: "+(e.message||"Unknown error")+". Your saved data has not been deleted.";b.classList.remove("hidden")}});
 (function(){
 "use strict";
-const VERSION="2.5.1", KEY="bathroomPlannerStable";
+const VERSION="2.5.2", KEY="bathroomPlannerStable";
 const $=id=>document.getElementById(id), svg=$("planSvg");
 const clone=o=>JSON.parse(JSON.stringify(o));
 
@@ -12,7 +12,7 @@ const starter={
  createdAt:"2026-08-26T00:00:00.000Z",
  updatedAt:"2026-08-26T00:00:00.000Z",
  project:{name:"Bathroom Redesign",planName:"Current working layout",notes:"Confirm final survey dimensions after strip-out before ordering fitted items."},
- room:{width:2280,depth:2545,ceiling:2470,tolerance:20,window:{before:660,width:930,after:690,sill:900,height:960},door:{before:835,width:860,leafWidth:762,after:850,height:1981,hinge:"bottom",swingDirection:"in",openAngle:26}},
+ room:{width:2280,depth:2545,ceiling:2470,tolerance:20,window:{before:660,width:930,after:690,sill:900,height:960,depth:200},door:{before:835,width:860,leafWidth:762,after:850,height:1981,hinge:"bottom",swingDirection:"in",openAngle:26}},
  ui:{measureMode:"selected",snap:true,planLayer:"layout"},
  items:[
   {id:"bath1",type:"bath",name:"Bath",x:0,y:0,w:1600,h:700,rotation:0,locked:false,z:0,height:550},
@@ -85,6 +85,7 @@ const hadDoorLeafWidth=state?.room?.door?.leafWidth!=null;
 state.project = {...clone(starter.project), ...(state.project||{})};
 state.room = {...clone(starter.room), ...(state.room||{})};
 state.room.window = {...clone(starter.room.window), ...(state.room.window||{})};
+if(state.room.window.depth==null) state.room.window.depth=200;
 state.room.door = {...clone(starter.room.door), ...(state.room.door||{})};
 if(!["in","out"].includes(state.room.door.swingDirection)) state.room.door.swingDirection="in";
 if(!Array.isArray(state.items)) state.items=[];
@@ -776,7 +777,7 @@ function openSelectedSheet(){
   $("detailsToggle").classList.add("hidden");$("openingDetails").classList.remove("hidden");
   if(selected.id==="window"){
    $("sheetEyebrow").textContent="Opening";$("sheetTitle").textContent="Window";$("windowFields").classList.remove("hidden");$("doorFields").classList.add("hidden");
-   $("openA").value=state.room.window.before;$("openW").value=state.room.window.width;$("openB").value=state.room.window.after;$("openSill").value=state.room.window.sill;$("openHeight").value=state.room.window.height;
+   $("openA").value=state.room.window.before;$("openW").value=state.room.window.width;$("openB").value=state.room.window.after;$("openSill").value=state.room.window.sill;$("openHeight").value=state.room.window.height;if($("openDepth"))$("openDepth").value=state.room.window.depth||200;
   }else{
    $("sheetEyebrow").textContent="Opening";$("sheetTitle").textContent="Door";$("doorFields").classList.remove("hidden");$("windowFields").classList.add("hidden");
    $("doorA").value=state.room.door.before;$("doorW").value=state.room.door.width;$("doorLeafW").value=Math.round(state.room.door.leafWidth||state.room.door.width);$("doorB").value=state.room.door.after;$("doorOpenHeight").value=state.room.door.height;$("doorHinge").value=state.room.door.hinge||"bottom";$("doorSwingDirectionSheet").value=state.room.door.swingDirection||"in";$("doorAngle").value=state.room.door.openAngle??26;
@@ -829,7 +830,7 @@ function renderPlanVariants(){
 function sync(){
  const r=state.room;
  $("roomWidth").value=r.width;$("roomDepth").value=r.depth;$("ceilingHeight").value=r.ceiling;$("tolerance").value=r.tolerance;
- $("windowBefore").value=r.window.before;$("windowWidth").value=r.window.width;$("windowAfter").value=r.window.after;$("windowSill").value=r.window.sill;$("windowHeight").value=r.window.height;
+ $("windowBefore").value=r.window.before;$("windowWidth").value=r.window.width;$("windowAfter").value=r.window.after;$("windowSill").value=r.window.sill;$("windowHeight").value=r.window.height;if($("windowDepth"))$("windowDepth").value=r.window.depth||200;
  $("doorBefore").value=r.door.before;$("doorWidth").value=r.door.width;$("doorLeafWidth").value=Math.round(r.door.leafWidth||r.door.width);$("doorAfter").value=r.door.after;$("doorHeight").value=r.door.height;
  if($("doorSwingDirection"))$("doorSwingDirection").value=r.door.swingDirection||"in";
  $("projectName").value=state.project.name||"";$("projectPlanName").value=state.project.planName||"";$("notes").value=state.project.notes||"";
@@ -959,7 +960,7 @@ async function importProductFile(file){
  try{
   const data=JSON.parse(await file.text()),p=data.product||data;
   if(!p.name||!p.width||!p.depth||!p.height)throw Error("Product JSON needs name, width, depth and height.");
-  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;ensureProduct3D(p);state.products.push(p);save();renderProducts();alert("Product imported. V2.3 will use a product-specific 3D profile automatically when the SKU is recognised.");
+  checkpoint();p.id="prod-"+Date.now();p.builtIn=false;ensureProduct3D(p);state.products.push(p);save();renderProducts();alert("Product imported. V2.5.2 will use its product-specific 3D profile automatically when recognised.");
  }catch(err){alert("Could not import product: "+err.message)}
 }
 $("newProductBtn").onclick=()=>openProductEditor();
@@ -1329,7 +1330,7 @@ ITEM_DETAIL_CONTROL_IDS.forEach(id=>{
  el.addEventListener("change",()=>{applyItemDetailsLive(id);save();delete el.dataset.undoArmed;});
  el.addEventListener("blur",()=>{save();delete el.dataset.undoArmed;});
 });
-["openA","openW","openB","openSill","openHeight"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);save();sync();render();openSelectedSheet()});
+["openA","openW","openB","openSill","openHeight","openDepth"].forEach(id=>$(id)&&($(id).onchange=()=>{checkpoint();state.room.window.before=Math.max(0,Number($("openA").value)||0);state.room.window.width=Math.max(100,Number($("openW").value)||100);state.room.window.after=Math.max(0,Number($("openB").value)||0);state.room.window.sill=Math.max(0,Number($("openSill").value)||0);state.room.window.height=Math.max(100,Number($("openHeight").value)||100);state.room.window.depth=Math.max(20,Number($("openDepth").value)||200);save();sync();render();openSelectedSheet();if(window.BP3DView?.refresh)window.BP3DView.refresh()}));
 ["doorA","doorW","doorLeafW","doorB","doorOpenHeight","doorHinge","doorSwingDirectionSheet","doorAngle"].forEach(id=>$(id).onchange=()=>{checkpoint();state.room.door.before=Math.max(0,Number($("doorA").value)||0);state.room.door.width=Math.max(100,Number($("doorW").value)||100);state.room.door.leafWidth=Math.max(100,Math.min(state.room.door.width,Number($("doorLeafW").value)||state.room.door.width));state.room.door.after=Math.max(0,Number($("doorB").value)||0);state.room.door.height=Math.max(100,Number($("doorOpenHeight").value)||100);state.room.door.hinge=$("doorHinge").value||"bottom";state.room.door.swingDirection=$("doorSwingDirectionSheet").value||"in";state.room.door.openAngle=Math.max(0,Math.min(120,Number($("doorAngle").value)||0));save();sync();render();openSelectedSheet();if(window.BP3DView?.refresh)window.BP3DView.refresh()});
 ["serviceName","serviceType","serviceX","serviceY","serviceZ"].forEach(id=>$(id).onchange=()=>{
  const s=state.services.find(x=>x.id===selected.id);if(!s)return;checkpoint();s.name=$("serviceName").value.trim()||s.name;s.type=$("serviceType").value;s.x=Number($("serviceX").value)||0;s.y=Number($("serviceY").value)||0;s.z=Math.max(0,Number($("serviceZ").value)||0);save();render();openSelectedSheet();
@@ -1346,7 +1347,7 @@ $("flipDoorHingeSheetBtn")?.addEventListener("click",()=>{checkpoint();flipDoorH
 
 const numPaths={
  roomWidth:["room","width"],roomDepth:["room","depth"],ceilingHeight:["room","ceiling"],tolerance:["room","tolerance"],
- windowBefore:["room","window","before"],windowWidth:["room","window","width"],windowAfter:["room","window","after"],windowSill:["room","window","sill"],windowHeight:["room","window","height"],
+ windowBefore:["room","window","before"],windowWidth:["room","window","width"],windowAfter:["room","window","after"],windowSill:["room","window","sill"],windowHeight:["room","window","height"],windowDepth:["room","window","depth"],
  doorBefore:["room","door","before"],doorWidth:["room","door","width"],doorLeafWidth:["room","door","leafWidth"],doorAfter:["room","door","after"],doorHeight:["room","door","height"]
 };
 Object.entries(numPaths).forEach(([id,path])=>$(id).onchange=()=>{

@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <script>
 (() => {
-  const BUILD="3.0.0";
+  const BUILD="3.0.1";
   try {
     const u=new URL(location.href);
     if(u.searchParams.get("build")!==BUILD){u.searchParams.set("build",BUILD);u.searchParams.delete("fresh");history.replaceState(null,"",u.toString());}
@@ -19,13 +19,13 @@
 })();
 </script>
 <title>Bathroom Planner</title>
-<link rel="manifest" href="./manifest.json?build=3.0.0">
-<link rel="icon" href="./icon-192.png?build=3.0.0">
-<link rel="stylesheet" href="./styles.css?build=3.0.0">
+<link rel="manifest" href="./manifest.json?build=3.0.1">
+<link rel="icon" href="./icon-192.png?build=3.0.1">
+<link rel="stylesheet" href="./styles.css?build=3.0.1">
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V3.0.0 · complete bathroom design system</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V3.0.1 · plumbing routes & ordering</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -55,6 +55,7 @@
       <option value="layout">Layout</option>
       <option value="structure">Structure</option>
       <option value="heating">Heating</option>
+      <option value="pipes">Pipes</option>
     </select>
     <button id="manualMeasureBtn">Measure</button>
     <button id="clearMeasuresBtn" class="hidden">Clear</button>
@@ -67,6 +68,13 @@
   <div class="status">
     <span id="surveyStatus" class="pill">Survey dimensions reconcile</span>
     <span id="statusHint" class="hint">Drag fixtures · pinch to zoom · select an item, then tap Details to edit.</span>
+  </div>
+  <div id="pipeDrawBar" class="pipeDrawBar hidden">
+    <strong id="pipeDrawText">Drawing pipe route</strong>
+    <span class="spacer"></span>
+    <button id="pipeUndoPointBtn" type="button">Undo point</button>
+    <button id="pipeFinishDrawBtn" type="button" class="primary">Finish route</button>
+    <button id="pipeCancelDrawBtn" type="button">Cancel</button>
   </div>
 
   <div class="canvasShell">
@@ -149,13 +157,14 @@
 
 <section id="build" class="panel">
   <div class="buildTop">
-    <div><div class="eyebrow">V2 build system</div><h2 style="margin:2px 0 0;font-size:1.08rem">Floor, structure & heating</h2></div>
+    <div><div class="eyebrow">V3 build system</div><h2 style="margin:2px 0 0;font-size:1.08rem">Floor, structure, heating & plumbing</h2></div>
     <span class="spacer"></span><span class="v2badge">Build foundation</span>
   </div>
   <div class="buildTabs">
     <button class="active" data-build-pane="floor">Floor build-up</button>
     <button data-build-pane="structure">Structure</button>
     <button data-build-pane="heating">Heating</button>
+    <button data-build-pane="plumbing">Plumbing</button>
   </div>
 
   <div id="buildPaneFloor" class="buildPane active">
@@ -208,6 +217,42 @@
       <div id="heatingSummary" class="buildStat"></div>
       <div class="quickActions"><button id="showHeatingPlanBtn">Show heating in Plan</button></div>
       <div class="layerLegend"><span><i class="legendSwatch" style="background:#d5866e"></i>Heating zone</span><span><i class="legendSwatch" style="background:#f3eee6"></i>Fixture exclusion</span></div>
+    </div>
+  </div>
+
+  <div id="buildPanePlumbing" class="buildPane">
+    <div class="buildCard">
+      <div class="pipeHeader"><div><div class="eyebrow">First-fix plumbing</div><h3>Pipe routes & ordering</h3><p class="muted">Draw separate hot, cold, waste and soil runs directly over the bathroom plan. Each run stores its pipe size, material, height and ordering allowance.</p></div><button id="pipeShowPlanBtn" type="button">Show pipes in Plan</button></div>
+      <div class="pipeLegend">
+        <button data-pipe-start="hot"><i style="background:#d84a3d"></i>Draw hot</button>
+        <button data-pipe-start="cold"><i style="background:#2878d8"></i>Draw cold</button>
+        <button data-pipe-start="waste"><i style="background:#159a7f"></i>Draw waste</button>
+        <button data-pipe-start="soil"><i style="background:#363a3a"></i>Draw soil</button>
+      </div>
+      <div class="pipeOptions">
+        <label><input id="pipeSnap90" type="checkbox"> 90° route snap</label>
+        <label><input id="pipeOverlayLayout" type="checkbox"> Show routes on Layout plan</label>
+      </div>
+      <div class="section">Routes</div>
+      <div id="pipeRouteList" class="pipeRouteList"></div>
+      <div id="pipeRouteEditor" class="pipeEditor hidden">
+        <div class="grid three">
+          <label>Route name<input id="pipeRouteName"></label>
+          <label>System<select id="pipeRouteType"><option value="hot">Hot water</option><option value="cold">Cold water</option><option value="waste">Waste</option><option value="soil">Soil</option></select></label>
+          <label>Pipe size<select id="pipeRouteDiameter"><option>10</option><option>15</option><option>22</option><option>28</option><option>32</option><option>40</option><option>50</option><option>82</option><option>110</option></select></label>
+          <label>Material<select id="pipeRouteMaterial"><option value="plastic-pushfit">Plastic push-fit</option><option value="copper">Copper</option><option value="pex">PEX / multilayer</option><option value="solvent-waste">Solvent-weld waste</option><option value="pushfit-waste">Push-fit waste</option><option value="soil-pvc">PVC soil</option></select></label>
+          <label>Start Z (mm)<input id="pipeRouteZStart" type="number" step="1"></label>
+          <label>End Z (mm)<input id="pipeRouteZEnd" type="number" step="1"></label>
+          <label>Ordering allowance %<input id="pipeRouteAllowance" type="number" min="0" max="100" step="1"></label>
+        </div>
+        <div id="pipeRouteStats" class="buildStat"></div>
+        <div class="quickActions"><button id="pipeReverseBtn" type="button">Reverse start/end</button></div>
+      </div>
+      <div class="section">Ordering summary</div>
+      <div id="pipeOrderSummary" class="pipeOrderSummary"></div>
+      <div id="pipeOrderNote" class="heightNote"></div>
+      <div class="quickActions"><button id="pipeExportBtn" type="button" class="primary">Export pipe CSV</button><button id="pipeClearBtn" type="button" class="danger">Delete all routes</button></div>
+      <div class="heightNote" style="margin-top:8px">Z can be negative for under-floor routes. Waste/soil fall is calculated from Start Z to End Z against the horizontal route length. This is a planning/ordering aid; confirm pipe sizing, falls and fitting requirements before installation.</div>
     </div>
   </div>
 </section>
@@ -726,13 +771,19 @@
       <button data-add-service="waste">Waste outlet</button><button data-add-service="soil">Soil stack</button>
       <button data-add-service="electric">Electrical point</button>
     </div>
+    <div class="section">Pipe routes</div>
+    <div class="addgrid">
+      <button data-pipe-start="hot">Draw hot route</button><button data-pipe-start="cold">Draw cold route</button>
+      <button data-pipe-start="waste">Draw waste route</button><button data-pipe-start="soil">Draw soil route</button>
+    </div>
   </div>
 </div>
 
-<script src="./app-3.0.0.js?build=3.0.0"></script>
-<script src="./v3-manager.js?build=3.0.0"></script>
-<script type="module" src="./three-view-3.0.0.js?build=3.0.0"></script>
-<script src="./surfaces-manager.js?build=3.0.0"></script>
-<script src="./build-manager.js?build=3.0.0"></script>
+<script src="./app-3.0.1.js?build=3.0.1"></script>
+<script src="./v3-manager.js?build=3.0.1"></script>
+<script src="./pipe-manager.js?build=3.0.1"></script>
+<script type="module" src="./three-view-3.0.1.js?build=3.0.1"></script>
+<script src="./surfaces-manager.js?build=3.0.1"></script>
+<script src="./build-manager.js?build=3.0.1"></script>
 </body>
 </html>

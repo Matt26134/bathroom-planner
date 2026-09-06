@@ -26,7 +26,8 @@ function refreshAll(save=true){if(save)api.persist?.();api.refresh2D?.();window.
 
 function ensureV3State(){
   const s=st();
-  s.schemaVersion=Math.max(7,Number(s.schemaVersion)||0);
+  s.schemaVersion=Math.max(8,Number(s.schemaVersion)||0);
+  s.pipeRoutes=Array.isArray(s.pipeRoutes)?s.pipeRoutes:[];
   s.assemblies=Array.isArray(s.assemblies)?s.assemblies:[];
   s.project=s.project||{};
   s.project.finishPalette={metal:s.project.globalFixtureFinish||"use-item",sanitary:"bright-white",furniture:"product",glass:"fluted",glassTrim:"inherit-metal",...(s.project.finishPalette||{})};
@@ -51,7 +52,7 @@ function recoveryKey(){return "bathroomPlannerV3Recovery";}
 function loadRecovery(){try{return JSON.parse(localStorage.getItem(recoveryKey())||"[]")||[]}catch(_){return[]}}
 function saveRecovery(list){try{localStorage.setItem(recoveryKey(),JSON.stringify(list.slice(0,6)))}catch(_){}renderRecovery();}
 function makeRecovery(label="Manual restore point"){
-  const s=st(),snap={id:uid("r"),at:new Date().toISOString(),label,data:{room:clone(s.room),items:clone(s.items||[]),services:clone(s.services||[]),project:clone(s.project||{}),assemblies:clone(s.assemblies||[]),activePlanId:s.activePlanId,planVariants:clone(s.planVariants||[])}};
+  const s=st(),snap={id:uid("r"),at:new Date().toISOString(),label,data:{room:clone(s.room),items:clone(s.items||[]),services:clone(s.services||[]),pipeRoutes:clone(s.pipeRoutes||[]),project:clone(s.project||{}),assemblies:clone(s.assemblies||[]),activePlanId:s.activePlanId,planVariants:clone(s.planVariants||[])}};
   const list=loadRecovery();list.unshift(snap);saveRecovery(list);return snap;
 }
 function restoreRecovery(id){
@@ -201,8 +202,8 @@ function renderCompare(){
   const sel=$("comparePlanSelect"),out=$("compareMetrics");if(!sel||!out)return;const s=st(),variants=s.planVariants||[];const current=sel.value;sel.innerHTML="";variants.filter(v=>v.id!==s.activePlanId).forEach(v=>{const o=document.createElement("option");o.value=v.id;o.textContent=v.name;sel.appendChild(o)});if(current&&[...sel.options].some(o=>o.value===current))sel.value=current;
   const v=variants.find(x=>x.id===sel.value);if(!v){out.innerHTML="<p class='muted'>Duplicate a plan to compare alternatives.</p>";return;}const A=planMetrics(s.items),B=planMetrics(v.items);out.innerHTML=`<div><span>Objects</span><strong>${A.items} ↔ ${B.items}</strong></div><div><span>Approx. floor footprint</span><strong>${A.occupied.toFixed(0)}% ↔ ${B.occupied.toFixed(0)}%</strong></div><div><span>Largest vanity</span><strong>${A.vanity} ↔ ${B.vanity} mm</strong></div><div><span>Largest shower</span><strong>${A.shower.toFixed(2)} ↔ ${B.shower.toFixed(2)} m²</strong></div>`;
 }
-function previewCompare(){const s=st(),v=(s.planVariants||[]).find(x=>x.id===$("comparePlanSelect")?.value);if(!v||comparePreview)return;comparePreview={items:clone(s.items||[]),services:clone(s.services||[])};s.items=clone(v.items||[]);s.services=clone(v.services||[]);$("previewCompareBtn")?.classList.add("hidden");$("returnCompareBtn")?.classList.remove("hidden");api.refresh2D?.();window.BP3DView?.refresh?.();}
-function returnCompare(){if(!comparePreview)return;const s=st();s.items=comparePreview.items;s.services=comparePreview.services;comparePreview=null;$("previewCompareBtn")?.classList.remove("hidden");$("returnCompareBtn")?.classList.add("hidden");api.refresh2D?.();window.BP3DView?.refresh?.();}
+function previewCompare(){const s=st(),v=(s.planVariants||[]).find(x=>x.id===$("comparePlanSelect")?.value);if(!v||comparePreview)return;comparePreview={items:clone(s.items||[]),services:clone(s.services||[]),pipeRoutes:clone(s.pipeRoutes||[])};s.items=clone(v.items||[]);s.services=clone(v.services||[]);s.pipeRoutes=clone(v.pipeRoutes||[]);$("previewCompareBtn")?.classList.add("hidden");$("returnCompareBtn")?.classList.remove("hidden");api.refresh2D?.();window.BP3DView?.refresh?.();}
+function returnCompare(){if(!comparePreview)return;const s=st();s.items=comparePreview.items;s.services=comparePreview.services;s.pipeRoutes=comparePreview.pipeRoutes||[];comparePreview=null;$("previewCompareBtn")?.classList.remove("hidden");$("returnCompareBtn")?.classList.add("hidden");api.refresh2D?.();window.BP3DView?.refresh?.();}
 
 function syncPaletteUI(){const p=st().project.finishPalette||{};if($("paletteMetal"))$("paletteMetal").value=p.metal||"use-item";if($("paletteSanitary"))$("paletteSanitary").value=p.sanitary||"bright-white";if($("paletteFurniture"))$("paletteFurniture").value=p.furniture||"product";if($("paletteGlass"))$("paletteGlass").value=p.glass||"fluted";if($("paletteGlassTrim"))$("paletteGlassTrim").value=p.glassTrim||"inherit-metal";if($("paletteFidelity"))$("paletteFidelity").value=st().ui.fidelity||"detailed";if($("globalFixtureFinish"))$("globalFixtureFinish").value=p.metal||"use-item";}
 function sync3DUI(){if($("wallMode"))$("wallMode").value=st().ui.wallMode||"auto";if($("fidelityMode"))$("fidelityMode").value=st().ui.fidelity||"detailed";}

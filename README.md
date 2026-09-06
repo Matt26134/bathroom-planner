@@ -1,4 +1,4 @@
-# Bathroom Planner V3.0.0
+# Bathroom Planner V3.0.1
 
 Major V3 rebuild based on the stable V2.5.10 project format. Existing browser projects remain on the same storage key and are migrated in place; do not reset the project when upgrading.
 
@@ -22,4 +22,8 @@ Major V3 rebuild based on the stable V2.5.10 project format. Existing browser pr
 - V3 local restore points before major V3 actions.
 
 ## Upgrade
-Upload the contents of `bathroom-planner-v3.0.0-GITHUB-ROOT.zip` directly into the GitHub Pages repository root. The page should show `V3.0.0 · complete bathroom design system` and the 3D status should show `renderer V3.0.0`.
+Upload the contents of `bathroom-planner-v3.0.1-GITHUB-ROOT.zip` directly into the GitHub Pages repository root. The page should show `V3.0.1 · complete bathroom design system` and the 3D status should show `renderer V3.0.1`.
+
+
+## V3.0.1 plumbing routes
+Adds routeable hot, cold, waste and soil runs in Plan and 3D, per-route diameter/material/Z/fall, ordering allowance, approximate bend count and CSV export. Pipe routes are stored with plan variants and recovery snapshots.

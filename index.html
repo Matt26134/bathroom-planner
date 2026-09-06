@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <script>
 (() => {
-  const BUILD="3.0.3";
+  const BUILD="3.0.5";
   try {
     const u=new URL(location.href);
     if(u.searchParams.get("build")!==BUILD){u.searchParams.set("build",BUILD);u.searchParams.delete("fresh");history.replaceState(null,"",u.toString());}
@@ -19,13 +19,13 @@
 })();
 </script>
 <title>Bathroom Planner</title>
-<link rel="manifest" href="./manifest.json?build=3.0.3">
-<link rel="icon" href="./icon-192.png?build=3.0.3">
-<link rel="stylesheet" href="./styles.css?build=3.0.3">
+<link rel="manifest" href="./manifest.json?build=3.0.5">
+<link rel="icon" href="./icon-192.png?build=3.0.5">
+<link rel="stylesheet" href="./styles.css?build=3.0.5">
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V3.0.4 · visible 3D add menu + direct recess placement</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V3.0.5 · saved pipe editing + accurate 3D surface picking</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -105,8 +105,6 @@
         <option value="left">Vanity wall / opposite door</option>
         <option value="right">Door wall</option>
       </select>
-      <button id="viewDoor">Door view</button>
-      <button id="viewWindow">Window view</button>
       <button id="viewTop">Top</button>
       <button id="viewReset">Reset</button>
       <select id="cameraPreset" aria-label="Camera preset">
@@ -118,8 +116,6 @@
       <select id="wallMode" aria-label="Wall visibility"><option value="auto">Walls: Auto</option><option value="all">Walls: All</option><option value="none">Walls: None</option></select>
       <select id="fidelityMode" aria-label="3D fidelity"><option value="draft">Draft</option><option value="detailed" selected>Detailed</option><option value="presentation">Presentation</option></select>
       <button id="measure3DBtn" type="button" aria-pressed="false">3D measure</button>
-      <button id="sectionXBtn" type="button" aria-pressed="false">Section X</button>
-      <button id="sectionYBtn" type="button" aria-pressed="false">Section Y</button>
       <button id="fullScreen3DBtn" type="button">Full screen</button>
       <input id="floorXrayToggle" type="checkbox" hidden>
       <button id="floorXrayBtn" type="button" aria-pressed="false">Under floor</button>
@@ -155,8 +151,19 @@
       <div class="pipe3DOverlayActions"><button id="pipe3DUndoBtn" type="button">Undo</button><button id="pipe3DFinishBtn" type="button" class="primary">Finish</button><button id="pipe3DCancelBtn" type="button">Cancel</button></div>
     </div>
     <div id="pipe3DEditBar" class="pipe3DOverlay pipe3DEdit hidden">
-      <div class="pipe3DOverlayText"><strong id="pipe3DEditLabel">Selected pipe</strong><small>Move the complete route vertically without changing its shape.</small></div>
-      <div class="pipe3DOverlayActions"><button type="button" data-pipe3d-shift="-100">↓100</button><button type="button" data-pipe3d-shift="-25">↓25</button><button type="button" data-pipe3d-shift="25">↑25</button><button type="button" data-pipe3d-shift="100">↑100</button><button id="pipe3DEditDoneBtn" type="button">Done</button></div>
+      <div class="pipe3DOverlayText"><strong id="pipe3DEditLabel">Selected pipe</strong><small>Move the complete saved route in plan or height, or delete it.</small></div>
+      <div class="pipe3DMoveGrid" aria-label="Move selected pipe route">
+        <button type="button" data-pipe3d-translate="0,-50,0">Window −Y</button>
+        <button type="button" data-pipe3d-shift="25">↑ Z 25</button>
+        <button type="button" data-pipe3d-translate="0,50,0">Opposite +Y</button>
+        <button type="button" data-pipe3d-translate="-50,0,0">← X 50</button>
+        <button id="pipe3DOpenPlanBtn" type="button">Drag in Plan</button>
+        <button type="button" data-pipe3d-translate="50,0,0">X 50 →</button>
+        <button type="button" data-pipe3d-shift="-100">↓ Z 100</button>
+        <button type="button" data-pipe3d-shift="-25">↓ Z 25</button>
+        <button type="button" data-pipe3d-shift="100">↑ Z 100</button>
+      </div>
+      <div class="pipe3DOverlayActions"><button id="pipe3DDeleteBtn" type="button" class="danger">Delete pipe</button><button id="pipe3DEditDoneBtn" type="button">Done</button></div>
     </div>
     <canvas id="threeDCanvas"></canvas>
     <div id="walkControls" class="walkControls hidden" aria-label="Walkthrough movement controls">
@@ -166,7 +173,7 @@
       <button type="button" class="walkRight" data-walk="right" aria-label="Step right">→</button>
     </div>
     <div id="elevationWrap" class="elevationWrap"><svg id="elevationSvg" class="elevationSvg"></svg></div>
-    <div class="threeDHint">Orbit: drag · pinch/scroll to zoom · tap an item to edit. <strong>Auto walls</strong> cut away the wall between you and the room. Camera presets frame major fixtures. <strong>3D measure</strong> lets you tap two surfaces. Section X/Y cuts through the room. Full screen gives the model the whole display. Use <strong>+ Add</strong> to start pipe routes or place a recess directly in 3D. 3D plumbing lets you tap floor/wall/stud surfaces and choose level, vertical or surface-following route points.</div>
+    <div class="threeDHint">Orbit: drag · pinch/scroll to zoom · tap an item or saved pipe to edit. <strong>Auto walls</strong> cut away the wall between you and the room. Camera presets frame major fixtures. <strong>3D measure</strong> lets you tap two surfaces. Full screen gives the model the whole display. Use <strong>+ Add</strong> for pipe routes or recesses. Pipe placement now snaps to the actual surface hit; stud-wall points are embedded onto the stud centre plane rather than floating in front of it.</div>
   </div>
 </section>
 
@@ -281,9 +288,12 @@
           <label>Ordering allowance %<input id="pipeRouteAllowance" type="number" min="0" max="100" step="1"></label>
         </div>
         <div id="pipeRouteStats" class="buildStat"></div>
-        <div class="section">Move entire route vertically</div>
-        <div class="heightNote">Moves every route node together, preserving all risers, drops and slopes.</div>
+        <div class="section">Move complete saved route</div>
+        <div class="heightNote">On the Plan, drag the coloured pipe itself to move the whole saved route in X/Y. These controls nudge the complete route without changing its shape.</div>
+        <div class="pipePlanMoveGrid"><button type="button" data-pipe-translate="0,-50,0">Toward window 50</button><button type="button" data-pipe-translate="0,50,0">Toward opposite 50</button><button type="button" data-pipe-translate="-50,0,0">← Left 50</button><button type="button" data-pipe-translate="50,0,0">Right 50 →</button></div>
+        <div class="heightNote" style="margin-top:8px">Vertical movement shifts every node together, preserving risers, drops and slopes.</div>
         <div class="pipeShiftRow"><button type="button" data-pipe-shift="-100">↓ 100 mm</button><button type="button" data-pipe-shift="-25">↓ 25</button><label>Shift mm<input id="pipeShiftAmount" type="number" step="1" value="50"></label><button id="pipeShiftDownBtn" type="button">Move down</button><button id="pipeShiftUpBtn" type="button">Move up</button><button type="button" data-pipe-shift="25">↑ 25</button><button type="button" data-pipe-shift="100">↑ 100 mm</button></div>
+        <div class="quickActions"><button id="pipeDeleteSelectedBtn" type="button" class="danger">Delete selected route</button></div>
         <div class="section">Route heights / wall risers</div>
         <div class="heightNote">Each route point can have its own Z height. Use <strong>Add riser/drop</strong> to insert a second point at exactly the same plan position, then set its target height. That creates a true vertical pipe up/down a wall.</div>
         <div id="pipeNodeList" class="pipeNodeList"></div>
@@ -821,11 +831,11 @@
   </div>
 </div>
 
-<script src="./app-3.0.4.js?build=3.0.4"></script>
-<script src="./v3-manager.js?build=3.0.4"></script>
-<script src="./pipe-manager.js?build=3.0.4"></script>
-<script type="module" src="./three-view-3.0.4.js?build=3.0.4"></script>
-<script src="./surfaces-manager.js?build=3.0.4"></script>
-<script src="./build-manager.js?build=3.0.4"></script>
+<script src="./app-3.0.5.js?build=3.0.5"></script>
+<script src="./v3-manager.js?build=3.0.5"></script>
+<script src="./pipe-manager.js?build=3.0.5"></script>
+<script type="module" src="./three-view-3.0.5.js?build=3.0.5"></script>
+<script src="./surfaces-manager.js?build=3.0.5"></script>
+<script src="./build-manager.js?build=3.0.5"></script>
 </body>
 </html>

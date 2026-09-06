@@ -1,4 +1,4 @@
-# Bathroom Planner V3.0.2
+# Bathroom Planner V3.0.3
 
 Major V3 rebuild based on the stable V2.5.10 project format. Existing browser projects remain on the same storage key and are migrated in place; do not reset the project when upgrading.
 
@@ -22,16 +22,23 @@ Major V3 rebuild based on the stable V2.5.10 project format. Existing browser pr
 - V3 local restore points before major V3 actions.
 
 ## Upgrade
-Upload the contents of `bathroom-planner-v3.0.2-GITHUB-ROOT.zip` directly into the GitHub Pages repository root. The page should show `V3.0.2 · wall risers, mixed water & plumbing focus` and the 3D status should show `renderer V3.0.2`.
+Upload the contents of `bathroom-planner-v3.0.3-GITHUB-ROOT.zip` directly into the GitHub Pages repository root. The page should show `V3.0.3 · wall risers, mixed water & plumbing focus` and the 3D status should show `renderer V3.0.3`.
 
 
 ## V3.0.1 plumbing routes
 Adds routeable hot, cold, waste and soil runs in Plan and 3D, per-route diameter/material/Z/fall, ordering allowance, approximate bend count and CSV export. Pipe routes are stored with plan variants and recovery snapshots.
 
 
-## V3.0.2 plumbing wall risers and focus view
+## V3.0.3 plumbing wall risers and focus view
 - Added Mixed water (purple) for pipework downstream of a mixer.
 - Every route point can now have its own Z height.
 - “Add riser/drop” creates a second point at the same X/Y so the 3D route turns truly vertical up/down a stud or shower wall.
 - Route length and CSV ordering include vertical pipe length and 3D bends.
 - Added Plumbing focus in 3D: room fixtures, walls and surfaces become translucent while pipework is visually prioritised. Joists/noggins remain fully solid and the deck is hidden so under-floor routing is readable.
+
+
+## V3.0.3 plumbing interaction
+- Select a saved pipe route and move the complete route up/down while preserving all relative node heights, risers, drops and slopes.
+- Pipe routes can be selected directly in the 3D view.
+- Direct 3D pipe drawing supports Level next, Vertical next and Surface point modes.
+- Plan and 3D drawing share the same route model, ordering lengths and node-height editor.

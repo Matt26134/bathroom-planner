@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <script>
 (() => {
-  const BUILD="3.0.1";
+  const BUILD="3.0.2";
   try {
     const u=new URL(location.href);
     if(u.searchParams.get("build")!==BUILD){u.searchParams.set("build",BUILD);u.searchParams.delete("fresh");history.replaceState(null,"",u.toString());}
@@ -19,13 +19,13 @@
 })();
 </script>
 <title>Bathroom Planner</title>
-<link rel="manifest" href="./manifest.json?build=3.0.1">
-<link rel="icon" href="./icon-192.png?build=3.0.1">
-<link rel="stylesheet" href="./styles.css?build=3.0.1">
+<link rel="manifest" href="./manifest.json?build=3.0.2">
+<link rel="icon" href="./icon-192.png?build=3.0.2">
+<link rel="stylesheet" href="./styles.css?build=3.0.2">
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V3.0.1 · plumbing routes & ordering</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V3.0.2 · wall risers, mixed water & plumbing focus</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -122,6 +122,7 @@
       <button id="fullScreen3DBtn" type="button">Full screen</button>
       <input id="floorXrayToggle" type="checkbox" hidden>
       <button id="floorXrayBtn" type="button" aria-pressed="false">Under floor</button>
+      <button id="plumbingFocusBtn" type="button" aria-pressed="false">Plumbing focus</button>
       <button id="done3DMoveBtn" type="button" class="hidden">Done moving</button>
       <label class="legacyWallsToggle" style="display:none"><input id="wallsToggle" type="checkbox" checked>Walls</label>
     </div>
@@ -222,10 +223,11 @@
 
   <div id="buildPanePlumbing" class="buildPane">
     <div class="buildCard">
-      <div class="pipeHeader"><div><div class="eyebrow">First-fix plumbing</div><h3>Pipe routes & ordering</h3><p class="muted">Draw separate hot, cold, waste and soil runs directly over the bathroom plan. Each run stores its pipe size, material, height and ordering allowance.</p></div><button id="pipeShowPlanBtn" type="button">Show pipes in Plan</button></div>
+      <div class="pipeHeader"><div><div class="eyebrow">First-fix plumbing</div><h3>Pipe routes & ordering</h3><p class="muted">Draw separate hot, cold, mixed-water, waste and soil runs directly over the bathroom plan. Route nodes can have individual heights, so a pipe can run under the floor and then turn vertically up a stud or shower wall. Each run stores its pipe size, material, height and ordering allowance.</p></div><button id="pipeShowPlanBtn" type="button">Show pipes in Plan</button></div>
       <div class="pipeLegend">
         <button data-pipe-start="hot"><i style="background:#d84a3d"></i>Draw hot</button>
         <button data-pipe-start="cold"><i style="background:#2878d8"></i>Draw cold</button>
+        <button data-pipe-start="mixed"><i style="background:#8a54d6"></i>Draw mixed</button>
         <button data-pipe-start="waste"><i style="background:#159a7f"></i>Draw waste</button>
         <button data-pipe-start="soil"><i style="background:#363a3a"></i>Draw soil</button>
       </div>
@@ -238,7 +240,7 @@
       <div id="pipeRouteEditor" class="pipeEditor hidden">
         <div class="grid three">
           <label>Route name<input id="pipeRouteName"></label>
-          <label>System<select id="pipeRouteType"><option value="hot">Hot water</option><option value="cold">Cold water</option><option value="waste">Waste</option><option value="soil">Soil</option></select></label>
+          <label>System<select id="pipeRouteType"><option value="hot">Hot water</option><option value="cold">Cold water</option><option value="mixed">Mixed water · after mixer</option><option value="waste">Waste</option><option value="soil">Soil</option></select></label>
           <label>Pipe size<select id="pipeRouteDiameter"><option>10</option><option>15</option><option>22</option><option>28</option><option>32</option><option>40</option><option>50</option><option>82</option><option>110</option></select></label>
           <label>Material<select id="pipeRouteMaterial"><option value="plastic-pushfit">Plastic push-fit</option><option value="copper">Copper</option><option value="pex">PEX / multilayer</option><option value="solvent-waste">Solvent-weld waste</option><option value="pushfit-waste">Push-fit waste</option><option value="soil-pvc">PVC soil</option></select></label>
           <label>Start Z (mm)<input id="pipeRouteZStart" type="number" step="1"></label>
@@ -246,13 +248,17 @@
           <label>Ordering allowance %<input id="pipeRouteAllowance" type="number" min="0" max="100" step="1"></label>
         </div>
         <div id="pipeRouteStats" class="buildStat"></div>
+        <div class="section">Route heights / wall risers</div>
+        <div class="heightNote">Each route point can have its own Z height. Use <strong>Add riser/drop</strong> to insert a second point at exactly the same plan position, then set its target height. That creates a true vertical pipe up/down a wall.</div>
+        <div id="pipeNodeList" class="pipeNodeList"></div>
+        <div class="quickActions"><button id="pipeClearNodeHeightsBtn" type="button">Reset node heights to Start/End slope</button></div>
         <div class="quickActions"><button id="pipeReverseBtn" type="button">Reverse start/end</button></div>
       </div>
       <div class="section">Ordering summary</div>
       <div id="pipeOrderSummary" class="pipeOrderSummary"></div>
       <div id="pipeOrderNote" class="heightNote"></div>
       <div class="quickActions"><button id="pipeExportBtn" type="button" class="primary">Export pipe CSV</button><button id="pipeClearBtn" type="button" class="danger">Delete all routes</button></div>
-      <div class="heightNote" style="margin-top:8px">Z can be negative for under-floor routes. Waste/soil fall is calculated from Start Z to End Z against the horizontal route length. This is a planning/ordering aid; confirm pipe sizing, falls and fitting requirements before installation.</div>
+      <div class="heightNote" style="margin-top:8px">Z can be negative for under-floor routes. For a wall riser, add a riser/drop at the wall point and give the new node the mixer/head/basin height. Waste/soil fall is calculated from the first to last route height against horizontal route length. This is a planning/ordering aid; confirm pipe sizing, falls and fitting requirements before installation.</div>
     </div>
   </div>
 </section>
@@ -774,16 +780,16 @@
     <div class="section">Pipe routes</div>
     <div class="addgrid">
       <button data-pipe-start="hot">Draw hot route</button><button data-pipe-start="cold">Draw cold route</button>
-      <button data-pipe-start="waste">Draw waste route</button><button data-pipe-start="soil">Draw soil route</button>
+      <button data-pipe-start="mixed">Draw mixed route</button><button data-pipe-start="waste">Draw waste route</button><button data-pipe-start="soil">Draw soil route</button>
     </div>
   </div>
 </div>
 
-<script src="./app-3.0.1.js?build=3.0.1"></script>
-<script src="./v3-manager.js?build=3.0.1"></script>
-<script src="./pipe-manager.js?build=3.0.1"></script>
-<script type="module" src="./three-view-3.0.1.js?build=3.0.1"></script>
-<script src="./surfaces-manager.js?build=3.0.1"></script>
-<script src="./build-manager.js?build=3.0.1"></script>
+<script src="./app-3.0.2.js?build=3.0.2"></script>
+<script src="./v3-manager.js?build=3.0.2"></script>
+<script src="./pipe-manager.js?build=3.0.2"></script>
+<script type="module" src="./three-view-3.0.2.js?build=3.0.2"></script>
+<script src="./surfaces-manager.js?build=3.0.2"></script>
+<script src="./build-manager.js?build=3.0.2"></script>
 </body>
 </html>

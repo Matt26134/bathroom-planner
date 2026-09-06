@@ -1,4 +1,4 @@
-# Bathroom Planner V3.0.3
+# Bathroom Planner V3.0.4
 
 Major V3 rebuild based on the stable V2.5.10 project format. Existing browser projects remain on the same storage key and are migrated in place; do not reset the project when upgrading.
 
@@ -22,14 +22,14 @@ Major V3 rebuild based on the stable V2.5.10 project format. Existing browser pr
 - V3 local restore points before major V3 actions.
 
 ## Upgrade
-Upload the contents of `bathroom-planner-v3.0.3-GITHUB-ROOT.zip` directly into the GitHub Pages repository root. The page should show `V3.0.3 · wall risers, mixed water & plumbing focus` and the 3D status should show `renderer V3.0.3`.
+Upload the contents of `bathroom-planner-v3.0.4-GITHUB-ROOT.zip` directly into the GitHub Pages repository root. The page should show `V3.0.4 · wall risers, mixed water & plumbing focus` and the 3D status should show `renderer V3.0.4`.
 
 
 ## V3.0.1 plumbing routes
 Adds routeable hot, cold, waste and soil runs in Plan and 3D, per-route diameter/material/Z/fall, ordering allowance, approximate bend count and CSV export. Pipe routes are stored with plan variants and recovery snapshots.
 
 
-## V3.0.3 plumbing wall risers and focus view
+## V3.0.4 plumbing wall risers and focus view
 - Added Mixed water (purple) for pipework downstream of a mixer.
 - Every route point can now have its own Z height.
 - “Add riser/drop” creates a second point at the same X/Y so the 3D route turns truly vertical up/down a stud or shower wall.
@@ -37,8 +37,16 @@ Adds routeable hot, cold, waste and soil runs in Plan and 3D, per-route diameter
 - Added Plumbing focus in 3D: room fixtures, walls and surfaces become translucent while pipework is visually prioritised. Joists/noggins remain fully solid and the deck is hidden so under-floor routing is readable.
 
 
-## V3.0.3 plumbing interaction
+## V3.0.4 plumbing interaction
 - Select a saved pipe route and move the complete route up/down while preserving all relative node heights, risers, drops and slopes.
 - Pipe routes can be selected directly in the 3D view.
 - Direct 3D pipe drawing supports Level next, Vertical next and Surface point modes.
 - Plan and 3D drawing share the same route model, ordering lengths and node-height editor.
+
+
+## V3.0.4
+- Added a permanently visible `+ Add` entry at the start of the 3D toolbar.
+- Pipe routes (hot/cold/mixed/waste/soil) can now be started directly from the 3D view without going back to Build.
+- Added direct 3D recess/niche placement on room walls and stud faces with width, height and depth controls.
+- New 3D-created recesses can be moved along and up/down their mounting wall using the normal 3D move workflow.
+- Upgraded mounted recess rendering to show a recessed back plus four internal returns rather than a flat marker.

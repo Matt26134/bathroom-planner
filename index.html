@@ -25,7 +25,7 @@
 </head>
 <body>
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V3.0.3 · selectable pipe heights + direct 3D pipe drawing</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>Bathroom Planner</h1><div class="version">V3.0.4 · visible 3D add menu + direct recess placement</div></div></div>
   <button id="reloadBtn">Reload latest</button>
 </header>
 
@@ -97,6 +97,7 @@
 <section id="threeD" class="panel">
   <div class="view3dShell">
     <div class="view3dTop">
+      <button id="add3DBtn" type="button" class="primary add3DButton" aria-expanded="false">+ Add</button>
       <select id="viewMode">
         <option value="3d">3D room</option>
         <option value="window">Window wall</option>
@@ -126,6 +127,28 @@
       <button id="done3DMoveBtn" type="button" class="hidden">Done moving</button>
       <label class="legacyWallsToggle" style="display:none"><input id="wallsToggle" type="checkbox" checked>Walls</label>
     </div>
+    <div id="add3DMenu" class="add3DMenu hidden" role="menu" aria-label="Add in 3D">
+      <div class="add3DMenuHead"><strong>Add in 3D</strong><small>Start a pipe route or place a recess directly on a wall.</small></div>
+      <div class="add3DMenuSection">Pipe route</div>
+      <div class="add3DMenuGrid pipeChoices">
+        <button type="button" data-add3d-pipe="hot"><i style="background:#d84a3d"></i>Hot</button>
+        <button type="button" data-add3d-pipe="cold"><i style="background:#2878d8"></i>Cold</button>
+        <button type="button" data-add3d-pipe="mixed"><i style="background:#8a54d6"></i>Mixed</button>
+        <button type="button" data-add3d-pipe="waste"><i style="background:#159a7f"></i>Waste</button>
+        <button type="button" data-add3d-pipe="soil"><i style="background:#363a3a"></i>Soil</button>
+      </div>
+      <div class="add3DMenuSection">Wall item</div>
+      <button id="add3DNicheBtn" type="button" class="add3DNicheChoice">▣ Recess / niche</button>
+    </div>
+    <div id="niche3DPlaceBar" class="pipe3DOverlay niche3DOverlay hidden">
+      <div class="pipe3DOverlayText"><strong>Place recess / niche in 3D</strong><small>Set the size, then tap the room wall or stud face at the centre of the recess.</small></div>
+      <div class="niche3DSizeGrid">
+        <label>Width mm<input id="niche3DWidth" type="number" min="100" step="10" value="400"></label>
+        <label>Height mm<input id="niche3DHeight" type="number" min="100" step="10" value="300"></label>
+        <label>Depth mm<input id="niche3DDepth" type="number" min="40" step="5" value="90"></label>
+      </div>
+      <div class="pipe3DOverlayActions"><button id="niche3DCancelBtn" type="button">Cancel</button></div>
+    </div>
     <div id="pipe3DDrawBar" class="pipe3DOverlay hidden">
       <div class="pipe3DOverlayText"><strong id="pipe3DDrawLabel">Drawing pipe in 3D</strong><small id="pipe3DDrawHint">Tap a surface to add the first point.</small></div>
       <div class="pipe3DModeBtns"><button id="pipe3DModeLevel" type="button" data-pipe3d-mode="level" class="active3d">Level next</button><button id="pipe3DModeVertical" type="button" data-pipe3d-mode="vertical">Vertical next</button><button id="pipe3DModeSurface" type="button" data-pipe3d-mode="surface">Surface point</button></div>
@@ -143,7 +166,7 @@
       <button type="button" class="walkRight" data-walk="right" aria-label="Step right">→</button>
     </div>
     <div id="elevationWrap" class="elevationWrap"><svg id="elevationSvg" class="elevationSvg"></svg></div>
-    <div class="threeDHint">Orbit: drag · pinch/scroll to zoom · tap an item to edit. <strong>Auto walls</strong> cut away the wall between you and the room. Camera presets frame major fixtures. <strong>3D measure</strong> lets you tap two surfaces. Section X/Y cuts through the room. Full screen gives the model the whole display. <strong>3D plumbing</strong> lets you tap floor/wall/stud surfaces and choose level, vertical or surface-following route points.</div>
+    <div class="threeDHint">Orbit: drag · pinch/scroll to zoom · tap an item to edit. <strong>Auto walls</strong> cut away the wall between you and the room. Camera presets frame major fixtures. <strong>3D measure</strong> lets you tap two surfaces. Section X/Y cuts through the room. Full screen gives the model the whole display. Use <strong>+ Add</strong> to start pipe routes or place a recess directly in 3D. 3D plumbing lets you tap floor/wall/stud surfaces and choose level, vertical or surface-following route points.</div>
   </div>
 </section>
 
@@ -798,11 +821,11 @@
   </div>
 </div>
 
-<script src="./app-3.0.3.js?build=3.0.3"></script>
-<script src="./v3-manager.js?build=3.0.3"></script>
-<script src="./pipe-manager.js?build=3.0.3"></script>
-<script type="module" src="./three-view-3.0.3.js?build=3.0.3"></script>
-<script src="./surfaces-manager.js?build=3.0.3"></script>
-<script src="./build-manager.js?build=3.0.3"></script>
+<script src="./app-3.0.4.js?build=3.0.4"></script>
+<script src="./v3-manager.js?build=3.0.4"></script>
+<script src="./pipe-manager.js?build=3.0.4"></script>
+<script type="module" src="./three-view-3.0.4.js?build=3.0.4"></script>
+<script src="./surfaces-manager.js?build=3.0.4"></script>
+<script src="./build-manager.js?build=3.0.4"></script>
 </body>
 </html>
